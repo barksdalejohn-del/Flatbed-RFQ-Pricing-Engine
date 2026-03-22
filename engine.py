@@ -361,20 +361,27 @@ def price_lane(orig_market, dest_market, data, params_override=None, dashboard_s
     liq_adj = get_liq_adjustment(liq_tier, params)
     cycle_buffer = get_cycle_buffer(params)
 
-    # --- For SPOT: directional replaces vol buffer ---
-    # --- For CONTRACT: directional supplements vol buffer (dampened) ---
+    # --- For SPOT: directional replaces vol buffer AND cycle buffer ---
+    #     The directional adjustment IS the cycle at the market level.
+    #     No need to double-count with a national cycle overlay.
+    # --- For CONTRACT: vol buffer + cycle buffer stay, directional is additive (dampened) ---
     if term == 0:
-        # Spot: use directional adjustment instead of vol buffer
-        total_buffer = dir_adj_pct + liq_adj + cycle_buffer
+        # Spot: directional + liquidity only — no vol buffer, no cycle buffer
+        total_buffer = dir_adj_pct + liq_adj
         effective_vol = 0.0
+        effective_cycle = 0.0
     else:
-        # Contract: vol buffer stays, directional is additive (already dampened by term)
+        # Contract: full stack — vol buffer + liq + cycle + dampened directional
         total_buffer = vol_buffer + liq_adj + cycle_buffer + dir_adj_pct
         effective_vol = vol_buffer
+        effective_cycle = cycle_buffer
 
     contract_rpm = rpm * (1 + total_buffer) * (1 + target_margin)
     flat_rate = contract_rpm * mi
-    carrier_rpm = rpm * (1 + liq_adj + cycle_buffer + dir_adj_pct)
+    if term == 0:
+        carrier_rpm = rpm * (1 + liq_adj + dir_adj_pct)
+    else:
+        carrier_rpm = rpm * (1 + liq_adj + cycle_buffer + dir_adj_pct)
     carrier_flat = carrier_rpm * mi
     carrier_fsc = carrier_flat + (fsc * mi)
     customer_fsc = flat_rate + (fsc * mi)
@@ -405,7 +412,7 @@ def price_lane(orig_market, dest_market, data, params_override=None, dashboard_s
         "liq_tier": liq_tier,
         "vol_buffer": round(effective_vol, 4),
         "liq_adj": round(liq_adj, 4),
-        "cycle_buffer": round(cycle_buffer, 4),
+        "cycle_buffer": round(effective_cycle if term == 0 else cycle_buffer, 4),
         "dir_adj_pct": round(dir_adj_pct, 4),
         "total_buffer": round(total_buffer, 4),
         "contract_rpm": round(contract_rpm, 4),
