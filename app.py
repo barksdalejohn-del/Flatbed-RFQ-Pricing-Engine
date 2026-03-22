@@ -285,49 +285,19 @@ params_override = {
 st.title("Flatbed Spot Pricing Tool")
 st.caption("TA Services | Directional Market Intelligence")
 
-# --- Origin / Destination Input ---
-st.markdown("### Lane Details")
-qq1, qq2 = st.columns(2)
-with qq1:
-    st.markdown("**Origin**")
-    orig_method = st.radio("Input method", ["Zip3", "City + State", "Market Code"],
-                           key="orig_method", horizontal=True)
-    if orig_method == "Zip3":
-        orig_val = st.text_input("Origin Zip3", placeholder="770", key="orig_zip")
-        orig_state_val = None
-    elif orig_method == "City + State":
-        orig_val = st.text_input("Origin City", placeholder="HOUSTON", key="orig_city_q")
-        orig_state_val = st.text_input("Origin State", placeholder="TX", key="orig_state_q")
-    else:
-        orig_val = st.text_input("Origin Market", placeholder="TX_HOU", key="orig_mkt")
-        orig_state_val = None
-
-with qq2:
-    st.markdown("**Destination**")
-    dest_method = st.radio("Input method", ["Zip3", "City + State", "Market Code"],
-                           key="dest_method", horizontal=True)
-    if dest_method == "Zip3":
-        dest_val = st.text_input("Dest Zip3", placeholder="606", key="dest_zip")
-        dest_state_val = None
-    elif dest_method == "City + State":
-        dest_val = st.text_input("Dest City", placeholder="CHICAGO", key="dest_city_q")
-        dest_state_val = st.text_input("Dest State", placeholder="IL", key="dest_state_q")
-    else:
-        dest_val = st.text_input("Dest Market", placeholder="IL_CHI", key="dest_mkt")
-        dest_state_val = None
-
-
-# --- Screenshot Upload Section ---
-st.markdown("---")
-st.markdown("### DAT RateView Data")
-
-screenshot_file = st.file_uploader("Upload DAT RateView Screenshot", type=["png", "jpg", "jpeg"],
-                                   key="rateview_screenshot",
-                                   help="Screenshot the rate panel and lane trend from DAT RateView")
-
 # Initialize session state for extracted data
 if "vision_data" not in st.session_state:
     st.session_state["vision_data"] = None
+
+# --- Screenshot Upload Section (top) ---
+st.markdown("### DAT RateView Screenshot")
+
+screenshot_file = st.file_uploader("Upload or drag DAT RateView screenshot",
+                                   type=["png", "jpg", "jpeg"],
+                                   key="rateview_screenshot",
+                                   help="Screenshot the rate panel and lane trend from DAT RateView")
+st.caption("**Quick method:** Press Win+Shift+S, select the DAT area, then drag from the "
+           "notification popup into the upload box above. Or save to desktop and browse.")
 
 if screenshot_file is not None:
     # Show the uploaded image
@@ -348,6 +318,16 @@ if screenshot_file is not None:
     # Show extracted data for confirmation
     if st.session_state["vision_data"] is not None:
         vd = st.session_state["vision_data"]
+
+        # Show auto-detected origin/destination
+        v_orig_city = vd.get("origin_city") or ""
+        v_orig_state = vd.get("origin_state") or ""
+        v_dest_city = vd.get("dest_city") or ""
+        v_dest_state = vd.get("dest_state") or ""
+        if v_orig_city and v_dest_city:
+            st.info(f"Auto-detected: **{v_orig_city}, {v_orig_state}** → "
+                    f"**{v_dest_city}, {v_dest_state}**")
+
         st.markdown("**Extracted Values** (edit if needed):")
         vc1, vc2, vc3, vc4 = st.columns(4)
         with vc1:
@@ -380,22 +360,88 @@ if screenshot_file is not None:
                 trend_df = pd.DataFrame(vd["lane_trend"])
                 st.dataframe(trend_df, hide_index=True, use_container_width=True)
 
-# Manual fallback inputs
-st.markdown("**Manual Input** (use if no screenshot or to override)")
-mc1, mc2, mc3, mc4 = st.columns(4)
-with mc1:
-    manual_best_fit = st.number_input("Best Fit (all-in w/ fuel)", min_value=0.0,
-                                      step=50.0, value=0.0, key="manual_best_fit",
-                                      help="Total rate from DAT RateView including fuel")
-with mc2:
-    manual_range_low = st.number_input("Range Low", min_value=0.0, step=50.0,
-                                       value=0.0, key="manual_range_low")
-with mc3:
-    manual_range_high = st.number_input("Range High", min_value=0.0, step=50.0,
-                                        value=0.0, key="manual_range_high")
-with mc4:
-    manual_rate_strength = st.number_input("Rate Strength", min_value=0, max_value=100,
-                                           step=1, value=0, key="manual_strength")
+# --- Origin / Destination Input ---
+st.markdown("---")
+st.markdown("### Lane Details")
+
+# Determine if vision data provides origin/dest defaults
+vd_for_lane = st.session_state.get("vision_data")
+has_vision_origin = (vd_for_lane and vd_for_lane.get("origin_city") and vd_for_lane.get("origin_state"))
+has_vision_dest = (vd_for_lane and vd_for_lane.get("dest_city") and vd_for_lane.get("dest_state"))
+
+qq1, qq2 = st.columns(2)
+with qq1:
+    st.markdown("**Origin**")
+    # Default to City + State if vision extracted origin
+    orig_method_options = ["Zip3", "City + State", "Market Code"]
+    orig_method_default = 1 if has_vision_origin else 0
+    orig_method = st.radio("Input method", orig_method_options,
+                           index=orig_method_default,
+                           key="orig_method", horizontal=True)
+    if orig_method == "Zip3":
+        orig_val = st.text_input("Origin Zip3", placeholder="770", key="orig_zip")
+        orig_state_val = None
+    elif orig_method == "City + State":
+        orig_city_default = vd_for_lane.get("origin_city", "").upper() if has_vision_origin else ""
+        orig_state_default = vd_for_lane.get("origin_state", "").upper() if has_vision_origin else ""
+        orig_val = st.text_input("Origin City", value=orig_city_default,
+                                 placeholder="HOUSTON", key="orig_city_q")
+        orig_state_val = st.text_input("Origin State", value=orig_state_default,
+                                       placeholder="TX", key="orig_state_q")
+    else:
+        orig_val = st.text_input("Origin Market", placeholder="TX_HOU", key="orig_mkt")
+        orig_state_val = None
+
+with qq2:
+    st.markdown("**Destination**")
+    dest_method_options = ["Zip3", "City + State", "Market Code"]
+    dest_method_default = 1 if has_vision_dest else 0
+    dest_method = st.radio("Input method", dest_method_options,
+                           index=dest_method_default,
+                           key="dest_method", horizontal=True)
+    if dest_method == "Zip3":
+        dest_val = st.text_input("Dest Zip3", placeholder="606", key="dest_zip")
+        dest_state_val = None
+    elif dest_method == "City + State":
+        dest_city_default = vd_for_lane.get("dest_city", "").upper() if has_vision_dest else ""
+        dest_state_default = vd_for_lane.get("dest_state", "").upper() if has_vision_dest else ""
+        dest_val = st.text_input("Dest City", value=dest_city_default,
+                                 placeholder="CHICAGO", key="dest_city_q")
+        dest_state_val = st.text_input("Dest State", value=dest_state_default,
+                                       placeholder="IL", key="dest_state_q")
+    else:
+        dest_val = st.text_input("Dest Market", placeholder="IL_CHI", key="dest_mkt")
+        dest_state_val = None
+
+# --- Manual Rate Entry (only if no screenshot data) ---
+st.markdown("---")
+st.markdown("### DAT RateView Data")
+
+has_vision_rates = (st.session_state.get("vision_data") is not None
+                    and float(st.session_state.get("vision_data", {}).get("best_fit") or 0) > 0)
+
+if has_vision_rates:
+    st.caption("Using screenshot-extracted rates above. Clear the screenshot to enter manually.")
+    manual_best_fit = 0.0
+    manual_range_low = 0.0
+    manual_range_high = 0.0
+    manual_rate_strength = 0
+else:
+    st.markdown("**Manual Input** (enter from DAT RateView if not using screenshot)")
+    mc1, mc2, mc3, mc4 = st.columns(4)
+    with mc1:
+        manual_best_fit = st.number_input("Best Fit (all-in w/ fuel)", min_value=0.0,
+                                          step=50.0, value=0.0, key="manual_best_fit",
+                                          help="Total rate from DAT RateView including fuel")
+    with mc2:
+        manual_range_low = st.number_input("Range Low", min_value=0.0, step=50.0,
+                                           value=0.0, key="manual_range_low")
+    with mc3:
+        manual_range_high = st.number_input("Range High", min_value=0.0, step=50.0,
+                                            value=0.0, key="manual_range_high")
+    with mc4:
+        manual_rate_strength = st.number_input("Rate Strength", min_value=0, max_value=100,
+                                               step=1, value=0, key="manual_strength")
 
 
 # --- Get Quote Button ---

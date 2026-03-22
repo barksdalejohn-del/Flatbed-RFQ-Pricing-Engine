@@ -24,6 +24,12 @@ def extract_rateview_data(image_bytes):
 
     prompt = """Analyze this DAT RateView screenshot and extract ALL of the following data as JSON.
 
+Extract the Origin and Destination shown at the top of the screen:
+- origin_city: city name from the Origin field (e.g. "Vernon")
+- origin_state: two-letter state abbreviation from the Origin field (e.g. "CA")
+- dest_city: city name from the Destination field (e.g. "Sumner")
+- dest_state: two-letter state abbreviation from the Destination field (e.g. "WA")
+
 Extract from the rate panel:
 - best_fit: the Best Fit rate (total dollar amount including fuel, e.g. 3091)
 - range_low: the low end of the range (e.g. 2734)
@@ -43,6 +49,10 @@ If any field is not visible in the screenshot, set it to null.
 
 Return ONLY valid JSON, no other text. Example format:
 {
+  "origin_city": "Vernon",
+  "origin_state": "CA",
+  "dest_city": "Sumner",
+  "dest_state": "WA",
   "best_fit": 3091,
   "range_low": 2734,
   "range_high": 3482,
