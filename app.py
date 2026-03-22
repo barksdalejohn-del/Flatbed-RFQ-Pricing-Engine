@@ -209,67 +209,17 @@ target_margin = st.sidebar.slider("Target Margin %", 0, 25,
                                   format="%d%%") / 100
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("### Data Management")
-
-# DAT Market Data status
-st.sidebar.markdown(f"**DAT Market Data:** {params['dat_file_date']}")
-st.sidebar.markdown(f"**Markets:** {data['rate'].shape[0]} x {data['rate'].shape[1]}")
-
 # Dashboard signals status
+st.sidebar.markdown("---")
 if dashboard_signals is not None:
     sig_staleness, sig_factor = get_signal_staleness(dashboard_signals)
     sig_date = dashboard_signals.get("as_of", "Unknown")
-    n_states = len(dashboard_signals.get("states", {}))
     n_markets = len(dashboard_signals.get("markets", {}))
-    st.sidebar.markdown(f"**Dashboard Signals:** {sig_date}")
-    st.sidebar.markdown(f"**Coverage:** {n_states} states, {n_markets} markets")
+    st.sidebar.caption(f"Dashboard signals: {sig_date} · {n_markets} markets")
     if sig_staleness and sig_staleness > 7:
-        st.sidebar.warning(f"Signals are {sig_staleness} days old — dampened")
-    elif sig_staleness and sig_staleness <= 7:
-        st.sidebar.caption("Directional pricing active")
+        st.sidebar.warning(f"Signals are {sig_staleness} days old")
 else:
-    st.sidebar.caption("No dashboard signals loaded — run export_dashboard_signals.py")
-
-# DAT Key Markets upload
-dat_upload = st.sidebar.file_uploader("Update DAT Key Markets", type=["csv"], key="dat_refresh",
-    help="Upload new DAT Key Markets CSV to refresh all rate matrices")
-if dat_upload:
-    from refresh_dat import refresh_from_dat_csv
-    tmp_path = os.path.join(os.path.dirname(__file__), "data", "_tmp_dat_refresh.csv")
-    with open(tmp_path, "wb") as f:
-        f.write(dat_upload.getvalue())
-    result = refresh_from_dat_csv(tmp_path)
-    os.remove(tmp_path)
-    st.sidebar.success(f"Refreshed {result['markets']}x{result['markets']} matrices — "
-                       f"{result['dat_date']} data. Reload the page to use new data.")
-
-# State-to-State upload with archive logic
-state_upload = st.sidebar.file_uploader("Update State-to-State Rates", type=["csv"], key="state_refresh",
-    help="Upload newer DAT state-to-state CSV to replace saved data. Previous version auto-archived.")
-if state_upload:
-    import datetime
-    import shutil
-    save_path = os.path.join(os.path.dirname(__file__), "data", "state_to_state.csv")
-    history_dir = os.path.join(os.path.dirname(__file__), "data", "state_history")
-    os.makedirs(history_dir, exist_ok=True)
-    # Archive current file before replacing
-    if os.path.exists(save_path):
-        archive_date = datetime.datetime.fromtimestamp(os.path.getmtime(save_path)).strftime("%Y-%m-%d")
-        archive_path = os.path.join(history_dir, f"state_{archive_date}.csv")
-        if not os.path.exists(archive_path):
-            shutil.copy2(save_path, archive_path)
-    # Save new file
-    with open(save_path, "wb") as f:
-        f.write(state_upload.getvalue())
-    # Also save new file to history with today's date
-    today_str = datetime.datetime.now().strftime("%Y-%m-%d")
-    today_archive = os.path.join(history_dir, f"state_{today_str}.csv")
-    with open(today_archive, "wb") as f:
-        state_upload.seek(0)
-        f.write(state_upload.read())
-    st.sidebar.success(f"State-to-state data updated. Previous version archived as "
-                       f"state_{archive_date}.csv. Reload to use new data.")
-    st.cache_data.clear()
+    st.sidebar.caption("No dashboard signals loaded")
 
 params_override = {
     "regime": regime, "phase": phase, "ltr_direction": ltr_dir,
