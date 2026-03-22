@@ -92,16 +92,18 @@ def get_cycle_buffer(params):
         cycle_adj = 0.05 if ltr_dir == "RISING" else 0.03
     else:
         cycle_adj = 0.02 if ltr_dir == "RISING" else 0.0
-    if phase in (0, 1):
+    if phase == 0:
         multiplier = 1.2
+    elif phase == 1:
+        multiplier = 0.85
     elif phase == 2:
-        multiplier = 1.0
+        multiplier = 0.8
     elif phase == 3:
-        multiplier = 1.15
+        multiplier = 1.0
     elif phase == 4:
-        multiplier = 0.9
+        multiplier = 1.15
     elif phase == 5:
-        multiplier = 1.1
+        multiplier = 1.2
     else:
         multiplier = 1.0
     return cycle_adj * multiplier
