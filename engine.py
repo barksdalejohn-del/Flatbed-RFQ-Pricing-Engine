@@ -1,9 +1,193 @@
 import json
 import os
+from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# DIRECTIONAL PRICING INTELLIGENCE
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Weights: origin is present reality (60%), destination is future opportunity (40%)
+ORIGIN_WEIGHT = 0.60
+DEST_WEIGHT = 0.40
+MAX_ADJUSTMENT = 0.18  # ±18% cap
+MOMENTUM_MODIFIER = 0.02  # ±2% when momentum confirms direction
+BALANCED_MIDPOINT = 37.5  # Center of Balanced range (30-44)
+NORMALIZATION_RANGE = 62.5  # Max distance from midpoint (100 - 37.5)
+
+# Term dampening: how much directional signal applies by contract term
+TERM_DAMPENING = {
+    0: 1.0,    # Spot: full directional signal
+    6: 0.50,   # 6-month: half signal (market will shift)
+    12: 0.25,  # 12-month: quarter signal (mostly irrelevant)
+}
+
+# Staleness thresholds
+STALENESS_WARN_DAYS = 7
+STALENESS_CUTOFF_DAYS = 14
+
+
+def load_dashboard_signals():
+    """Load the dashboard signals JSON if available."""
+    signals_path = os.path.join(DATA_DIR, "dashboard_signals.json")
+    if not os.path.exists(signals_path):
+        return None
+    with open(signals_path) as f:
+        signals = json.load(f)
+    return signals
+
+
+def get_signal_staleness(signals):
+    """Check how stale the dashboard signals are. Returns (days_old, dampening_factor)."""
+    if signals is None:
+        return None, 0.0
+    as_of = signals.get("as_of")
+    if not as_of:
+        return None, 0.0
+    try:
+        signal_date = datetime.strptime(as_of, "%Y-%m-%d")
+        days_old = (datetime.now() - signal_date).days
+        if days_old > STALENESS_CUTOFF_DAYS:
+            return days_old, 0.0  # Too stale, disable
+        elif days_old > STALENESS_WARN_DAYS:
+            return days_old, 0.5  # Stale, dampen 50%
+        else:
+            return days_old, 1.0  # Fresh, full signal
+    except (ValueError, TypeError):
+        return None, 0.0
+
+
+def normalize_pressure(pressure_score):
+    """Convert pressure score (0-100) to normalized scale (-1.0 to +1.0)."""
+    if pressure_score is None:
+        return 0.0  # Balanced default
+    return (pressure_score - BALANCED_MIDPOINT) / NORMALIZATION_RANGE
+
+
+def get_market_pressure(market_code, signals):
+    """Look up pressure score for a DAT market code. Falls back to state level."""
+    if signals is None:
+        return None, None, None
+
+    # Try market-level first
+    markets = signals.get("markets", {})
+    if market_code in markets:
+        m = markets[market_code]
+        return m.get("pressure_score"), m.get("signal"), m.get("momentum")
+
+    # Fall back to state-level
+    state = market_code[:2] if market_code else None
+    states = signals.get("states", {})
+    if state and state in states:
+        s = states[state]
+        return s.get("pressure_score"), s.get("signal"), s.get("momentum")
+
+    return None, None, None
+
+
+def compute_directional_adjustment(orig_market, dest_market, signals, term=0):
+    """
+    Compute the directional pricing adjustment based on origin/destination market pressure.
+
+    Returns dict with:
+        adjustment_pct: the % adjustment to carrier cost (negative = discount, positive = premium)
+        orig_pressure: origin pressure score
+        dest_pressure: destination pressure score
+        orig_signal: origin signal name
+        dest_signal: destination signal name
+        staleness_days: how old the signal data is
+        dampened: whether the signal was dampened (staleness or term)
+    """
+    if signals is None:
+        return {
+            "adjustment_pct": 0.0,
+            "orig_pressure": None, "dest_pressure": None,
+            "orig_signal": None, "dest_signal": None,
+            "orig_ltr_8d": None, "dest_ltr_8d": None,
+            "orig_ltr_30d": None, "dest_ltr_30d": None,
+            "staleness_days": None, "dampened": False,
+            "momentum_applied": False,
+        }
+
+    # Get staleness
+    staleness_days, staleness_factor = get_signal_staleness(signals)
+
+    # Get pressure scores
+    orig_pressure, orig_signal, orig_momentum = get_market_pressure(orig_market, signals)
+    dest_pressure, dest_signal, dest_momentum = get_market_pressure(dest_market, signals)
+
+    # Get LTR values for display
+    orig_ltr_8d, orig_ltr_30d = None, None
+    dest_ltr_8d, dest_ltr_30d = None, None
+
+    # Try market level first, then state
+    for source_key in ["markets", "states"]:
+        source = signals.get(source_key, {})
+        lookup_orig = orig_market if source_key == "markets" else (orig_market[:2] if orig_market else None)
+        lookup_dest = dest_market if source_key == "markets" else (dest_market[:2] if dest_market else None)
+        if lookup_orig and lookup_orig in source and orig_ltr_8d is None:
+            orig_ltr_8d = source[lookup_orig].get("ltr_8d")
+            orig_ltr_30d = source[lookup_orig].get("ltr_30d")
+        if lookup_dest and lookup_dest in source and dest_ltr_8d is None:
+            dest_ltr_8d = source[lookup_dest].get("ltr_8d")
+            dest_ltr_30d = source[lookup_dest].get("ltr_30d")
+
+    # Normalize pressures
+    norm_orig = normalize_pressure(orig_pressure)
+    norm_dest = normalize_pressure(dest_pressure)
+
+    # Core formula: origin pushes cost UP, destination pulls cost DOWN
+    raw_adjustment = (norm_orig * ORIGIN_WEIGHT) - (norm_dest * DEST_WEIGHT)
+
+    # Momentum modifier: if momentum confirms direction, add ±2%
+    momentum_applied = False
+    momentum_bonus = 0.0
+    if orig_momentum is not None and dest_momentum is not None:
+        # Origin momentum negative (softening further) AND dest momentum positive (tightening further)
+        # = strongest directional confirmation
+        if orig_momentum < -0.02 and dest_momentum > 0.02:
+            momentum_bonus = -MOMENTUM_MODIFIER  # Extra discount
+            momentum_applied = True
+        elif orig_momentum > 0.02 and dest_momentum < -0.02:
+            momentum_bonus = MOMENTUM_MODIFIER  # Extra premium
+            momentum_applied = True
+
+    # Apply momentum
+    adjusted = raw_adjustment + momentum_bonus
+
+    # Apply cap
+    capped = max(-1.0, min(1.0, adjusted))
+
+    # Scale to max adjustment
+    adjustment_pct = capped * MAX_ADJUSTMENT
+
+    # Apply term dampening
+    term_factor = TERM_DAMPENING.get(int(term), 0.5)
+    adjustment_pct *= term_factor
+
+    # Apply staleness dampening
+    adjustment_pct *= staleness_factor
+
+    dampened = (term_factor < 1.0) or (staleness_factor < 1.0)
+
+    return {
+        "adjustment_pct": round(adjustment_pct, 4),
+        "orig_pressure": orig_pressure,
+        "dest_pressure": dest_pressure,
+        "orig_signal": orig_signal,
+        "dest_signal": dest_signal,
+        "orig_ltr_8d": orig_ltr_8d,
+        "dest_ltr_8d": dest_ltr_8d,
+        "orig_ltr_30d": orig_ltr_30d,
+        "dest_ltr_30d": dest_ltr_30d,
+        "staleness_days": staleness_days,
+        "dampened": dampened,
+        "momentum_applied": momentum_applied,
+    }
 
 
 def load_data():
@@ -145,7 +329,7 @@ def get_liq_adjustment(liq_tier, params):
     return params["liq_adj_table"].get(liq_tier, 0.0)
 
 
-def price_lane(orig_market, dest_market, data, params_override=None):
+def price_lane(orig_market, dest_market, data, params_override=None, dashboard_signals=None):
     params = data["params"].copy()
     if params_override:
         params.update(params_override)
@@ -169,19 +353,45 @@ def price_lane(orig_market, dest_market, data, params_override=None):
     target_margin = params.get("target_margin", 0.12)
     fsc = params.get("fsc_per_mile", 0.53)
 
+    # --- Compute directional adjustment ---
+    directional = compute_directional_adjustment(orig_market, dest_market, dashboard_signals, term)
+    dir_adj_pct = directional["adjustment_pct"]
+
     vol_buffer = get_vol_buffer(vol_tier, confidence, term, params)
     liq_adj = get_liq_adjustment(liq_tier, params)
     cycle_buffer = get_cycle_buffer(params)
-    total_buffer = vol_buffer + liq_adj + cycle_buffer
+
+    # --- For SPOT: directional replaces vol buffer ---
+    # --- For CONTRACT: directional supplements vol buffer (dampened) ---
+    if term == 0:
+        # Spot: use directional adjustment instead of vol buffer
+        total_buffer = dir_adj_pct + liq_adj + cycle_buffer
+        effective_vol = 0.0
+    else:
+        # Contract: vol buffer stays, directional is additive (already dampened by term)
+        total_buffer = vol_buffer + liq_adj + cycle_buffer + dir_adj_pct
+        effective_vol = vol_buffer
 
     contract_rpm = rpm * (1 + total_buffer) * (1 + target_margin)
     flat_rate = contract_rpm * mi
-    carrier_rpm = rpm * (1 + liq_adj + cycle_buffer)
+    carrier_rpm = rpm * (1 + liq_adj + cycle_buffer + dir_adj_pct)
     carrier_flat = carrier_rpm * mi
     carrier_fsc = carrier_flat + (fsc * mi)
     customer_fsc = flat_rate + (fsc * mi)
     margin_dollar = customer_fsc - carrier_fsc
     margin_pct = margin_dollar / customer_fsc if customer_fsc != 0 else 0
+
+    # --- Quote range for spot ---
+    quote_aggressive = None
+    quote_target = None
+    quote_defensive = None
+    if term == 0:
+        # Show a range: aggressive (10%), target (margin%), defensive (margin%+4%)
+        aggressive_margin = max(target_margin - 0.04, 0.06)
+        defensive_margin = target_margin + 0.04
+        quote_aggressive = round(carrier_fsc * (1 + aggressive_margin), 2)
+        quote_target = round(carrier_fsc * (1 + target_margin), 2)
+        quote_defensive = round(carrier_fsc * (1 + defensive_margin), 2)
 
     return {
         "status": "MATCHED",
@@ -193,9 +403,10 @@ def price_lane(orig_market, dest_market, data, params_override=None):
         "reports": rpts,
         "vol_tier": vol_tier,
         "liq_tier": liq_tier,
-        "vol_buffer": round(vol_buffer, 4),
+        "vol_buffer": round(effective_vol, 4),
         "liq_adj": round(liq_adj, 4),
         "cycle_buffer": round(cycle_buffer, 4),
+        "dir_adj_pct": round(dir_adj_pct, 4),
         "total_buffer": round(total_buffer, 4),
         "contract_rpm": round(contract_rpm, 4),
         "flat_rate": round(flat_rate, 2),
@@ -203,6 +414,22 @@ def price_lane(orig_market, dest_market, data, params_override=None):
         "customer_fsc": round(customer_fsc, 2),
         "margin_dollar": round(margin_dollar, 2),
         "margin_pct": round(margin_pct, 4),
+        # Directional intelligence
+        "orig_signal": directional["orig_signal"],
+        "dest_signal": directional["dest_signal"],
+        "orig_pressure": directional["orig_pressure"],
+        "dest_pressure": directional["dest_pressure"],
+        "orig_ltr_8d": directional["orig_ltr_8d"],
+        "dest_ltr_8d": directional["dest_ltr_8d"],
+        "orig_ltr_30d": directional["orig_ltr_30d"],
+        "dest_ltr_30d": directional["dest_ltr_30d"],
+        "momentum_applied": directional["momentum_applied"],
+        "staleness_days": directional["staleness_days"],
+        "signal_dampened": directional["dampened"],
+        # Quote range (spot only)
+        "quote_aggressive": quote_aggressive,
+        "quote_target": quote_target,
+        "quote_defensive": quote_defensive,
     }
 
 
@@ -352,7 +579,7 @@ def parse_state_to_state_csv(filepath):
 import csv
 
 
-def price_rfq(rfq_df, data, state_rates=None, params_override=None):
+def price_rfq(rfq_df, data, state_rates=None, params_override=None, dashboard_signals=None):
     params = data["params"].copy()
     if params_override:
         params.update(params_override)
@@ -379,7 +606,7 @@ def price_rfq(rfq_df, data, state_rates=None, params_override=None):
             })
             continue
 
-        pricing = price_lane(orig_market, dest_market, data, params_override)
+        pricing = price_lane(orig_market, dest_market, data, params_override, dashboard_signals)
         if pricing is None:
             results.append({"ta_id": idx + 1, "status": "NO DATA", "orig_market": orig_market, "dest_market": dest_market})
             continue

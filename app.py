@@ -32,7 +32,8 @@ if not check_password():
     st.stop()
 
 from engine import (load_data, price_rfq, parse_state_to_state_csv, resolve_market,
-                     load_previous_state_rates, compute_true_freshness)
+                     load_previous_state_rates, compute_true_freshness,
+                     load_dashboard_signals, price_lane, get_signal_staleness)
 
 # --- Custom CSS ---
 st.markdown("""
@@ -56,6 +57,12 @@ st.markdown("""
 @st.cache_data
 def get_data():
     return load_data()
+
+
+@st.cache_data
+def get_dashboard_signals():
+    """Load dashboard signals JSON for directional pricing."""
+    return load_dashboard_signals()
 
 
 @st.cache_data
@@ -152,6 +159,7 @@ def zone_badge(zone):
 st.sidebar.title("Control Panel")
 data = get_data()
 params = data["params"]
+dashboard_signals = get_dashboard_signals()
 
 st.sidebar.markdown("### Market Regime")
 col1, col2 = st.sidebar.columns(2)
@@ -184,6 +192,21 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("### Data Management")
 st.sidebar.markdown(f"**DAT Market Data:** {params['dat_file_date']}")
 st.sidebar.markdown(f"**Markets:** {data['rate'].shape[0]} x {data['rate'].shape[1]}")
+
+# Dashboard signals status
+if dashboard_signals is not None:
+    sig_staleness, sig_factor = get_signal_staleness(dashboard_signals)
+    sig_date = dashboard_signals.get("as_of", "Unknown")
+    n_states = len(dashboard_signals.get("states", {}))
+    n_markets = len(dashboard_signals.get("markets", {}))
+    st.sidebar.markdown(f"**Dashboard Signals:** {sig_date}")
+    st.sidebar.markdown(f"**Coverage:** {n_states} states, {n_markets} markets")
+    if sig_staleness and sig_staleness > 7:
+        st.sidebar.warning(f"Signals are {sig_staleness} days old — dampened")
+    elif sig_staleness and sig_staleness <= 7:
+        st.sidebar.caption("✅ Directional pricing active")
+else:
+    st.sidebar.caption("No dashboard signals loaded — run export_dashboard_signals.py")
 
 # Auto-load saved state-to-state rates
 saved_state_rates = load_saved_state_rates()
@@ -278,7 +301,7 @@ with tab_rfq:
         st.markdown(f"**Parsed {len(rfq_df)} lanes from upload.**")
 
         with st.spinner("Pricing lanes..."):
-            results = price_rfq(rfq_df, data, state_rates, params_override)
+            results = price_rfq(rfq_df, data, state_rates, params_override, dashboard_signals)
 
         matched = results[results["status"] == "MATCHED"]
         no_match = results[results["status"] == "NO MATCH"]
@@ -568,8 +591,7 @@ with tab_quick:
         elif dest_market is None or dest_market == "NO MATCH":
             st.error(f"Could not resolve destination: {dest_val}")
         else:
-            from engine import price_lane, compute_nowcast, compute_gate, auto_risk_tolerance, auto_decision
-            result = price_lane(orig_market, dest_market, data, params_override)
+            result = price_lane(orig_market, dest_market, data, params_override, dashboard_signals)
 
             if result is None:
                 st.error(f"No rate data for {orig_market} → {dest_market}")
@@ -578,71 +600,101 @@ with tab_quick:
             else:
                 st.success(f"**{orig_market} → {dest_market}** | {result['miles']} miles")
 
+                # --- Directional Intelligence Section ---
+                orig_sig = result.get("orig_signal")
+                dest_sig = result.get("dest_signal")
+                dir_adj = result.get("dir_adj_pct", 0)
+
+                if orig_sig and dest_sig:
+                    # Signal color mapping
+                    sig_colors = {
+                        "Acute Imbalance": "#f85149",
+                        "Tightening": "#e07b39",
+                        "Firming": "#d29922",
+                        "Balanced": "#8b949e",
+                        "Loosening": "#3fb950",
+                        "Soft": "#58a6ff",
+                    }
+                    orig_color = sig_colors.get(orig_sig, "#8b949e")
+                    dest_color = sig_colors.get(dest_sig, "#8b949e")
+                    flow_desc = f"{orig_sig} → {dest_sig}"
+
+                    # Determine flow character
+                    if dir_adj < -0.03:
+                        flow_label = "Carrier-friendly lane — quote competitively"
+                        flow_icon = "🟢"
+                    elif dir_adj > 0.03:
+                        flow_label = "Carrier-unfriendly lane — protect margin"
+                        flow_icon = "🔴"
+                    else:
+                        flow_label = "Balanced flow — quote at market"
+                        flow_icon = "⚪"
+
+                    st.markdown("---")
+                    st.markdown("**Market Intelligence**")
+
+                    mi1, mi2 = st.columns(2)
+                    with mi1:
+                        orig_ltr_str = f"LTR 8D: {result.get('orig_ltr_8d', '—')}"
+                        st.markdown(f"**Origin:** {orig_market} — "
+                                    f"<span style='color:{orig_color};font-weight:bold'>{orig_sig}</span> "
+                                    f"({orig_ltr_str})", unsafe_allow_html=True)
+                    with mi2:
+                        dest_ltr_str = f"LTR 8D: {result.get('dest_ltr_8d', '—')}"
+                        st.markdown(f"**Dest:** {dest_market} — "
+                                    f"<span style='color:{dest_color};font-weight:bold'>{dest_sig}</span> "
+                                    f"({dest_ltr_str})", unsafe_allow_html=True)
+
+                    st.markdown(f"{flow_icon} **Flow:** {flow_desc} — {flow_label}")
+                    if result.get("momentum_applied"):
+                        st.caption("Momentum confirms direction — additional ±2% applied")
+
+                # --- Core Pricing ---
+                st.markdown("---")
+                st.markdown("**Pricing Breakdown**")
+
                 r1, r2, r3, r4 = st.columns(4)
                 r1.metric("DAT Spot RPM", f"${result['dat_spot_rpm']:.4f}")
                 r2.metric("Vol / Liq Tier", f"{result['vol_tier']} / {result['liq_tier']}")
-                r3.metric("Total Buffer", f"{result['total_buffer']:.1%}")
-                r4.metric("Carrier + FSC", format_currency(result['carrier_fsc']))
+                dir_label = f"{dir_adj:+.1%}" if dir_adj != 0 else "0.0%"
+                r3.metric("Dir Adjustment", dir_label)
+                r4.metric("Total Buffer", f"{result['total_buffer']:.1%}")
 
                 r5, r6, r7, r8 = st.columns(4)
-                r5.metric("Model Quote", format_currency(result['customer_fsc']))
-                r6.metric("Margin $", format_currency(result['margin_dollar']))
-                r7.metric("Margin %", format_pct(result['margin_pct']))
-                r8.metric("Contract RPM", f"${result['contract_rpm']:.4f}")
+                r5.metric("Carrier + FSC", format_currency(result['carrier_fsc']))
+                r6.metric("Contract RPM", f"${result['contract_rpm']:.4f}")
+                r7.metric("Margin $", format_currency(result['margin_dollar']))
+                r8.metric("Margin %", format_pct(result['margin_pct']))
 
+                # --- Quote Range (Spot) ---
+                if result.get("quote_aggressive") is not None:
+                    st.markdown("---")
+                    st.markdown("**Quote Range**")
+                    q1, q2, q3 = st.columns(3)
+                    q1.metric("Aggressive", format_currency(result["quote_aggressive"]),
+                              delta=f"{((result['quote_aggressive'] - result['carrier_fsc']) / result['quote_aggressive'] * 100):.1f}% margin")
+                    q2.metric("Target", format_currency(result["quote_target"]),
+                              delta=f"{((result['quote_target'] - result['carrier_fsc']) / result['quote_target'] * 100):.1f}% margin")
+                    q3.metric("Defensive", format_currency(result["quote_defensive"]),
+                              delta=f"{((result['quote_defensive'] - result['carrier_fsc']) / result['quote_defensive'] * 100):.1f}% margin")
+                else:
+                    # Contract quote - single number
+                    st.markdown("---")
+                    r9, r10 = st.columns(2)
+                    r9.metric("Model Quote", format_currency(result['customer_fsc']))
+                    r10.metric("All-in RPM", f"${result['customer_fsc'] / result['miles']:.4f}" if result['miles'] > 0 else "—")
+
+                # --- State-to-State Signal (if available) ---
                 if state_rates is not None:
+                    from engine import compute_nowcast
                     fsc_val = params_override.get("fsc_per_mile", 0.53)
                     nowcast_fsc, state_rpm_val = compute_nowcast(
                         orig_market, dest_market, state_rates, result["miles"], fsc_val)
                     if nowcast_fsc:
                         fresh_ratio = state_rpm_val / result["dat_spot_rpm"] if result["dat_spot_rpm"] else None
-                        sgt = params_override.get("state_gate_tolerance", 0.10)
-                        gz = params_override.get("green_zone", 0.05)
-                        rz = params_override.get("red_zone", 0.15)
-                        gate = compute_gate(result["customer_fsc"], nowcast_fsc, result["carrier_fsc"],
-                                           sgt, green_threshold=gz, red_threshold=rz)
-                        # Compute True Freshness if history available
-                        true_fresh = None
-                        if prev_state_rates is not None:
-                            true_fresh = compute_true_freshness(orig_market, dest_market,
-                                                                state_rates, prev_state_rates)
-
                         st.markdown("---")
-                        st.markdown("**Market Signal (State-to-State)**")
-                        s1, s2, s3, s4 = st.columns(4)
+                        st.markdown("**State-to-State Reference**")
+                        s1, s2, s3 = st.columns(3)
                         s1.metric("State RPM", f"${state_rpm_val:.4f}")
-                        if true_fresh is not None:
-                            pct_change = (true_fresh - 1) * 100
-                            direction = "↑" if pct_change > 0.1 else ("↓" if pct_change < -0.1 else "→")
-                            s2.metric("True Freshness", f"{true_fresh:.3f}x",
-                                      delta=f"{direction} {abs(pct_change):.1f}% vs {prev_state_date}",
-                                      delta_color="normal" if pct_change >= 0 else "inverse")
-                        else:
-                            s2.metric("Freshness Ratio", f"{fresh_ratio:.2f}x" if fresh_ratio else "—")
-                        s3.metric("Market Signal (w/FSC)", format_currency(nowcast_fsc))
-                        s4.metric("Carrier+FSC (Model)", format_currency(result["carrier_fsc"]))
-
-                        s5, s6, s7, s8 = st.columns(4)
-                        s5.metric("Variance", f"{gate['variance_pct']:+.1%}" if gate["variance_pct"] else "—")
-                        s6.metric("Zone", zone_badge(gate["zone"]))
-                        s7.metric("Gate Quote", format_currency(gate["gate_quote"]))
-                        s8.metric("Variance $", format_currency(gate["variance_dollar"]))
-
-                        if gate["variance_pct"] is not None:
-                            qk = abs(gate["variance_pct"]) * 0.25
-                            risk_tol = auto_risk_tolerance(gate["variance_pct"], qk, gz)
-                            decision = auto_decision(gate["variance_pct"], gz)
-                            if risk_tol:
-                                gate_with_risk = compute_gate(result["customer_fsc"], nowcast_fsc,
-                                    result["carrier_fsc"], sgt, risk_tol, green_threshold=gz, red_threshold=rz)
-                                final = gate_with_risk["gate_quote"] if decision == "DAT" else result["customer_fsc"]
-                                floor = gate_with_risk["floor_margin_pct"]
-                            else:
-                                final = result["customer_fsc"]
-                                floor = gate.get("floor_margin_pct")
-
-                            f1, f2, f3, f4 = st.columns(4)
-                            f1.metric("Qtr Kelly", f"{qk:.4f}")
-                            f2.metric("Auto Risk Tol", f"{risk_tol:.2%}" if risk_tol else "—")
-                            f3.metric("Decision", decision)
-                            f4.metric("Final Quote", format_currency(final))
+                        s2.metric("Freshness Ratio", f"{fresh_ratio:.2f}x" if fresh_ratio else "—")
+                        s3.metric("State Mkt Signal (w/FSC)", format_currency(nowcast_fsc))
