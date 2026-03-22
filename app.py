@@ -58,6 +58,15 @@ def get_data():
 
 
 @st.cache_data
+def load_saved_state_rates():
+    """Load the saved state-to-state CSV from the data folder (always available)."""
+    saved_path = os.path.join(os.path.dirname(__file__), "data", "state_to_state.csv")
+    if os.path.exists(saved_path):
+        return parse_state_to_state_csv(saved_path)
+    return None
+
+
+@st.cache_data
 def load_state_rates(file_content, filename):
     tmp = os.path.join(os.path.dirname(__file__), "data", "_tmp_state.csv")
     with open(tmp, "w", encoding="utf-8") as f:
@@ -168,6 +177,17 @@ st.sidebar.markdown("### Data Management")
 st.sidebar.markdown(f"**DAT Market Data:** {params['dat_file_date']}")
 st.sidebar.markdown(f"**Markets:** {data['rate'].shape[0]} x {data['rate'].shape[1]}")
 
+# Auto-load saved state-to-state rates
+saved_state_rates = load_saved_state_rates()
+if saved_state_rates is not None:
+    saved_state_path = os.path.join(os.path.dirname(__file__), "data", "state_to_state.csv")
+    import datetime
+    state_mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(saved_state_path))
+    st.sidebar.markdown(f"**State-to-State Data:** {state_mod_time.strftime('%b %d, %Y')}")
+    st.sidebar.markdown(f"**State Pairs:** {saved_state_rates.shape[0]} x {saved_state_rates.shape[1]}")
+else:
+    st.sidebar.warning("No state-to-state data loaded. Upload below.")
+
 dat_upload = st.sidebar.file_uploader("Update DAT Key Markets", type=["csv"], key="dat_refresh",
     help="Upload new DAT Key Markets CSV to refresh all rate matrices")
 if dat_upload:
@@ -178,6 +198,14 @@ if dat_upload:
     result = refresh_from_dat_csv(tmp_path)
     os.remove(tmp_path)
     st.sidebar.success(f"Refreshed {result['markets']}x{result['markets']} matrices — {result['dat_date']} data. Reload the page to use new data.")
+
+state_upload = st.sidebar.file_uploader("Update State-to-State Rates", type=["csv"], key="state_refresh",
+    help="Upload newer DAT state-to-state CSV to replace saved data")
+if state_upload:
+    save_path = os.path.join(os.path.dirname(__file__), "data", "state_to_state.csv")
+    with open(save_path, "wb") as f:
+        f.write(state_upload.getvalue())
+    st.sidebar.success("State-to-state data updated. Reload the page to use new data.")
     st.cache_data.clear()
 
 params_override = {
@@ -200,18 +228,14 @@ with tab_rfq:
     st.markdown("### Upload Customer RFQ")
     st.markdown("Upload a CSV or Excel file with origin/destination columns. Supports Zip3, Zip5, city+state, or DAT market codes.")
 
-    col_upload, col_state = st.columns(2)
-    with col_upload:
-        rfq_file = st.file_uploader("RFQ File", type=["csv", "xlsx", "xls"], key="rfq")
-    with col_state:
-        state_file = st.file_uploader("State-to-State Rates (optional)", type=["csv"], key="state",
-                                       help="Upload current DAT state-to-state CSV for market signal / variance analysis")
+    rfq_file = st.file_uploader("RFQ File", type=["csv", "xlsx", "xls"], key="rfq")
 
-    state_rates = None
-    if state_file:
-        content = state_file.getvalue().decode("utf-8")
-        state_rates = load_state_rates(content, state_file.name)
-        st.success(f"State-to-state rates loaded: {state_rates.shape[0]} origins x {state_rates.shape[1]} destinations")
+    # Auto-load saved state rates — no upload needed
+    state_rates = saved_state_rates
+    if state_rates is not None:
+        st.caption(f"✅ State-to-state market signal active ({state_rates.shape[0]} x {state_rates.shape[1]} state pairs). Update via sidebar.")
+    else:
+        st.warning("No state-to-state data available. Upload via sidebar for market signal / variance analysis.")
 
     if rfq_file:
         rfq_df = parse_rfq_upload(rfq_file)
