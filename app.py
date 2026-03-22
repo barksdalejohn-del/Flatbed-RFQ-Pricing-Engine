@@ -662,7 +662,8 @@ with tab_quick:
 
                 r5, r6, r7, r8 = st.columns(4)
                 r5.metric("Carrier + FSC", format_currency(result['carrier_fsc']))
-                r6.metric("Contract RPM", f"${result['contract_rpm']:.4f}")
+                rpm_label = "Spot RPM" if term == 0 else "Contract RPM"
+                r6.metric(rpm_label, f"${result['contract_rpm']:.4f}")
                 r7.metric("Margin $", format_currency(result['margin_dollar']))
                 r8.metric("Margin %", format_pct(result['margin_pct']))
 
