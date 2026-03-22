@@ -13,11 +13,16 @@ def load_data():
     miles = pd.read_csv(os.path.join(DATA_DIR, "miles_matrix.csv"), index_col=0)
     zip3 = pd.read_csv(os.path.join(DATA_DIR, "zip3_lookup.csv"), dtype={"Zip3": str})
     city = pd.read_csv(os.path.join(DATA_DIR, "city_lookup.csv"))
+    city_zip3_path = os.path.join(DATA_DIR, "city_zip3_lookup.csv")
+    if os.path.exists(city_zip3_path):
+        city_zip3 = pd.read_csv(city_zip3_path, dtype={"Zip3": str})
+    else:
+        city_zip3 = pd.DataFrame(columns=["City", "State", "Zip3"])
     with open(os.path.join(DATA_DIR, "control_panel.json")) as f:
         params = json.load(f)
     return {
         "rate": rate, "stddev": stddev, "reports": reports, "miles": miles,
-        "zip3": zip3, "city": city, "params": params,
+        "zip3": zip3, "city": city, "city_zip3": city_zip3, "params": params,
     }
 
 
@@ -33,7 +38,7 @@ def resolve_market(origin_input, state_input, data):
         if not match.empty:
             row = match.iloc[0]
             return row["DAT_Market"], row["Market_City"], row["State"]
-    # Try as city name
+    # Try as city name (DAT market cities first)
     upper_val = val.upper()
     city_df = data["city"]
     if state_input and str(state_input).strip():
@@ -44,6 +49,21 @@ def resolve_market(origin_input, state_input, data):
     match = city_df[city_df["City"] == upper_val]
     if not match.empty:
         return match.iloc[0]["DAT_Market"], upper_val, match.iloc[0]["State"]
+    # Fallback: city+state -> zip3 -> DAT market (covers ~25,000 US cities)
+    city_zip3_df = data.get("city_zip3", pd.DataFrame())
+    if not city_zip3_df.empty:
+        if state_input and str(state_input).strip():
+            st = str(state_input).strip().upper()
+            match = city_zip3_df[(city_zip3_df["City"] == upper_val) & (city_zip3_df["State"] == st)]
+        else:
+            match = city_zip3_df[city_zip3_df["City"] == upper_val]
+        if not match.empty:
+            z3 = match.iloc[0]["Zip3"]
+            st_found = match.iloc[0]["State"]
+            z3_match = data["zip3"][data["zip3"]["Zip3"] == z3]
+            if not z3_match.empty:
+                row = z3_match.iloc[0]
+                return row["DAT_Market"], upper_val, st_found
     # Try as direct market code
     if val.upper() in data["rate"].index:
         return val.upper(), val.upper(), val[:2].upper()
