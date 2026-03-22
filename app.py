@@ -31,7 +31,8 @@ def check_password():
 if not check_password():
     st.stop()
 
-from engine import load_data, price_rfq, parse_state_to_state_csv, resolve_market
+from engine import (load_data, price_rfq, parse_state_to_state_csv, resolve_market,
+                     load_previous_state_rates, compute_true_freshness)
 
 # --- Custom CSS ---
 st.markdown("""
@@ -64,6 +65,13 @@ def load_saved_state_rates():
     if os.path.exists(saved_path):
         return parse_state_to_state_csv(saved_path)
     return None
+
+
+@st.cache_data
+def get_previous_state_rates():
+    """Load the previous state-to-state CSV from history for true freshness comparison."""
+    prev_rates, prev_date = load_previous_state_rates()
+    return prev_rates, prev_date
 
 
 @st.cache_data
@@ -179,12 +187,23 @@ st.sidebar.markdown(f"**Markets:** {data['rate'].shape[0]} x {data['rate'].shape
 
 # Auto-load saved state-to-state rates
 saved_state_rates = load_saved_state_rates()
+prev_state_rates, prev_state_date = get_previous_state_rates()
 if saved_state_rates is not None:
     saved_state_path = os.path.join(os.path.dirname(__file__), "data", "state_to_state.csv")
     import datetime
     state_mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(saved_state_path))
     st.sidebar.markdown(f"**State-to-State Data:** {state_mod_time.strftime('%b %d, %Y')}")
     st.sidebar.markdown(f"**State Pairs:** {saved_state_rates.shape[0]} x {saved_state_rates.shape[1]}")
+    # Show history info
+    history_dir = os.path.join(os.path.dirname(__file__), "data", "state_history")
+    if os.path.exists(history_dir):
+        history_files = sorted([f for f in os.listdir(history_dir) if f.startswith("state_") and f.endswith(".csv")])
+        if len(history_files) >= 2:
+            st.sidebar.markdown(f"**History:** {len(history_files)} snapshots")
+            st.sidebar.markdown(f"**Previous:** {prev_state_date}")
+            st.sidebar.caption("✅ True Freshness Ratio active")
+        else:
+            st.sidebar.caption(f"History: {len(history_files)} snapshot(s) — need 2+ for True Freshness")
 else:
     st.sidebar.warning("No state-to-state data loaded. Upload below.")
 
@@ -200,12 +219,29 @@ if dat_upload:
     st.sidebar.success(f"Refreshed {result['markets']}x{result['markets']} matrices — {result['dat_date']} data. Reload the page to use new data.")
 
 state_upload = st.sidebar.file_uploader("Update State-to-State Rates", type=["csv"], key="state_refresh",
-    help="Upload newer DAT state-to-state CSV to replace saved data")
+    help="Upload newer DAT state-to-state CSV to replace saved data. Previous version auto-archived.")
 if state_upload:
+    import datetime
     save_path = os.path.join(os.path.dirname(__file__), "data", "state_to_state.csv")
+    history_dir = os.path.join(os.path.dirname(__file__), "data", "state_history")
+    os.makedirs(history_dir, exist_ok=True)
+    # Archive current file before replacing
+    if os.path.exists(save_path):
+        archive_date = datetime.datetime.fromtimestamp(os.path.getmtime(save_path)).strftime("%Y-%m-%d")
+        archive_path = os.path.join(history_dir, f"state_{archive_date}.csv")
+        if not os.path.exists(archive_path):
+            import shutil
+            shutil.copy2(save_path, archive_path)
+    # Save new file
     with open(save_path, "wb") as f:
         f.write(state_upload.getvalue())
-    st.sidebar.success("State-to-state data updated. Reload the page to use new data.")
+    # Also save new file to history with today's date
+    today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+    today_archive = os.path.join(history_dir, f"state_{today_str}.csv")
+    with open(today_archive, "wb") as f:
+        state_upload.seek(0)
+        f.write(state_upload.read())
+    st.sidebar.success(f"State-to-state data updated. Previous version archived as state_{archive_date}.csv. Reload to use new data.")
     st.cache_data.clear()
 
 params_override = {
@@ -565,11 +601,24 @@ with tab_quick:
                         rz = params_override.get("red_zone", 0.15)
                         gate = compute_gate(result["customer_fsc"], nowcast_fsc, result["carrier_fsc"],
                                            sgt, green_threshold=gz, red_threshold=rz)
+                        # Compute True Freshness if history available
+                        true_fresh = None
+                        if prev_state_rates is not None:
+                            true_fresh = compute_true_freshness(orig_market, dest_market,
+                                                                state_rates, prev_state_rates)
+
                         st.markdown("---")
                         st.markdown("**Market Signal (State-to-State)**")
                         s1, s2, s3, s4 = st.columns(4)
                         s1.metric("State RPM", f"${state_rpm_val:.4f}")
-                        s2.metric("Freshness Ratio", f"{fresh_ratio:.2f}x" if fresh_ratio else "—")
+                        if true_fresh is not None:
+                            pct_change = (true_fresh - 1) * 100
+                            direction = "↑" if pct_change > 0.1 else ("↓" if pct_change < -0.1 else "→")
+                            s2.metric("True Freshness", f"{true_fresh:.3f}x",
+                                      delta=f"{direction} {abs(pct_change):.1f}% vs {prev_state_date}",
+                                      delta_color="normal" if pct_change >= 0 else "inverse")
+                        else:
+                            s2.metric("Freshness Ratio", f"{fresh_ratio:.2f}x" if fresh_ratio else "—")
                         s3.metric("Market Signal (w/FSC)", format_currency(nowcast_fsc))
                         s4.metric("Carrier+FSC (Model)", format_currency(result["carrier_fsc"]))
 

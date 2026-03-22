@@ -206,6 +206,39 @@ def price_lane(orig_market, dest_market, data, params_override=None):
     }
 
 
+def load_previous_state_rates():
+    """Load the most recent historical state-to-state CSV before the current one."""
+    history_dir = os.path.join(DATA_DIR, "state_history")
+    if not os.path.exists(history_dir):
+        return None, None
+    files = sorted([f for f in os.listdir(history_dir) if f.startswith("state_") and f.endswith(".csv")])
+    if len(files) < 2:
+        return None, None
+    # Second-to-last file is the previous one
+    prev_file = files[-2]
+    prev_date = prev_file.replace("state_", "").replace(".csv", "")
+    prev_path = os.path.join(history_dir, prev_file)
+    return parse_state_to_state_csv(prev_path), prev_date
+
+
+def compute_true_freshness(orig_market, dest_market, current_rates, previous_rates):
+    """Compare current state RPM to previous state RPM for true market movement signal."""
+    if current_rates is None or previous_rates is None:
+        return None
+    orig_state = orig_market[:2] if orig_market else None
+    dest_state = dest_market[:2] if dest_market else None
+    if orig_state is None or dest_state is None:
+        return None
+    try:
+        current_rpm = current_rates.loc[orig_state, dest_state]
+        prev_rpm = previous_rates.loc[orig_state, dest_state]
+        if pd.isna(current_rpm) or pd.isna(prev_rpm) or prev_rpm == 0:
+            return None
+        return round(float(current_rpm) / float(prev_rpm), 4)
+    except (KeyError, TypeError):
+        return None
+
+
 def compute_nowcast(orig_market, dest_market, state_rates, miles, fsc_per_mile=0.53):
     orig_state = orig_market[:2] if orig_market else None
     dest_state = dest_market[:2] if dest_market else None
