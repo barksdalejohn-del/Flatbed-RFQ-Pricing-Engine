@@ -241,29 +241,46 @@ if "vision_data" not in st.session_state:
 
 # --- Screenshot Upload Section (top) ---
 st.markdown("### DAT RateView Screenshot")
+st.caption("Win+Shift+S → select DAT area → click 📋 Paste button below → auto-extracts everything")
 
-screenshot_file = st.file_uploader("Upload or drag DAT RateView screenshot",
+from streamlit_paste_button import paste_image_button as pib
+
+# Paste button - captures clipboard image
+paste_result = pib("📋 Paste Screenshot (Ctrl+V)", key="paste_btn")
+
+# Check if image was pasted
+screenshot_image_bytes = None
+
+if paste_result is not None and paste_result.image_data is not None:
+    # Convert pasted image to bytes
+    import io
+    buf = io.BytesIO()
+    paste_result.image_data.save(buf, format="PNG")
+    screenshot_image_bytes = buf.getvalue()
+    st.image(screenshot_image_bytes, caption="Pasted RateView Screenshot", use_container_width=True)
+
+# Also keep file uploader as fallback
+screenshot_file = st.file_uploader("Or drag/browse a saved screenshot",
                                    type=["png", "jpg", "jpeg"],
                                    key="rateview_screenshot",
-                                   help="Screenshot the rate panel and lane trend from DAT RateView")
-st.caption("**Quick method:** Press Win+Shift+S, select the DAT area, then drag from the "
-           "notification popup into the upload box above. Or save to desktop and browse.")
+                                   label_visibility="collapsed")
 
-if screenshot_file is not None:
-    # Show the uploaded image
-    st.image(screenshot_file, caption="Uploaded RateView Screenshot", use_container_width=True)
+if screenshot_file is not None and screenshot_image_bytes is None:
+    screenshot_image_bytes = screenshot_file.getvalue()
+    st.image(screenshot_image_bytes, caption="Uploaded RateView Screenshot", use_container_width=True)
 
-    if st.button("Extract Data from Screenshot", type="secondary"):
+# Process screenshot if we have one
+if screenshot_image_bytes is not None:
+    if st.button("Extract Data from Screenshot", type="primary"):
         with st.spinner("Analyzing screenshot with Claude Vision..."):
-            image_bytes = screenshot_file.getvalue()
-            extracted, error = extract_rateview_data(image_bytes)
+            extracted, error = extract_rateview_data(screenshot_image_bytes)
 
         if error:
             st.error(f"Vision extraction failed: {error}")
             st.info("Use the manual input fields below instead.")
         else:
             st.session_state["vision_data"] = extracted
-            st.success("Data extracted successfully! Review below and adjust if needed.")
+            st.success("Data extracted successfully!")
 
     # Show extracted data for confirmation
     if st.session_state["vision_data"] is not None:
