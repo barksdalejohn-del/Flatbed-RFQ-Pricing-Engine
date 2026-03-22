@@ -114,7 +114,7 @@ def get_vol_buffer(vol_tier, confidence, term, params):
     term_key = str(int(term))
     table = params["vol_buffer_table"]
     if term_key not in table:
-        term_key = "6"
+        term_key = "6" if int(term) > 0 else "0"
     tier_table = table[term_key].get(vol_tier, table[term_key]["MED"])
     if conf_num in tier_table:
         return tier_table[conf_num]

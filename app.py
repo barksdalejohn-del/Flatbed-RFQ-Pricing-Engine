@@ -145,7 +145,11 @@ nat_ltr = col2.number_input("National LTR", value=float(params["national_ltr"]),
 
 st.sidebar.markdown("### Pricing Parameters")
 target_margin = st.sidebar.slider("Target Margin %", 0, 25, int(float(params["target_margin"]) * 100), 1, format="%d%%") / 100
-term = st.sidebar.selectbox("Contract Term", [6, 12], index=0 if params["contract_term"] == 6 else 1)
+term_options = {"Spot": 0, "6-Month": 6, "12-Month": 12}
+term_default = {0: "Spot", 6: "6-Month", 12: "12-Month"}.get(params["contract_term"], "6-Month")
+term_label = st.sidebar.selectbox("Contract Term", list(term_options.keys()),
+    index=list(term_options.keys()).index(term_default))
+term = term_options[term_label]
 confidence = st.sidebar.selectbox("Confidence Level",
     ["P50", "P55", "P60", "P65", "P70", "P75", "P80", "P85", "P90"],
     index=["P50", "P55", "P60", "P65", "P70", "P75", "P80", "P85", "P90"].index(params["confidence"]))
