@@ -4,10 +4,13 @@ import numpy as np
 import os
 import io
 
-st.set_page_config(page_title="Flatbed RFQ Pricing Engine", page_icon="🚛", layout="wide")
+st.set_page_config(page_title="Flatbed Spot Pricing Tool", page_icon="🚛", layout="wide")
 
 
-# --- Password Protection ---
+# ──────────────────────────────────────────────────────────────────────────────
+# PASSWORD PROTECTION
+# ──────────────────────────────────────────────────────────────────────────────
+
 def check_password():
     """Returns True if the user has entered the correct password."""
     def password_entered():
@@ -20,7 +23,7 @@ def check_password():
     if st.session_state.get("password_correct", False):
         return True
 
-    st.markdown("## Flatbed RFQ Pricing Engine")
+    st.markdown("## Flatbed Spot Pricing Tool")
     st.markdown("**TA Services** — Authorized access only.")
     st.text_input("Enter password:", type="password", on_change=password_entered, key="password")
     if "password_correct" in st.session_state and not st.session_state["password_correct"]:
@@ -31,11 +34,15 @@ def check_password():
 if not check_password():
     st.stop()
 
-from engine import (load_data, price_rfq, parse_state_to_state_csv, resolve_market,
-                     load_previous_state_rates, compute_true_freshness,
-                     load_dashboard_signals, price_lane, get_signal_staleness)
+from engine import (load_data, resolve_market, load_dashboard_signals, get_signal_staleness,
+                     compute_directional_adjustment, lookup_lane)
+from vision_reader import extract_rateview_data
 
-# --- Custom CSS ---
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CUSTOM CSS
+# ──────────────────────────────────────────────────────────────────────────────
+
 st.markdown("""
 <style>
     .stApp { font-family: 'Segoe UI', Arial, sans-serif; }
@@ -47,91 +54,97 @@ st.markdown("""
     }
     div[data-testid="stMetric"] label { color: #a0a0b0 !important; }
     div[data-testid="stMetric"] [data-testid="stMetricValue"] { color: #ffffff !important; }
-    .zone-green { background-color: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; }
-    .zone-yellow { background-color: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; }
-    .zone-red { background-color: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; }
 </style>
 """, unsafe_allow_html=True)
 
 
-@st.cache_data
-def get_data():
-    return load_data()
+# ──────────────────────────────────────────────────────────────────────────────
+# EV CALCULATION FUNCTIONS
+# ──────────────────────────────────────────────────────────────────────────────
+
+def calculate_ev(quote_price, best_fit, std_dev, carrier_adj=None):
+    """Calculate Expected Value for a given quote price.
+
+    Args:
+        quote_price: what we'd charge the customer (all-in)
+        best_fit: DAT Best Fit (our best estimate of carrier cost)
+        std_dev: standard deviation of carrier costs
+        carrier_adj: directionally adjusted carrier cost (if different from best_fit)
+
+    Returns dict with ev_per_load, p_profit, expected_100_loads, signal
+    """
+    from scipy.stats import norm
+
+    # Use adjusted carrier cost as the mean if provided
+    mean_cost = carrier_adj if carrier_adj else best_fit
+
+    if std_dev <= 0:
+        # No volatility data - simple margin calc
+        margin = quote_price - mean_cost
+        return {
+            "ev_per_load": margin,
+            "p_profit": 1.0 if margin > 0 else 0.0,
+            "expected_100": margin * 100,
+            "signal": "+" if margin > 0 else "-"
+        }
+
+    # P(carrier cost <= quote_price) = P(we make money)
+    p_profit = norm.cdf(quote_price, loc=mean_cost, scale=std_dev)
+
+    # Expected profit when we win (carrier cost < quote)
+    # E[profit | win] = quote - E[carrier_cost | carrier_cost < quote]
+    # E[X | X < a] = mu - sigma * phi((a-mu)/sigma) / Phi((a-mu)/sigma)
+    z = (quote_price - mean_cost) / std_dev
+    phi_z = norm.pdf(z)  # standard normal PDF at z
+    Phi_z = norm.cdf(z)  # standard normal CDF at z
+
+    if Phi_z > 0.001:
+        expected_cost_when_win = mean_cost - std_dev * (phi_z / Phi_z)
+        expected_profit_when_win = quote_price - expected_cost_when_win
+    else:
+        expected_profit_when_win = 0
+
+    # Expected loss when we lose (carrier cost > quote)
+    p_loss = 1 - p_profit
+    if p_loss > 0.001:
+        expected_cost_when_lose = mean_cost + std_dev * (phi_z / (1 - Phi_z))
+        expected_loss_when_lose = expected_cost_when_lose - quote_price
+    else:
+        expected_loss_when_lose = 0
+
+    # EV = P(win) * E[profit|win] - P(lose) * E[loss|lose]
+    ev = p_profit * expected_profit_when_win - p_loss * expected_loss_when_lose
+
+    return {
+        "ev_per_load": round(ev, 2),
+        "p_profit": round(p_profit, 4),
+        "expected_100": round(ev * 100, 2),
+        "signal": "+" if ev > 0 else "-"
+    }
 
 
-@st.cache_data
-def get_dashboard_signals():
-    """Load dashboard signals JSON for directional pricing."""
-    return load_dashboard_signals()
+def find_breakeven(best_fit, std_dev, carrier_adj=None):
+    """Find the minimum quote price where EV turns positive."""
+    mean_cost = carrier_adj if carrier_adj else best_fit
+
+    # Binary search for breakeven
+    low = mean_cost * 0.8
+    high = mean_cost * 1.5
+
+    for _ in range(50):
+        mid = (low + high) / 2
+        ev = calculate_ev(mid, best_fit, std_dev, carrier_adj)
+        if ev["ev_per_load"] > 0:
+            high = mid
+        else:
+            low = mid
+
+    return round((low + high) / 2, 2)
 
 
-@st.cache_data
-def load_saved_state_rates():
-    """Load the saved state-to-state CSV from the data folder (always available)."""
-    saved_path = os.path.join(os.path.dirname(__file__), "data", "state_to_state.csv")
-    if os.path.exists(saved_path):
-        return parse_state_to_state_csv(saved_path)
-    return None
-
-
-@st.cache_data
-def get_previous_state_rates():
-    """Load the previous state-to-state CSV from history for true freshness comparison."""
-    prev_rates, prev_date = load_previous_state_rates()
-    return prev_rates, prev_date
-
-
-@st.cache_data
-def load_state_rates(file_content, filename):
-    tmp = os.path.join(os.path.dirname(__file__), "data", "_tmp_state.csv")
-    with open(tmp, "w", encoding="utf-8") as f:
-        f.write(file_content)
-    df = parse_state_to_state_csv(tmp)
-    os.remove(tmp)
-    return df
-
-
-def parse_rfq_upload(uploaded_file):
-    content = uploaded_file.getvalue()
-    try:
-        df = pd.read_csv(io.BytesIO(content))
-    except Exception:
-        df = pd.read_excel(io.BytesIO(content))
-
-    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
-    col_map = {}
-    for col in df.columns:
-        cl = col.lower()
-        if "orig" in cl and "zip" in cl:
-            col_map["orig_zip3"] = col
-        elif "dest" in cl and "zip" in cl:
-            col_map["dest_zip3"] = col
-        elif "orig" in cl and "city" in cl:
-            col_map["orig_city"] = col
-        elif "dest" in cl and "city" in cl:
-            col_map["dest_city"] = col
-        elif "orig" in cl and "state" in cl:
-            col_map["orig_state"] = col
-        elif "dest" in cl and "state" in cl:
-            col_map["dest_state"] = col
-        elif "origin" in cl and "zip" not in cl and "state" not in cl and "city" not in cl:
-            if "orig_zip3" not in col_map:
-                col_map["orig_zip3"] = col
-        elif "dest" in cl and "zip" not in cl and "state" not in cl and "city" not in cl:
-            if "dest_zip3" not in col_map:
-                col_map["dest_zip3"] = col
-
-    result = pd.DataFrame()
-    for target, source in col_map.items():
-        result[target] = df[source].astype(str).str.strip()
-        result[target] = result[target].replace({"nan": None, "": None, "None": None})
-
-    for needed in ["orig_zip3", "orig_city", "orig_state", "dest_zip3", "dest_city", "dest_state"]:
-        if needed not in result.columns:
-            result[needed] = None
-
-    return result
-
+# ──────────────────────────────────────────────────────────────────────────────
+# HELPERS
+# ──────────────────────────────────────────────────────────────────────────────
 
 def format_currency(val):
     if pd.isna(val) or val is None:
@@ -145,51 +158,60 @@ def format_pct(val):
     return f"{val:.1%}"
 
 
-def zone_badge(zone):
-    if zone == "GREEN":
-        return "🟢 Green"
-    elif zone == "YELLOW":
-        return "🟡 Yellow"
-    elif zone == "RED":
-        return "🔴 Red"
-    return zone or ""
+SIGNAL_COLORS = {
+    "Acute Imbalance": "#f85149",
+    "Tightening": "#e07b39",
+    "Firming": "#d29922",
+    "Balanced": "#8b949e",
+    "Loosening": "#3fb950",
+    "Soft": "#58a6ff",
+}
 
 
-# --- Sidebar ---
+# ──────────────────────────────────────────────────────────────────────────────
+# DATA LOADING
+# ──────────────────────────────────────────────────────────────────────────────
+
+@st.cache_data
+def get_data():
+    return load_data()
+
+
+@st.cache_data
+def get_dashboard_signals():
+    return load_dashboard_signals()
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# SIDEBAR — CONTROL PANEL
+# ──────────────────────────────────────────────────────────────────────────────
+
 st.sidebar.title("Control Panel")
 data = get_data()
 params = data["params"]
 dashboard_signals = get_dashboard_signals()
 
+# Market Regime
 st.sidebar.markdown("### Market Regime")
 col1, col2 = st.sidebar.columns(2)
-regime = col1.selectbox("Regime", ["EXPANSION", "CONTRACTION"], index=0 if params["regime"] == "EXPANSION" else 1)
-phase = col2.selectbox("Phase", [0, 1, 2, 3, 4, 5], index=[0, 1, 2, 3, 4, 5].index(params["phase"]))
-ltr_dir = col1.selectbox("LTR Direction", ["RISING", "FALLING"], index=0 if params["ltr_direction"] == "RISING" else 1)
+regime = col1.selectbox("Regime", ["EXPANSION", "CONTRACTION"],
+                        index=0 if params["regime"] == "EXPANSION" else 1)
+phase = col2.selectbox("Phase", [0, 1, 2, 3, 4, 5],
+                       index=[0, 1, 2, 3, 4, 5].index(params["phase"]))
+ltr_dir = col1.selectbox("LTR Direction", ["RISING", "FALLING"],
+                         index=0 if params["ltr_direction"] == "RISING" else 1)
 nat_ltr = col2.number_input("National LTR", value=float(params["national_ltr"]), format="%.2f")
 
-st.sidebar.markdown("### Pricing Parameters")
-target_margin = st.sidebar.slider("Target Margin %", 0, 25, int(float(params["target_margin"]) * 100), 1, format="%d%%") / 100
-term_options = {"Spot": 0, "6-Month": 6, "12-Month": 12}
-term_default = {0: "Spot", 6: "6-Month", 12: "12-Month"}.get(params["contract_term"], "6-Month")
-term_label = st.sidebar.selectbox("Contract Term", list(term_options.keys()),
-    index=list(term_options.keys()).index(term_default))
-term = term_options[term_label]
-confidence = st.sidebar.selectbox("Confidence Level",
-    ["P50", "P55", "P60", "P65", "P70", "P75", "P80", "P85", "P90"],
-    index=["P50", "P55", "P60", "P65", "P70", "P75", "P80", "P85", "P90"].index(params["confidence"]))
-fsc = st.sidebar.number_input("Fuel Surcharge ($/mi)", value=float(params["fsc_per_mile"]), format="%.2f", step=0.01)
-
-st.sidebar.markdown("### Variance Thresholds")
-c1, c2 = st.sidebar.columns(2)
-green_zone = c1.number_input("Green Zone", value=float(params["green_zone"]), format="%.2f", step=0.01)
-red_zone = c2.number_input("Red Zone", value=float(params["red_zone"]), format="%.2f", step=0.01)
-gate_tol = st.sidebar.number_input("Lane Gate Tolerance", value=float(params["gate_tolerance"]), format="%.2f", step=0.01)
-state_gate_tol = st.sidebar.number_input("State Data Gate Tolerance", value=0.10, format="%.2f", step=0.01,
-    help="Wider tolerance for state-level data (coarser than lane-level). Default 10%.")
+# Target Margin
+st.sidebar.markdown("### Pricing")
+target_margin = st.sidebar.slider("Target Margin %", 0, 25,
+                                  int(float(params["target_margin"]) * 100), 1,
+                                  format="%d%%") / 100
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Data Management")
+
+# DAT Market Data status
 st.sidebar.markdown(f"**DAT Market Data:** {params['dat_file_date']}")
 st.sidebar.markdown(f"**Markets:** {data['rate'].shape[0]} x {data['rate'].shape[1]}")
 
@@ -204,32 +226,11 @@ if dashboard_signals is not None:
     if sig_staleness and sig_staleness > 7:
         st.sidebar.warning(f"Signals are {sig_staleness} days old — dampened")
     elif sig_staleness and sig_staleness <= 7:
-        st.sidebar.caption("✅ Directional pricing active")
+        st.sidebar.caption("Directional pricing active")
 else:
     st.sidebar.caption("No dashboard signals loaded — run export_dashboard_signals.py")
 
-# Auto-load saved state-to-state rates
-saved_state_rates = load_saved_state_rates()
-prev_state_rates, prev_state_date = get_previous_state_rates()
-if saved_state_rates is not None:
-    saved_state_path = os.path.join(os.path.dirname(__file__), "data", "state_to_state.csv")
-    import datetime
-    state_mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(saved_state_path))
-    st.sidebar.markdown(f"**State-to-State Data:** {state_mod_time.strftime('%b %d, %Y')}")
-    st.sidebar.markdown(f"**State Pairs:** {saved_state_rates.shape[0]} x {saved_state_rates.shape[1]}")
-    # Show history info
-    history_dir = os.path.join(os.path.dirname(__file__), "data", "state_history")
-    if os.path.exists(history_dir):
-        history_files = sorted([f for f in os.listdir(history_dir) if f.startswith("state_") and f.endswith(".csv")])
-        if len(history_files) >= 2:
-            st.sidebar.markdown(f"**History:** {len(history_files)} snapshots")
-            st.sidebar.markdown(f"**Previous:** {prev_state_date}")
-            st.sidebar.caption("✅ True Freshness Ratio active")
-        else:
-            st.sidebar.caption(f"History: {len(history_files)} snapshot(s) — need 2+ for True Freshness")
-else:
-    st.sidebar.warning("No state-to-state data loaded. Upload below.")
-
+# DAT Key Markets upload
 dat_upload = st.sidebar.file_uploader("Update DAT Key Markets", type=["csv"], key="dat_refresh",
     help="Upload new DAT Key Markets CSV to refresh all rate matrices")
 if dat_upload:
@@ -239,12 +240,15 @@ if dat_upload:
         f.write(dat_upload.getvalue())
     result = refresh_from_dat_csv(tmp_path)
     os.remove(tmp_path)
-    st.sidebar.success(f"Refreshed {result['markets']}x{result['markets']} matrices — {result['dat_date']} data. Reload the page to use new data.")
+    st.sidebar.success(f"Refreshed {result['markets']}x{result['markets']} matrices — "
+                       f"{result['dat_date']} data. Reload the page to use new data.")
 
+# State-to-State upload with archive logic
 state_upload = st.sidebar.file_uploader("Update State-to-State Rates", type=["csv"], key="state_refresh",
     help="Upload newer DAT state-to-state CSV to replace saved data. Previous version auto-archived.")
 if state_upload:
     import datetime
+    import shutil
     save_path = os.path.join(os.path.dirname(__file__), "data", "state_to_state.csv")
     history_dir = os.path.join(os.path.dirname(__file__), "data", "state_history")
     os.makedirs(history_dir, exist_ok=True)
@@ -253,7 +257,6 @@ if state_upload:
         archive_date = datetime.datetime.fromtimestamp(os.path.getmtime(save_path)).strftime("%Y-%m-%d")
         archive_path = os.path.join(history_dir, f"state_{archive_date}.csv")
         if not os.path.exists(archive_path):
-            import shutil
             shutil.copy2(save_path, archive_path)
     # Save new file
     with open(save_path, "wb") as f:
@@ -264,633 +267,412 @@ if state_upload:
     with open(today_archive, "wb") as f:
         state_upload.seek(0)
         f.write(state_upload.read())
-    st.sidebar.success(f"State-to-state data updated. Previous version archived as state_{archive_date}.csv. Reload to use new data.")
+    st.sidebar.success(f"State-to-state data updated. Previous version archived as "
+                       f"state_{archive_date}.csv. Reload to use new data.")
     st.cache_data.clear()
 
 params_override = {
     "regime": regime, "phase": phase, "ltr_direction": ltr_dir,
     "national_ltr": nat_ltr, "target_margin": target_margin,
-    "contract_term": term, "confidence": confidence,
-    "fsc_per_mile": fsc, "green_zone": green_zone,
-    "red_zone": red_zone, "gate_tolerance": gate_tol,
-    "state_gate_tolerance": state_gate_tol,
+    "contract_term": 0,  # Always spot
 }
 
-# --- Main Area ---
-st.title("Flatbed RFQ Pricing Engine")
-st.caption("TA Services | Automated Cycle-Adjusted Spot Market Pricing")
 
-tab_rfq, tab_cockpit, tab_quick = st.tabs(["Price RFQ", "Decision Cockpit", "Quick Quote"])
+# ──────────────────────────────────────────────────────────────────────────────
+# MAIN AREA — SPOT QUOTE INTERFACE
+# ──────────────────────────────────────────────────────────────────────────────
 
-# === TAB: Price RFQ ===
-with tab_rfq:
-    st.markdown("### Upload Customer RFQ")
-    st.markdown("Upload a CSV or Excel file with origin/destination columns. Supports Zip3, Zip5, city+state, or DAT market codes.")
+st.title("Flatbed Spot Pricing Tool")
+st.caption("TA Services | Directional Market Intelligence")
 
-    rfq_file = st.file_uploader("RFQ File", type=["csv", "xlsx", "xls"], key="rfq")
-
-    # Auto-load saved state rates — no upload needed
-    state_rates = saved_state_rates
-    if state_rates is not None:
-        st.caption(f"✅ State-to-state market signal active ({state_rates.shape[0]} x {state_rates.shape[1]} state pairs). Update via sidebar.")
+# --- Origin / Destination Input ---
+st.markdown("### Lane Details")
+qq1, qq2 = st.columns(2)
+with qq1:
+    st.markdown("**Origin**")
+    orig_method = st.radio("Input method", ["Zip3", "City + State", "Market Code"],
+                           key="orig_method", horizontal=True)
+    if orig_method == "Zip3":
+        orig_val = st.text_input("Origin Zip3", placeholder="770", key="orig_zip")
+        orig_state_val = None
+    elif orig_method == "City + State":
+        orig_val = st.text_input("Origin City", placeholder="HOUSTON", key="orig_city_q")
+        orig_state_val = st.text_input("Origin State", placeholder="TX", key="orig_state_q")
     else:
-        st.warning("No state-to-state data available. Upload via sidebar for market signal / variance analysis.")
+        orig_val = st.text_input("Origin Market", placeholder="TX_HOU", key="orig_mkt")
+        orig_state_val = None
 
-    if rfq_file:
-        rfq_df = parse_rfq_upload(rfq_file)
-        st.markdown(f"**Parsed {len(rfq_df)} lanes from upload.**")
-
-        with st.spinner("Pricing lanes..."):
-            results = price_rfq(rfq_df, data, state_rates, params_override, dashboard_signals)
-
-        matched = results[results["status"] == "MATCHED"]
-        no_match = results[results["status"] == "NO MATCH"]
-        short = results[results["status"] == "<300mi"]
-        no_data = results[results["status"] == "NO DATA"]
-        missing = results[results["status"] == "MISSING INPUT"]
-
-        m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Total Lanes", len(results))
-        m2.metric("Matched", len(matched))
-        m3.metric("No Match", len(no_match))
-        m4.metric("< 300 mi", len(short))
-        m5.metric("No Data / Missing", len(no_data) + len(missing))
-
-        if not matched.empty:
-            st.markdown("---")
-            st.markdown("### Pricing Results")
-
-            display_cols = ["ta_id", "orig_market", "dest_market", "miles",
-                           "dat_spot_rpm", "vol_tier", "liq_tier", "total_buffer",
-                           "carrier_fsc", "customer_fsc", "margin_dollar", "margin_pct"]
-
-            if state_rates is not None:
-                display_cols += ["state_rpm", "freshness_ratio", "market_signal",
-                                "variance_pct", "zone",
-                                "auto_decision", "auto_risk_tol", "final_quote",
-                                "risk_adj_floor_margin"]
-
-            available = [c for c in display_cols if c in matched.columns]
-            display_df = matched[available].copy()
-
-            rename_map = {
-                "ta_id": "TA", "orig_market": "Origin", "dest_market": "Dest",
-                "miles": "Miles", "dat_spot_rpm": "Spot RPM", "vol_tier": "Vol",
-                "liq_tier": "Liq", "total_buffer": "Buffer %",
-                "carrier_fsc": "Carrier+FSC", "customer_fsc": "Model Quote",
-                "margin_dollar": "Margin $", "margin_pct": "Margin %",
-                "state_rpm": "State RPM", "freshness_ratio": "Fresh Ratio",
-                "market_signal": "Mkt Signal", "variance_pct": "Variance %",
-                "zone": "Zone", "auto_decision": "Decision",
-                "auto_risk_tol": "Risk Tol", "final_quote": "Final Quote",
-                "risk_adj_floor_margin": "Floor Margin %",
-            }
-            display_df = display_df.rename(columns=rename_map)
-
-            st.dataframe(
-                display_df.style
-                    .format({
-                        "Spot RPM": "${:.4f}",
-                        "State RPM": "${:.4f}",
-                        "Fresh Ratio": "{:.2f}x",
-                        "Buffer %": "{:.1%}",
-                        "Carrier+FSC": "${:,.2f}",
-                        "Model Quote": "${:,.2f}",
-                        "Margin $": "${:,.2f}",
-                        "Margin %": "{:.1%}",
-                        "Mkt Signal": "${:,.2f}",
-                        "Variance %": "{:+.1%}",
-                        "Risk Tol": "{:.2%}",
-                        "Final Quote": "${:,.2f}",
-                        "Floor Margin %": "{:.1%}",
-                    }, na_rep="—")
-                    .map(lambda v: "background-color: #d4edda" if v == "GREEN" else
-                         ("background-color: #fff3cd" if v == "YELLOW" else
-                          ("background-color: #f8d7da" if v == "RED" else "")),
-                         subset=["Zone"] if "Zone" in display_df.columns else []),
-                use_container_width=True, height=600, hide_index=True,
-            )
-
-            if state_rates is not None and "zone" in matched.columns:
-                st.markdown("### Zone Distribution")
-                zone_counts = matched["zone"].value_counts()
-                zc1, zc2, zc3 = st.columns(3)
-                zc1.metric("Green (0-5%)", zone_counts.get("GREEN", 0))
-                zc2.metric("Yellow (5-15%)", zone_counts.get("YELLOW", 0))
-                zc3.metric("Red (>15%)", zone_counts.get("RED", 0))
-
-                dec_counts = matched.get("auto_decision", pd.Series()).value_counts()
-                dc1, dc2 = st.columns(2)
-                dc1.metric("MODEL decisions", dec_counts.get("MODEL", 0))
-                dc2.metric("DAT decisions", dec_counts.get("DAT", 0))
-
-            st.markdown("### Summary Statistics")
-            sc1, sc2, sc3, sc4 = st.columns(4)
-            sc1.metric("Avg Model Quote", format_currency(matched["customer_fsc"].mean()))
-            sc2.metric("Avg Margin %", format_pct(matched["margin_pct"].mean()))
-            sc3.metric("Total Revenue (Model)", format_currency(matched["customer_fsc"].sum()))
-            sc4.metric("Total Margin $", format_currency(matched["margin_dollar"].sum()))
-
-            st.markdown("### Export")
-            export_csv = results.to_csv(index=False)
-            st.download_button("Download Full Results (CSV)", export_csv, "rfq_pricing_results.csv", "text/csv")
-
-        if not no_match.empty:
-            with st.expander(f"No Match Lanes ({len(no_match)})"):
-                st.dataframe(no_match[["ta_id", "orig_market", "dest_market"]].rename(
-                    columns={"ta_id": "TA", "orig_market": "Origin Input", "dest_market": "Dest Input"}
-                ), hide_index=True)
-
-# === TAB: Decision Cockpit ===
-with tab_cockpit:
-    st.markdown("### Decision Cockpit")
-    st.markdown("Review auto-calculated decisions, override Risk Tolerance and Decision per lane, then export final quotes.")
-
-    if "results" not in dir() or rfq_file is None:
-        st.info("Upload an RFQ in the 'Price RFQ' tab first, then return here to review lanes.")
+with qq2:
+    st.markdown("**Destination**")
+    dest_method = st.radio("Input method", ["Zip3", "City + State", "Market Code"],
+                           key="dest_method", horizontal=True)
+    if dest_method == "Zip3":
+        dest_val = st.text_input("Dest Zip3", placeholder="606", key="dest_zip")
+        dest_state_val = None
+    elif dest_method == "City + State":
+        dest_val = st.text_input("Dest City", placeholder="CHICAGO", key="dest_city_q")
+        dest_state_val = st.text_input("Dest State", placeholder="IL", key="dest_state_q")
     else:
-        if not matched.empty and state_rates is not None:
-            from engine import compute_gate
+        dest_val = st.text_input("Dest Market", placeholder="IL_CHI", key="dest_mkt")
+        dest_state_val = None
 
-            cockpit_src = matched.copy().reset_index(drop=True)
 
-            # Build the editable dataframe
-            edit_data = pd.DataFrame({
-                "TA": cockpit_src["ta_id"].astype(int),
-                "Origin": cockpit_src["orig_market"],
-                "Dest": cockpit_src["dest_market"],
-                "Miles": cockpit_src["miles"].astype(int),
-                "Carrier+FSC": cockpit_src["carrier_fsc"].round(2),
-                "Model Quote": cockpit_src["customer_fsc"].round(2),
-                "Mkt Signal": cockpit_src["market_signal"].round(2),
-                "Variance %": cockpit_src["variance_pct"].round(4),
-                "Zone": cockpit_src["zone"],
-                "Qtr Kelly": cockpit_src.get("qtr_kelly", pd.Series([None]*len(cockpit_src))),
-                "Risk Tol": cockpit_src.get("auto_risk_tol", pd.Series([None]*len(cockpit_src))),
-                "Decision": cockpit_src.get("auto_decision", pd.Series(["MODEL"]*len(cockpit_src))),
-            })
+# --- Screenshot Upload Section ---
+st.markdown("---")
+st.markdown("### DAT RateView Data")
 
-            # Replace NaN risk tol with 0.0 for editing
-            edit_data["Risk Tol"] = edit_data["Risk Tol"].fillna(0.0).round(4)
+screenshot_file = st.file_uploader("Upload DAT RateView Screenshot", type=["png", "jpg", "jpeg"],
+                                   key="rateview_screenshot",
+                                   help="Screenshot the rate panel and lane trend from DAT RateView")
 
-            col_config = {
-                "TA": st.column_config.NumberColumn("TA", disabled=True),
-                "Origin": st.column_config.TextColumn("Origin", disabled=True),
-                "Dest": st.column_config.TextColumn("Dest", disabled=True),
-                "Miles": st.column_config.NumberColumn("Miles", disabled=True),
-                "Carrier+FSC": st.column_config.NumberColumn("Carrier+FSC", format="$%,.2f", disabled=True),
-                "Model Quote": st.column_config.NumberColumn("Model Quote", format="$%,.2f", disabled=True),
-                "Mkt Signal": st.column_config.NumberColumn("Mkt Signal", format="$%,.2f", disabled=True),
-                "Variance %": st.column_config.NumberColumn("Variance %", format="%.1f%%", disabled=True),
-                "Zone": st.column_config.TextColumn("Zone", disabled=True),
-                "Qtr Kelly": st.column_config.NumberColumn("Qtr Kelly", format="%.4f", disabled=True),
-                "Risk Tol": st.column_config.NumberColumn("Risk Tol", format="%.2f%%", min_value=0.0, max_value=0.15, step=0.005,
-                    help="Editable — adjust risk tolerance per lane (0-15%)"),
-                "Decision": st.column_config.SelectboxColumn("Decision", options=["MODEL", "DAT"],
-                    help="Editable — choose MODEL (use model quote) or DAT (use gate-adjusted quote)"),
-            }
+# Initialize session state for extracted data
+if "vision_data" not in st.session_state:
+    st.session_state["vision_data"] = None
 
-            edited = st.data_editor(edit_data, column_config=col_config, use_container_width=True,
-                                     height=500, hide_index=True, num_rows="fixed", key="cockpit_editor")
+if screenshot_file is not None:
+    # Show the uploaded image
+    st.image(screenshot_file, caption="Uploaded RateView Screenshot", use_container_width=True)
 
-            # Recalculate quotes based on edited values
-            st.markdown("---")
-            st.markdown("### Recalculated Quotes")
+    if st.button("Extract Data from Screenshot", type="secondary"):
+        with st.spinner("Analyzing screenshot with Claude Vision..."):
+            image_bytes = screenshot_file.getvalue()
+            extracted, error = extract_rateview_data(image_bytes)
 
-            sgt = params_override.get("state_gate_tolerance", 0.10)
-            gz = params_override.get("green_zone", 0.05)
-            rz = params_override.get("red_zone", 0.15)
-
-            final_rows = []
-            for i, row in edited.iterrows():
-                src = cockpit_src.iloc[i]
-                risk_tol = row["Risk Tol"] if row["Risk Tol"] > 0 else None
-                decision = row["Decision"]
-
-                if decision == "MODEL":
-                    final_quote = row["Model Quote"]
-                    floor_margin = None
-                    risk_adj_quote = None
-                else:
-                    gate = compute_gate(row["Model Quote"], row["Mkt Signal"], row["Carrier+FSC"],
-                                       sgt, risk_tol, green_threshold=gz, red_threshold=rz)
-                    risk_adj_quote = gate["gate_quote"]
-                    floor_margin = gate["floor_margin_pct"]
-                    final_quote = risk_adj_quote
-
-                margin_on_final = final_quote - row["Carrier+FSC"]
-                margin_pct_final = margin_on_final / final_quote if final_quote != 0 else 0
-
-                final_rows.append({
-                    "TA": int(row["TA"]),
-                    "Origin": row["Origin"],
-                    "Dest": row["Dest"],
-                    "Miles": int(row["Miles"]),
-                    "Zone": row["Zone"],
-                    "Decision": decision,
-                    "Risk Tol": risk_tol if risk_tol else 0,
-                    "Carrier+FSC": row["Carrier+FSC"],
-                    "Final Quote": round(final_quote, 2),
-                    "Margin $": round(margin_on_final, 2),
-                    "Margin %": round(margin_pct_final, 4),
-                    "Floor Margin %": round(floor_margin, 4) if floor_margin is not None else None,
-                })
-
-            final_df = pd.DataFrame(final_rows)
-
-            # Summary metrics
-            total_rev = final_df["Final Quote"].sum()
-            total_margin = final_df["Margin $"].sum()
-            avg_margin = final_df["Margin %"].mean()
-            model_count = (final_df["Decision"] == "MODEL").sum()
-            dat_count = (final_df["Decision"] == "DAT").sum()
-
-            sm1, sm2, sm3, sm4, sm5 = st.columns(5)
-            sm1.metric("Total Revenue", format_currency(total_rev))
-            sm2.metric("Total Margin", format_currency(total_margin))
-            sm3.metric("Avg Margin %", format_pct(avg_margin))
-            sm4.metric("MODEL Lanes", model_count)
-            sm5.metric("DAT Lanes", dat_count)
-
-            st.dataframe(
-                final_df.style.format({
-                    "Carrier+FSC": "${:,.2f}",
-                    "Final Quote": "${:,.2f}",
-                    "Margin $": "${:,.2f}",
-                    "Margin %": "{:.1%}",
-                    "Risk Tol": "{:.2%}",
-                    "Floor Margin %": "{:.1%}",
-                }, na_rep="—").map(
-                    lambda v: "font-weight: bold; color: #0d6efd" if v == "MODEL" else
-                    ("font-weight: bold; color: #dc3545" if v == "DAT" else ""),
-                    subset=["Decision"]
-                ).map(
-                    lambda v: "background-color: #d4edda" if v == "GREEN" else
-                    ("background-color: #fff3cd" if v == "YELLOW" else
-                     ("background-color: #f8d7da" if v == "RED" else "")),
-                    subset=["Zone"]
-                ),
-                use_container_width=True, height=400, hide_index=True,
-            )
-
-            st.markdown("### Export")
-            exp1, exp2 = st.columns(2)
-            cockpit_csv = final_df.to_csv(index=False)
-            exp1.download_button("Download Final Quotes (CSV)", cockpit_csv, "final_quotes.csv", "text/csv")
-
-            # Customer-facing export (clean version)
-            customer_df = final_df[["TA", "Origin", "Dest", "Miles", "Final Quote"]].copy()
-            customer_df = customer_df.rename(columns={"Final Quote": "Quote Rate (All-In)"})
-            customer_df["RPM"] = (customer_df["Quote Rate (All-In)"] / customer_df["Miles"]).round(4)
-            customer_csv = customer_df.to_csv(index=False)
-            exp2.download_button("Download Customer Quote (CSV)", customer_csv, "customer_quote.csv", "text/csv")
-
-        elif state_rates is None:
-            st.warning("Upload a state-to-state CSV in the 'Price RFQ' tab to enable variance analysis and the Decision Cockpit.")
+        if error:
+            st.error(f"Vision extraction failed: {error}")
+            st.info("Use the manual input fields below instead.")
         else:
-            st.info("No matched lanes to display.")
+            st.session_state["vision_data"] = extracted
+            st.success("Data extracted successfully! Review below and adjust if needed.")
 
-# === TAB: Quick Quote ===
-with tab_quick:
-    st.markdown("### Quick Quote — Single Lane")
+    # Show extracted data for confirmation
+    if st.session_state["vision_data"] is not None:
+        vd = st.session_state["vision_data"]
+        st.markdown("**Extracted Values** (edit if needed):")
+        vc1, vc2, vc3, vc4 = st.columns(4)
+        with vc1:
+            vd_best_fit = st.number_input("Best Fit (all-in)", value=float(vd.get("best_fit") or 0),
+                                          step=50.0, key="v_best_fit")
+        with vc2:
+            vd_range_low = st.number_input("Range Low", value=float(vd.get("range_low") or 0),
+                                           step=50.0, key="v_range_low")
+        with vc3:
+            vd_range_high = st.number_input("Range High", value=float(vd.get("range_high") or 0),
+                                            step=50.0, key="v_range_high")
+        with vc4:
+            vd_rate_strength = st.number_input("Rate Strength", value=int(vd.get("rate_strength") or 0),
+                                               min_value=0, max_value=100, key="v_strength")
 
-    # Determine mode based on contract term
-    is_spot = (term == 0)
+        vc5, vc6, vc7 = st.columns(3)
+        with vc5:
+            vd_reports = st.number_input("Reports", value=int(vd.get("reports") or 0),
+                                         min_value=0, key="v_reports")
+        with vc6:
+            vd_companies = st.number_input("Companies", value=int(vd.get("companies") or 0),
+                                           min_value=0, key="v_companies")
+        with vc7:
+            vd_miles = st.number_input("Miles (from screenshot)", value=int(vd.get("miles") or 0),
+                                       min_value=0, key="v_miles")
 
-    if is_spot:
-        st.markdown("**Spot Mode** — Enter lane details and DAT Best Fit rate for real-time pricing.")
+        # Show lane trend if extracted
+        if vd.get("lane_trend"):
+            with st.expander(f"Lane Trend ({len(vd['lane_trend'])} months)", expanded=False):
+                trend_df = pd.DataFrame(vd["lane_trend"])
+                st.dataframe(trend_df, hide_index=True, use_container_width=True)
+
+# Manual fallback inputs
+st.markdown("**Manual Input** (use if no screenshot or to override)")
+mc1, mc2, mc3, mc4 = st.columns(4)
+with mc1:
+    manual_best_fit = st.number_input("Best Fit (all-in w/ fuel)", min_value=0.0,
+                                      step=50.0, value=0.0, key="manual_best_fit",
+                                      help="Total rate from DAT RateView including fuel")
+with mc2:
+    manual_range_low = st.number_input("Range Low", min_value=0.0, step=50.0,
+                                       value=0.0, key="manual_range_low")
+with mc3:
+    manual_range_high = st.number_input("Range High", min_value=0.0, step=50.0,
+                                        value=0.0, key="manual_range_high")
+with mc4:
+    manual_rate_strength = st.number_input("Rate Strength", min_value=0, max_value=100,
+                                           step=1, value=0, key="manual_strength")
+
+
+# --- Get Quote Button ---
+st.markdown("---")
+if st.button("Get Quote", type="primary", use_container_width=True):
+
+    # Resolve markets
+    orig_market, orig_city, orig_st = resolve_market(orig_val, orig_state_val, data)
+    dest_market, dest_city, dest_st = resolve_market(dest_val, dest_state_val, data)
+
+    if orig_market is None or orig_market == "NO MATCH":
+        st.error(f"Could not resolve origin: {orig_val}")
+    elif dest_market is None or dest_market == "NO MATCH":
+        st.error(f"Could not resolve destination: {dest_val}")
     else:
-        st.markdown("Get an instant contract price for a single lane.")
-
-    qq1, qq2 = st.columns(2)
-    with qq1:
-        st.markdown("**Origin**")
-        orig_method = st.radio("Input method", ["Zip3", "City + State", "Market Code"], key="orig_method", horizontal=True)
-        if orig_method == "Zip3":
-            orig_val = st.text_input("Origin Zip3", placeholder="770", key="orig_zip")
-            orig_state_val = None
-        elif orig_method == "City + State":
-            orig_val = st.text_input("Origin City", placeholder="HOUSTON", key="orig_city_q")
-            orig_state_val = st.text_input("Origin State", placeholder="TX", key="orig_state_q")
+        # Determine which data source to use (vision extracted > manual)
+        vd = st.session_state.get("vision_data")
+        if vd and vd.get("best_fit") and float(vd.get("best_fit", 0)) > 0:
+            # Use vision-extracted data (potentially edited by user)
+            best_fit = float(st.session_state.get("v_best_fit", vd.get("best_fit", 0)))
+            range_low = float(st.session_state.get("v_range_low", vd.get("range_low", 0)))
+            range_high = float(st.session_state.get("v_range_high", vd.get("range_high", 0)))
+            rate_strength = int(st.session_state.get("v_strength", vd.get("rate_strength", 0)))
+            reports = int(st.session_state.get("v_reports", vd.get("reports", 0)))
+            companies = int(st.session_state.get("v_companies", vd.get("companies", 0)))
+            screenshot_miles = int(st.session_state.get("v_miles", vd.get("miles", 0)))
+            lane_trend = vd.get("lane_trend")
         else:
-            orig_val = st.text_input("Origin Market", placeholder="TX_HOU", key="orig_mkt")
-            orig_state_val = None
+            # Use manual input
+            best_fit = manual_best_fit
+            range_low = manual_range_low
+            range_high = manual_range_high
+            rate_strength = manual_rate_strength
+            reports = 0
+            companies = 0
+            screenshot_miles = 0
+            lane_trend = None
 
-    with qq2:
-        st.markdown("**Destination**")
-        dest_method = st.radio("Input method", ["Zip3", "City + State", "Market Code"], key="dest_method", horizontal=True)
-        if dest_method == "Zip3":
-            dest_val = st.text_input("Dest Zip3", placeholder="606", key="dest_zip")
-            dest_state_val = None
-        elif dest_method == "City + State":
-            dest_val = st.text_input("Dest City", placeholder="CHICAGO", key="dest_city_q")
-            dest_state_val = st.text_input("Dest State", placeholder="IL", key="dest_state_q")
+        if best_fit <= 0:
+            st.error("Enter a Best Fit rate (from screenshot or manual input) to generate a quote.")
         else:
-            dest_val = st.text_input("Dest Market", placeholder="IL_CHI", key="dest_mkt")
-            dest_state_val = None
+            # Get directional adjustment
+            directional = compute_directional_adjustment(orig_market, dest_market,
+                                                         dashboard_signals, term=0)
+            dir_adj = directional["adjustment_pct"]
+            orig_sig = directional.get("orig_signal")
+            dest_sig = directional.get("dest_signal")
 
-    # --- DAT Best Fit input for Spot Mode ---
-    if is_spot:
-        st.markdown("---")
-        st.markdown("**DAT RateView Data** — _Enter from the screen you're looking at_")
-        dat_col1, dat_col2, dat_col3 = st.columns(3)
-        with dat_col1:
-            dat_best_fit = st.number_input("DAT 3-Day Best Fit (all-in w/ fuel)", min_value=0.0,
-                                           step=50.0, value=0.0, key="dat_best_fit",
-                                           help="Total rate from DAT RateView including fuel. E.g. $3,091")
-        with dat_col2:
-            dat_fuel_per_mile = st.number_input("DAT Fuel $/mi", min_value=0.0,
-                                                step=0.01, value=0.76, key="dat_fuel_mi",
-                                                help="Fuel cost per mile shown on DAT. Usually $0.76")
-        with dat_col3:
-            dat_rate_strength = st.number_input("Rate Strength (optional)", min_value=0, max_value=100,
-                                                step=1, value=0, key="dat_strength",
-                                                help="Rate strength score from DAT (0-100). Higher = more reliable.")
-
-    if st.button("Get Quote", type="primary"):
-        orig_market, orig_city, orig_st = resolve_market(orig_val, orig_state_val, data)
-        dest_market, dest_city, dest_st = resolve_market(dest_val, dest_state_val, data)
-
-        if orig_market is None or orig_market == "NO MATCH":
-            st.error(f"Could not resolve origin: {orig_val}")
-        elif dest_market is None or dest_market == "NO MATCH":
-            st.error(f"Could not resolve destination: {dest_val}")
-        else:
-            result = price_lane(orig_market, dest_market, data, params_override, dashboard_signals)
-
-            if result is None:
-                st.error(f"No rate data for {orig_market} → {dest_market}")
-            elif result.get("status") == "<300mi":
-                st.warning(f"Lane is {result['miles']} miles — below 300mi minimum.")
+            # Get miles from model data as fallback
+            model_lane = lookup_lane(orig_market, dest_market, data)
+            if screenshot_miles > 0:
+                miles = screenshot_miles
+            elif model_lane:
+                miles = model_lane["miles"]
             else:
-                miles = result['miles']
+                miles = 0
 
-                # --- Short-mile warning for Spot ---
-                if is_spot and miles < 500:
-                    st.warning(f"⚠️ **Short Mile Load ({miles} mi)** — Model pricing is unreliable "
-                               f"for short-haul spot loads. Refer to DAT RateView for direct market pricing. "
-                               f"Per-mile rates on short hauls are distorted by minimum charges.")
-                    st.info(f"**{orig_market} → {dest_market}** | {miles} miles")
+            if miles <= 0:
+                st.error("Could not determine mileage. Enter miles in the screenshot data or "
+                         "ensure the lane exists in the rate matrix.")
+            else:
+                # ──────────────────────────────────────────────────────────
+                # 1. LANE HEADER
+                # ──────────────────────────────────────────────────────────
+                st.success(f"**{orig_market} -> {dest_market}** | {miles:,} miles")
 
-                    # Still show directional intelligence — it's useful context
-                    orig_sig = result.get("orig_signal")
-                    dest_sig = result.get("dest_signal")
-                    if orig_sig and dest_sig:
-                        sig_colors = {
-                            "Acute Imbalance": "#f85149", "Tightening": "#e07b39",
-                            "Firming": "#d29922", "Balanced": "#8b949e",
-                            "Loosening": "#3fb950", "Soft": "#58a6ff",
-                        }
-                        st.markdown("**Market Intelligence** _(still useful for negotiation)_")
-                        mi1, mi2 = st.columns(2)
-                        with mi1:
-                            st.markdown(f"**Origin:** {orig_market} — "
-                                        f"<span style='color:{sig_colors.get(orig_sig, '#8b949e')};font-weight:bold'>"
-                                        f"{orig_sig}</span> (LTR 8D: {result.get('orig_ltr_8d', '—')})",
-                                        unsafe_allow_html=True)
-                        with mi2:
-                            st.markdown(f"**Dest:** {dest_market} — "
-                                        f"<span style='color:{sig_colors.get(dest_sig, '#8b949e')};font-weight:bold'>"
-                                        f"{dest_sig}</span> (LTR 8D: {result.get('dest_ltr_8d', '—')})",
-                                        unsafe_allow_html=True)
+                # ──────────────────────────────────────────────────────────
+                # 2. MARKET INTELLIGENCE
+                # ──────────────────────────────────────────────────────────
+                st.markdown("---")
+                st.markdown("### Market Intelligence")
 
-                # --- SPOT MODE with DAT Best Fit ---
-                elif is_spot and dat_best_fit > 0:
-                    st.success(f"**{orig_market} → {dest_market}** | {miles} miles")
+                if orig_sig and dest_sig:
+                    orig_color = SIGNAL_COLORS.get(orig_sig, "#8b949e")
+                    dest_color = SIGNAL_COLORS.get(dest_sig, "#8b949e")
 
-                    # Parse the DAT input
-                    dat_fuel_total = dat_fuel_per_mile * miles
-                    dat_linehaul = dat_best_fit - dat_fuel_total
-                    dat_linehaul_rpm = dat_linehaul / miles if miles > 0 else 0
+                    mi1, mi2 = st.columns(2)
+                    with mi1:
+                        ltr_8d_orig = directional.get("orig_ltr_8d", "---")
+                        st.markdown(
+                            f"**Origin:** {orig_market} — "
+                            f"<span style='color:{orig_color};font-weight:bold'>{orig_sig}</span> "
+                            f"(LTR 8D: {ltr_8d_orig})",
+                            unsafe_allow_html=True)
+                    with mi2:
+                        ltr_8d_dest = directional.get("dest_ltr_8d", "---")
+                        st.markdown(
+                            f"**Dest:** {dest_market} — "
+                            f"<span style='color:{dest_color};font-weight:bold'>{dest_sig}</span> "
+                            f"(LTR 8D: {ltr_8d_dest})",
+                            unsafe_allow_html=True)
 
-                    # --- Directional Intelligence ---
-                    orig_sig = result.get("orig_signal")
-                    dest_sig = result.get("dest_signal")
-                    dir_adj = result.get("dir_adj_pct", 0)
-
-                    if orig_sig and dest_sig:
-                        sig_colors = {
-                            "Acute Imbalance": "#f85149", "Tightening": "#e07b39",
-                            "Firming": "#d29922", "Balanced": "#8b949e",
-                            "Loosening": "#3fb950", "Soft": "#58a6ff",
-                        }
-                        orig_color = sig_colors.get(orig_sig, "#8b949e")
-                        dest_color = sig_colors.get(dest_sig, "#8b949e")
-
-                        if dir_adj < -0.03:
-                            flow_label = "Carrier-friendly — push hard on rate"
-                            flow_icon = "🟢"
-                        elif dir_adj > 0.03:
-                            flow_label = "Carrier-unfriendly — protect margin"
-                            flow_icon = "🔴"
-                        else:
-                            flow_label = "Balanced flow — quote at market"
-                            flow_icon = "⚪"
-
-                        st.markdown("---")
-                        st.markdown("**Market Intelligence**")
-                        mi1, mi2 = st.columns(2)
-                        with mi1:
-                            st.markdown(f"**Origin:** {orig_market} — "
-                                        f"<span style='color:{orig_color};font-weight:bold'>{orig_sig}</span> "
-                                        f"(LTR 8D: {result.get('orig_ltr_8d', '—')})", unsafe_allow_html=True)
-                        with mi2:
-                            st.markdown(f"**Dest:** {dest_market} — "
-                                        f"<span style='color:{dest_color};font-weight:bold'>{dest_sig}</span> "
-                                        f"(LTR 8D: {result.get('dest_ltr_8d', '—')})", unsafe_allow_html=True)
-
-                        st.markdown(f"{flow_icon} **Flow:** {orig_sig} → {dest_sig} — {flow_label}")
-                        if result.get("momentum_applied"):
-                            st.caption("⚡ Momentum confirms direction — additional ±2% applied")
-
-                    # --- DAT Market Data ---
-                    st.markdown("---")
-                    st.markdown("**DAT Market Data**")
-                    d1, d2, d3, d4 = st.columns(4)
-                    d1.metric("DAT Best Fit (all-in)", format_currency(dat_best_fit))
-                    d2.metric("Linehaul", format_currency(dat_linehaul))
-                    d3.metric("Linehaul RPM", f"${dat_linehaul_rpm:.2f}/mi")
-                    if dat_rate_strength > 0:
-                        strength_color = "normal" if dat_rate_strength >= 50 else "off"
-                        d4.metric("Rate Strength", f"{dat_rate_strength}/100",
-                                  delta="Reliable" if dat_rate_strength >= 70 else
-                                        "Moderate" if dat_rate_strength >= 50 else "Thin data",
-                                  delta_color=strength_color)
-
-                    # --- Carrier Target Range ---
-                    # Use DAT Best Fit as the baseline, adjust with directional intelligence
-                    st.markdown("---")
-                    st.markdown("**Carrier Target**")
-
-                    # Directional adjustment on the carrier cost
-                    # If origin is soft / dest is hot → carrier will discount below Best Fit
-                    # If origin is hot / dest is soft → carrier needs premium above Best Fit
-                    carrier_base = dat_best_fit  # All-in with fuel
-                    carrier_adjusted = carrier_base * (1 + dir_adj)
-                    carrier_low = min(carrier_base, carrier_adjusted)
-                    carrier_high = max(carrier_base, carrier_adjusted)
-
-                    ct1, ct2, ct3 = st.columns(3)
-                    ct1.metric("Target Low", format_currency(carrier_low),
-                               delta=f"{((carrier_low / carrier_base - 1) * 100):+.1f}% vs Best Fit" if carrier_low != carrier_base else "At market")
-                    ct2.metric("DAT Best Fit", format_currency(carrier_base))
-                    ct3.metric("Target High", format_currency(carrier_high),
-                               delta=f"{((carrier_high / carrier_base - 1) * 100):+.1f}% vs Best Fit" if carrier_high != carrier_base else "At market")
-
+                    # Flow description
                     if dir_adj < -0.03:
-                        st.caption(f"📉 Directional signal suggests carrier will discount "
-                                   f"{abs(dir_adj):.1%} below Best Fit. Push toward Target Low.")
+                        flow_icon = "<span style='color:#3fb950;font-size:1.2em'>&#9679;</span>"
+                        flow_label = "Carrier-friendly — push hard on rate"
                     elif dir_adj > 0.03:
-                        st.caption(f"📈 Directional signal suggests carrier needs "
-                                   f"{abs(dir_adj):.1%} premium above Best Fit. Budget toward Target High.")
+                        flow_icon = "<span style='color:#f85149;font-size:1.2em'>&#9679;</span>"
+                        flow_label = "Carrier-unfriendly — protect margin"
                     else:
-                        st.caption("↔️ Balanced market — carrier likely near DAT Best Fit.")
+                        flow_icon = "<span style='color:#8b949e;font-size:1.2em'>&#9679;</span>"
+                        flow_label = "Balanced flow — quote at market"
 
-                    # --- Customer Quote Range ---
-                    st.markdown("---")
-                    st.markdown("**Customer Quote Range**")
+                    st.markdown(f"{flow_icon} **Flow:** {orig_sig} -> {dest_sig} — {flow_label}",
+                                unsafe_allow_html=True)
 
-                    fsc_val = params_override.get("fsc_per_mile", 0.53)
-                    target_margin = params_override.get("target_margin", 0.12)
-
-                    # Use carrier_adjusted as the cost basis (directionally informed)
-                    aggressive_margin = max(target_margin - 0.04, 0.05)
-                    defensive_margin = target_margin + 0.04
-
-                    quote_aggressive = round(carrier_adjusted * (1 + aggressive_margin), 2)
-                    quote_target = round(carrier_adjusted * (1 + target_margin), 2)
-                    quote_defensive = round(carrier_adjusted * (1 + defensive_margin), 2)
-
-                    q1, q2, q3 = st.columns(3)
-                    agg_margin_pct = (quote_aggressive - carrier_adjusted) / quote_aggressive * 100
-                    tgt_margin_pct = (quote_target - carrier_adjusted) / quote_target * 100
-                    def_margin_pct = (quote_defensive - carrier_adjusted) / quote_defensive * 100
-
-                    q1.metric("Aggressive", format_currency(quote_aggressive),
-                              delta=f"↑ {agg_margin_pct:.1f}% margin")
-                    q2.metric("Target", format_currency(quote_target),
-                              delta=f"↑ {tgt_margin_pct:.1f}% margin")
-                    q3.metric("Defensive", format_currency(quote_defensive),
-                              delta=f"↑ {def_margin_pct:.1f}% margin")
-
-                    # --- Model Comparison ---
-                    st.markdown("---")
-                    st.markdown("**Model Comparison** _(for reference)_")
-                    mc1, mc2, mc3 = st.columns(3)
-                    mc1.metric("Model Carrier Est.", format_currency(result['carrier_fsc']),
-                               delta=f"{((result['carrier_fsc'] / dat_best_fit - 1) * 100):+.1f}% vs DAT",
-                               delta_color="off")
-                    mc2.metric("DAT Spot RPM (Feb data)", f"${result['dat_spot_rpm']:.4f}")
-                    mc3.metric("DAT Best Fit RPM (current)", f"${dat_linehaul_rpm:.2f}/mi")
-
-                    # Model vs reality comparison
-                    model_vs_dat = (result['carrier_fsc'] / dat_best_fit - 1) * 100
-                    if abs(model_vs_dat) > 15:
-                        st.caption(f"⚠️ Model is {model_vs_dat:+.1f}% vs DAT — significant gap. "
-                                   f"DAT-based quote is more reliable for this lane.")
-                    elif abs(model_vs_dat) > 5:
-                        st.caption(f"Model is {model_vs_dat:+.1f}% vs DAT — moderate gap. "
-                                   f"DAT-based quote recommended.")
-                    else:
-                        st.caption(f"Model and DAT are within {abs(model_vs_dat):.1f}% — both reliable.")
-
-                # --- SPOT MODE without DAT input (model-only fallback) ---
-                elif is_spot and dat_best_fit == 0:
-                    st.success(f"**{orig_market} → {dest_market}** | {miles} miles")
-                    st.info("💡 **Tip:** Enter the DAT 3-Day Best Fit above for more accurate spot pricing. "
-                            "Without it, the quote uses model estimates only.")
-
-                    # Show directional intelligence
-                    orig_sig = result.get("orig_signal")
-                    dest_sig = result.get("dest_signal")
-                    dir_adj = result.get("dir_adj_pct", 0)
-
-                    if orig_sig and dest_sig:
-                        sig_colors = {
-                            "Acute Imbalance": "#f85149", "Tightening": "#e07b39",
-                            "Firming": "#d29922", "Balanced": "#8b949e",
-                            "Loosening": "#3fb950", "Soft": "#58a6ff",
-                        }
-                        st.markdown("---")
-                        st.markdown("**Market Intelligence**")
-                        mi1, mi2 = st.columns(2)
-                        with mi1:
-                            st.markdown(f"**Origin:** {orig_market} — "
-                                        f"<span style='color:{sig_colors.get(orig_sig, '#8b949e')};font-weight:bold'>"
-                                        f"{orig_sig}</span> (LTR 8D: {result.get('orig_ltr_8d', '—')})",
-                                        unsafe_allow_html=True)
-                        with mi2:
-                            st.markdown(f"**Dest:** {dest_market} — "
-                                        f"<span style='color:{sig_colors.get(dest_sig, '#8b949e')};font-weight:bold'>"
-                                        f"{dest_sig}</span> (LTR 8D: {result.get('dest_ltr_8d', '—')})",
-                                        unsafe_allow_html=True)
-
-                        if dir_adj < -0.03:
-                            st.markdown("🟢 **Carrier-friendly lane — push hard on rate**")
-                        elif dir_adj > 0.03:
-                            st.markdown("🔴 **Carrier-unfriendly lane — protect margin**")
-                        else:
-                            st.markdown("⚪ **Balanced flow — quote at market**")
-
-                    # Model-based quote range
-                    st.markdown("---")
-                    st.markdown("**Model Quote Range** _(based on Feb market data + directional adjustment)_")
-                    q1, q2, q3 = st.columns(3)
-                    q1.metric("Aggressive", format_currency(result["quote_aggressive"]),
-                              delta=f"↑ {((result['quote_aggressive'] - result['carrier_fsc']) / result['quote_aggressive'] * 100):.1f}% margin")
-                    q2.metric("Target", format_currency(result["quote_target"]),
-                              delta=f"↑ {((result['quote_target'] - result['carrier_fsc']) / result['quote_target'] * 100):.1f}% margin")
-                    q3.metric("Defensive", format_currency(result["quote_defensive"]),
-                              delta=f"↑ {((result['quote_defensive'] - result['carrier_fsc']) / result['quote_defensive'] * 100):.1f}% margin")
-
-                # --- CONTRACT MODE ---
+                    if directional.get("momentum_applied"):
+                        st.caption("Momentum confirms direction — additional +/-2% applied")
                 else:
-                    st.success(f"**{orig_market} → {dest_market}** | {miles} miles")
+                    st.caption("No directional signals available — using market-neutral pricing")
 
-                    # Directional Intelligence
-                    orig_sig = result.get("orig_signal")
-                    dest_sig = result.get("dest_signal")
-                    dir_adj = result.get("dir_adj_pct", 0)
+                # ──────────────────────────────────────────────────────────
+                # 3. CARRIER TARGET
+                # ──────────────────────────────────────────────────────────
+                st.markdown("---")
+                st.markdown("### Carrier Target")
 
-                    if orig_sig and dest_sig:
-                        sig_colors = {
-                            "Acute Imbalance": "#f85149", "Tightening": "#e07b39",
-                            "Firming": "#d29922", "Balanced": "#8b949e",
-                            "Loosening": "#3fb950", "Soft": "#58a6ff",
-                        }
-                        st.markdown("---")
-                        st.markdown("**Market Intelligence**")
-                        mi1, mi2 = st.columns(2)
-                        with mi1:
-                            st.markdown(f"**Origin:** {orig_market} — "
-                                        f"<span style='color:{sig_colors.get(orig_sig, '#8b949e')};font-weight:bold'>"
-                                        f"{orig_sig}</span> (LTR 8D: {result.get('orig_ltr_8d', '—')})",
-                                        unsafe_allow_html=True)
-                        with mi2:
-                            st.markdown(f"**Dest:** {dest_market} — "
-                                        f"<span style='color:{sig_colors.get(dest_sig, '#8b949e')};font-weight:bold'>"
-                                        f"{dest_sig}</span> (LTR 8D: {result.get('dest_ltr_8d', '—')})",
-                                        unsafe_allow_html=True)
+                carrier_base = best_fit
+                carrier_adjusted = carrier_base * (1 + dir_adj)
+                carrier_low = min(carrier_base, carrier_adjusted)
+                carrier_high = max(carrier_base, carrier_adjusted)
 
-                    # Core Pricing
+                ct1, ct2, ct3 = st.columns(3)
+                ct1.metric("Target Low", format_currency(carrier_low),
+                           delta=f"{((carrier_low / carrier_base - 1) * 100):+.1f}% vs Best Fit"
+                           if abs(carrier_low - carrier_base) > 1 else "At market")
+                ct2.metric("DAT Best Fit", format_currency(carrier_base))
+                ct3.metric("Target High", format_currency(carrier_high),
+                           delta=f"{((carrier_high / carrier_base - 1) * 100):+.1f}% vs Best Fit"
+                           if abs(carrier_high - carrier_base) > 1 else "At market")
+
+                if dir_adj < -0.03:
+                    st.caption(f"Directional signal suggests carrier will discount "
+                               f"{abs(dir_adj):.1%} below Best Fit. Push toward Target Low.")
+                elif dir_adj > 0.03:
+                    st.caption(f"Directional signal suggests carrier needs "
+                               f"{abs(dir_adj):.1%} premium above Best Fit. Budget toward Target High.")
+                else:
+                    st.caption("Balanced market — carrier likely near DAT Best Fit.")
+
+                # ──────────────────────────────────────────────────────────
+                # 4. CUSTOMER QUOTE RANGE (Floor and Ceiling)
+                # ──────────────────────────────────────────────────────────
+                st.markdown("---")
+                st.markdown("### Customer Quote Range")
+
+                aggressive_margin = max(target_margin - 0.04, 0.05)
+                defensive_margin = target_margin + 0.04
+
+                # Floor row — based on Target Low
+                st.markdown("**Floor** (cost basis: Target Low)")
+                f1, f2, f3 = st.columns(3)
+
+                floor_agg = round(carrier_low * (1 + aggressive_margin), 2)
+                floor_tgt = round(carrier_low * (1 + target_margin), 2)
+                floor_def = round(carrier_low * (1 + defensive_margin), 2)
+
+                floor_agg_margin_d = floor_agg - carrier_low
+                floor_agg_margin_p = floor_agg_margin_d / floor_agg * 100 if floor_agg else 0
+                floor_tgt_margin_d = floor_tgt - carrier_low
+                floor_tgt_margin_p = floor_tgt_margin_d / floor_tgt * 100 if floor_tgt else 0
+                floor_def_margin_d = floor_def - carrier_low
+                floor_def_margin_p = floor_def_margin_d / floor_def * 100 if floor_def else 0
+
+                f1.metric("Aggressive", format_currency(floor_agg),
+                          delta=f"${floor_agg_margin_d:,.0f} | {floor_agg_margin_p:.1f}%")
+                f2.metric("Target", format_currency(floor_tgt),
+                          delta=f"${floor_tgt_margin_d:,.0f} | {floor_tgt_margin_p:.1f}%")
+                f3.metric("Defensive", format_currency(floor_def),
+                          delta=f"${floor_def_margin_d:,.0f} | {floor_def_margin_p:.1f}%")
+
+                # Ceiling row — based on Target High
+                st.markdown("**Ceiling** (cost basis: Target High)")
+                c1, c2, c3 = st.columns(3)
+
+                ceil_agg = round(carrier_high * (1 + aggressive_margin), 2)
+                ceil_tgt = round(carrier_high * (1 + target_margin), 2)
+                ceil_def = round(carrier_high * (1 + defensive_margin), 2)
+
+                ceil_agg_margin_d = ceil_agg - carrier_high
+                ceil_agg_margin_p = ceil_agg_margin_d / ceil_agg * 100 if ceil_agg else 0
+                ceil_tgt_margin_d = ceil_tgt - carrier_high
+                ceil_tgt_margin_p = ceil_tgt_margin_d / ceil_tgt * 100 if ceil_tgt else 0
+                ceil_def_margin_d = ceil_def - carrier_high
+                ceil_def_margin_p = ceil_def_margin_d / ceil_def * 100 if ceil_def else 0
+
+                c1.metric("Aggressive", format_currency(ceil_agg),
+                          delta=f"${ceil_agg_margin_d:,.0f} | {ceil_agg_margin_p:.1f}%")
+                c2.metric("Target", format_currency(ceil_tgt),
+                          delta=f"${ceil_tgt_margin_d:,.0f} | {ceil_tgt_margin_p:.1f}%")
+                c3.metric("Defensive", format_currency(ceil_def),
+                          delta=f"${ceil_def_margin_d:,.0f} | {ceil_def_margin_p:.1f}%")
+
+                # ──────────────────────────────────────────────────────────
+                # 5. EXPECTED VALUE ANALYSIS
+                # ──────────────────────────────────────────────────────────
+                has_range = range_low > 0 and range_high > 0 and range_high > range_low
+
+                if has_range:
                     st.markdown("---")
-                    st.markdown("**Pricing Breakdown**")
+                    st.markdown("### Expected Value Analysis")
 
-                    r1, r2, r3, r4 = st.columns(4)
-                    r1.metric("DAT Spot RPM", f"${result['dat_spot_rpm']:.4f}")
-                    r2.metric("Vol / Liq Tier", f"{result['vol_tier']} / {result['liq_tier']}")
-                    dir_label = f"{dir_adj:+.1%}" if dir_adj != 0 else "0.0%"
-                    r3.metric("Dir Adjustment", dir_label)
-                    r4.metric("Total Buffer", f"{result['total_buffer']:.1%}")
+                    # Calculate StdDev from DAT range
+                    dat_std_dev = (range_high - range_low) / 4.0
 
-                    r5, r6, r7, r8 = st.columns(4)
-                    r5.metric("Carrier + FSC", format_currency(result['carrier_fsc']))
-                    r6.metric("Contract RPM", f"${result['contract_rpm']:.4f}")
-                    r7.metric("Margin $", format_currency(result['margin_dollar']))
-                    r8.metric("Margin %", format_pct(result['margin_pct']))
+                    # If 13-month history available, use historical StdDev
+                    hist_std_dev = None
+                    if lane_trend and len(lane_trend) >= 2:
+                        monthly_stds = []
+                        for month in lane_trend:
+                            m_low = month.get("low")
+                            m_high = month.get("high")
+                            if m_low and m_high and m_high > m_low:
+                                monthly_stds.append((m_high - m_low) / 4.0)
+                        if monthly_stds:
+                            hist_std_dev = sum(monthly_stds) / len(monthly_stds)
 
-                    # Contract quote
-                    st.markdown("---")
-                    r9, r10 = st.columns(2)
-                    r9.metric("Model Quote", format_currency(result['customer_fsc']))
-                    r10.metric("All-in RPM", f"${result['customer_fsc'] / result['miles']:.4f}" if result['miles'] > 0 else "—")
+                    std_dev_used = hist_std_dev if hist_std_dev else dat_std_dev
+                    std_source = (f"Historical ({len(lane_trend)} months)"
+                                  if hist_std_dev else "DAT Range")
+
+                    st.caption(f"StdDev: ${std_dev_used:,.0f} (source: {std_source}) | "
+                               f"DAT Range: ${range_low:,.0f} - ${range_high:,.0f}")
+
+                    # Find breakeven
+                    carrier_mean = carrier_adjusted if abs(dir_adj) > 0.001 else best_fit
+                    breakeven = find_breakeven(best_fit, std_dev_used, carrier_mean)
+
+                    st.markdown(f"**Breakeven (EV=0): {format_currency(breakeven)}**")
+
+                    # Generate price points from breakeven to defensive
+                    price_points = set()
+                    price_points.add(breakeven)
+                    price_points.add(floor_agg)
+                    price_points.add(floor_tgt)
+                    price_points.add(floor_def)
+                    price_points.add(ceil_tgt)
+                    price_points.add(ceil_def)
+                    price_points = sorted(price_points)
+
+                    # Build EV table
+                    ev_rows = []
+                    for price in price_points:
+                        ev_result = calculate_ev(price, best_fit, std_dev_used, carrier_mean)
+                        ev_rows.append({
+                            "Quote": format_currency(price),
+                            "EV/Load": format_currency(ev_result["ev_per_load"]),
+                            "100-Load": format_currency(ev_result["expected_100"]),
+                            "P(Profit)": f"{ev_result['p_profit']:.0%}",
+                            "Signal": ev_result["signal"],
+                            "_ev": ev_result["ev_per_load"],
+                            "_price": price,
+                        })
+
+                    ev_df = pd.DataFrame(ev_rows)
+
+                    # Color code the table
+                    def color_ev_row(row):
+                        if row["_ev"] > 0:
+                            return ["background-color: rgba(63, 185, 80, 0.15)"] * len(row)
+                        elif row["_ev"] < 0:
+                            return ["background-color: rgba(248, 81, 73, 0.15)"] * len(row)
+                        return [""] * len(row)
+
+                    display_ev = ev_df[["Quote", "EV/Load", "100-Load", "P(Profit)", "Signal"]]
+                    styled = ev_df.style.apply(color_ev_row, axis=1).format(
+                        subset=["Quote", "EV/Load", "100-Load", "P(Profit)", "Signal"],
+                        formatter=lambda x: x
+                    )
+
+                    # Use a simpler display approach
+                    st.dataframe(display_ev, hide_index=True, use_container_width=True)
+
+                    # Highlight key insight
+                    best_ev_row = max(ev_rows, key=lambda r: r["_ev"])
+                    if best_ev_row["_ev"] > 0:
+                        st.caption(
+                            f"Best EV: {best_ev_row['Quote']} at "
+                            f"{best_ev_row['EV/Load']}/load "
+                            f"({best_ev_row['100-Load']} over 100 loads)")
