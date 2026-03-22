@@ -144,7 +144,7 @@ ltr_dir = col1.selectbox("LTR Direction", ["RISING", "FALLING"], index=0 if para
 nat_ltr = col2.number_input("National LTR", value=float(params["national_ltr"]), format="%.2f")
 
 st.sidebar.markdown("### Pricing Parameters")
-target_margin = st.sidebar.slider("Target Margin %", 0.0, 0.25, float(params["target_margin"]), 0.01, format="%.0%%")
+target_margin = st.sidebar.slider("Target Margin %", 0, 25, int(float(params["target_margin"]) * 100), 1, format="%d%%") / 100
 term = st.sidebar.selectbox("Contract Term", [6, 12], index=0 if params["contract_term"] == 6 else 1)
 confidence = st.sidebar.selectbox("Confidence Level",
     ["P50", "P55", "P60", "P65", "P70", "P75", "P80", "P85", "P90"],
