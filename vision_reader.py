@@ -8,9 +8,9 @@ import streamlit as st
 def extract_rateview_data(image_bytes):
     """Send DAT RateView screenshot to Claude Vision API and extract structured data."""
 
-    api_key = st.secrets.get("anthropic_api_key")
+    api_key = st.secrets.get("ANTHROPIC_API_KEY", st.secrets.get("anthropic_api_key"))
     if not api_key:
-        return None, "No Anthropic API key configured. Add 'anthropic_api_key' to Streamlit secrets."
+        return None, "No Anthropic API key configured. Add 'ANTHROPIC_API_KEY' to Streamlit secrets."
 
     client = anthropic.Anthropic(api_key=api_key)
 

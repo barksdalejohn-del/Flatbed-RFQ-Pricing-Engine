@@ -14,7 +14,7 @@ st.set_page_config(page_title="Flatbed Spot Pricing Tool", page_icon="🚛", lay
 def check_password():
     """Returns True if the user has entered the correct password."""
     def password_entered():
-        if st.session_state.get("password") == st.secrets.get("app_password", "TA2026!pricing"):
+        if st.session_state.get("password") == st.secrets.get("APP_PASSWORD", st.secrets.get("app_password", "TA2026!pricing")):
             st.session_state["password_correct"] = True
             del st.session_state["password"]
         else:
