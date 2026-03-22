@@ -553,7 +553,14 @@ with tab_cockpit:
 # === TAB: Quick Quote ===
 with tab_quick:
     st.markdown("### Quick Quote — Single Lane")
-    st.markdown("Get an instant price for a single lane.")
+
+    # Determine mode based on contract term
+    is_spot = (term == 0)
+
+    if is_spot:
+        st.markdown("**Spot Mode** — Enter lane details and DAT Best Fit rate for real-time pricing.")
+    else:
+        st.markdown("Get an instant contract price for a single lane.")
 
     qq1, qq2 = st.columns(2)
     with qq1:
@@ -582,6 +589,24 @@ with tab_quick:
             dest_val = st.text_input("Dest Market", placeholder="IL_CHI", key="dest_mkt")
             dest_state_val = None
 
+    # --- DAT Best Fit input for Spot Mode ---
+    if is_spot:
+        st.markdown("---")
+        st.markdown("**DAT RateView Data** — _Enter from the screen you're looking at_")
+        dat_col1, dat_col2, dat_col3 = st.columns(3)
+        with dat_col1:
+            dat_best_fit = st.number_input("DAT 3-Day Best Fit (all-in w/ fuel)", min_value=0.0,
+                                           step=50.0, value=0.0, key="dat_best_fit",
+                                           help="Total rate from DAT RateView including fuel. E.g. $3,091")
+        with dat_col2:
+            dat_fuel_per_mile = st.number_input("DAT Fuel $/mi", min_value=0.0,
+                                                step=0.01, value=0.76, key="dat_fuel_mi",
+                                                help="Fuel cost per mile shown on DAT. Usually $0.76")
+        with dat_col3:
+            dat_rate_strength = st.number_input("Rate Strength (optional)", min_value=0, max_value=100,
+                                                step=1, value=0, key="dat_strength",
+                                                help="Rate strength score from DAT (0-100). Higher = more reliable.")
+
     if st.button("Get Quote", type="primary"):
         orig_market, orig_city, orig_st = resolve_market(orig_val, orig_state_val, data)
         dest_market, dest_city, dest_st = resolve_market(dest_val, dest_state_val, data)
@@ -598,104 +623,274 @@ with tab_quick:
             elif result.get("status") == "<300mi":
                 st.warning(f"Lane is {result['miles']} miles — below 300mi minimum.")
             else:
-                st.success(f"**{orig_market} → {dest_market}** | {result['miles']} miles")
+                miles = result['miles']
 
-                # --- Directional Intelligence Section ---
-                orig_sig = result.get("orig_signal")
-                dest_sig = result.get("dest_signal")
-                dir_adj = result.get("dir_adj_pct", 0)
+                # --- Short-mile warning for Spot ---
+                if is_spot and miles < 500:
+                    st.warning(f"⚠️ **Short Mile Load ({miles} mi)** — Model pricing is unreliable "
+                               f"for short-haul spot loads. Refer to DAT RateView for direct market pricing. "
+                               f"Per-mile rates on short hauls are distorted by minimum charges.")
+                    st.info(f"**{orig_market} → {dest_market}** | {miles} miles")
 
-                if orig_sig and dest_sig:
-                    # Signal color mapping
-                    sig_colors = {
-                        "Acute Imbalance": "#f85149",
-                        "Tightening": "#e07b39",
-                        "Firming": "#d29922",
-                        "Balanced": "#8b949e",
-                        "Loosening": "#3fb950",
-                        "Soft": "#58a6ff",
-                    }
-                    orig_color = sig_colors.get(orig_sig, "#8b949e")
-                    dest_color = sig_colors.get(dest_sig, "#8b949e")
-                    flow_desc = f"{orig_sig} → {dest_sig}"
+                    # Still show directional intelligence — it's useful context
+                    orig_sig = result.get("orig_signal")
+                    dest_sig = result.get("dest_signal")
+                    if orig_sig and dest_sig:
+                        sig_colors = {
+                            "Acute Imbalance": "#f85149", "Tightening": "#e07b39",
+                            "Firming": "#d29922", "Balanced": "#8b949e",
+                            "Loosening": "#3fb950", "Soft": "#58a6ff",
+                        }
+                        st.markdown("**Market Intelligence** _(still useful for negotiation)_")
+                        mi1, mi2 = st.columns(2)
+                        with mi1:
+                            st.markdown(f"**Origin:** {orig_market} — "
+                                        f"<span style='color:{sig_colors.get(orig_sig, '#8b949e')};font-weight:bold'>"
+                                        f"{orig_sig}</span> (LTR 8D: {result.get('orig_ltr_8d', '—')})",
+                                        unsafe_allow_html=True)
+                        with mi2:
+                            st.markdown(f"**Dest:** {dest_market} — "
+                                        f"<span style='color:{sig_colors.get(dest_sig, '#8b949e')};font-weight:bold'>"
+                                        f"{dest_sig}</span> (LTR 8D: {result.get('dest_ltr_8d', '—')})",
+                                        unsafe_allow_html=True)
 
-                    # Determine flow character
+                # --- SPOT MODE with DAT Best Fit ---
+                elif is_spot and dat_best_fit > 0:
+                    st.success(f"**{orig_market} → {dest_market}** | {miles} miles")
+
+                    # Parse the DAT input
+                    dat_fuel_total = dat_fuel_per_mile * miles
+                    dat_linehaul = dat_best_fit - dat_fuel_total
+                    dat_linehaul_rpm = dat_linehaul / miles if miles > 0 else 0
+
+                    # --- Directional Intelligence ---
+                    orig_sig = result.get("orig_signal")
+                    dest_sig = result.get("dest_signal")
+                    dir_adj = result.get("dir_adj_pct", 0)
+
+                    if orig_sig and dest_sig:
+                        sig_colors = {
+                            "Acute Imbalance": "#f85149", "Tightening": "#e07b39",
+                            "Firming": "#d29922", "Balanced": "#8b949e",
+                            "Loosening": "#3fb950", "Soft": "#58a6ff",
+                        }
+                        orig_color = sig_colors.get(orig_sig, "#8b949e")
+                        dest_color = sig_colors.get(dest_sig, "#8b949e")
+
+                        if dir_adj < -0.03:
+                            flow_label = "Carrier-friendly — push hard on rate"
+                            flow_icon = "🟢"
+                        elif dir_adj > 0.03:
+                            flow_label = "Carrier-unfriendly — protect margin"
+                            flow_icon = "🔴"
+                        else:
+                            flow_label = "Balanced flow — quote at market"
+                            flow_icon = "⚪"
+
+                        st.markdown("---")
+                        st.markdown("**Market Intelligence**")
+                        mi1, mi2 = st.columns(2)
+                        with mi1:
+                            st.markdown(f"**Origin:** {orig_market} — "
+                                        f"<span style='color:{orig_color};font-weight:bold'>{orig_sig}</span> "
+                                        f"(LTR 8D: {result.get('orig_ltr_8d', '—')})", unsafe_allow_html=True)
+                        with mi2:
+                            st.markdown(f"**Dest:** {dest_market} — "
+                                        f"<span style='color:{dest_color};font-weight:bold'>{dest_sig}</span> "
+                                        f"(LTR 8D: {result.get('dest_ltr_8d', '—')})", unsafe_allow_html=True)
+
+                        st.markdown(f"{flow_icon} **Flow:** {orig_sig} → {dest_sig} — {flow_label}")
+                        if result.get("momentum_applied"):
+                            st.caption("⚡ Momentum confirms direction — additional ±2% applied")
+
+                    # --- DAT Market Data ---
+                    st.markdown("---")
+                    st.markdown("**DAT Market Data**")
+                    d1, d2, d3, d4 = st.columns(4)
+                    d1.metric("DAT Best Fit (all-in)", format_currency(dat_best_fit))
+                    d2.metric("Linehaul", format_currency(dat_linehaul))
+                    d3.metric("Linehaul RPM", f"${dat_linehaul_rpm:.2f}/mi")
+                    if dat_rate_strength > 0:
+                        strength_color = "normal" if dat_rate_strength >= 50 else "off"
+                        d4.metric("Rate Strength", f"{dat_rate_strength}/100",
+                                  delta="Reliable" if dat_rate_strength >= 70 else
+                                        "Moderate" if dat_rate_strength >= 50 else "Thin data",
+                                  delta_color=strength_color)
+
+                    # --- Carrier Target Range ---
+                    # Use DAT Best Fit as the baseline, adjust with directional intelligence
+                    st.markdown("---")
+                    st.markdown("**Carrier Target**")
+
+                    # Directional adjustment on the carrier cost
+                    # If origin is soft / dest is hot → carrier will discount below Best Fit
+                    # If origin is hot / dest is soft → carrier needs premium above Best Fit
+                    carrier_base = dat_best_fit  # All-in with fuel
+                    carrier_adjusted = carrier_base * (1 + dir_adj)
+                    carrier_low = min(carrier_base, carrier_adjusted)
+                    carrier_high = max(carrier_base, carrier_adjusted)
+
+                    ct1, ct2, ct3 = st.columns(3)
+                    ct1.metric("Target Low", format_currency(carrier_low),
+                               delta=f"{((carrier_low / carrier_base - 1) * 100):+.1f}% vs Best Fit" if carrier_low != carrier_base else "At market")
+                    ct2.metric("DAT Best Fit", format_currency(carrier_base))
+                    ct3.metric("Target High", format_currency(carrier_high),
+                               delta=f"{((carrier_high / carrier_base - 1) * 100):+.1f}% vs Best Fit" if carrier_high != carrier_base else "At market")
+
                     if dir_adj < -0.03:
-                        flow_label = "Carrier-friendly lane — quote competitively"
-                        flow_icon = "🟢"
+                        st.caption(f"📉 Directional signal suggests carrier will discount "
+                                   f"{abs(dir_adj):.1%} below Best Fit. Push toward Target Low.")
                     elif dir_adj > 0.03:
-                        flow_label = "Carrier-unfriendly lane — protect margin"
-                        flow_icon = "🔴"
+                        st.caption(f"📈 Directional signal suggests carrier needs "
+                                   f"{abs(dir_adj):.1%} premium above Best Fit. Budget toward Target High.")
                     else:
-                        flow_label = "Balanced flow — quote at market"
-                        flow_icon = "⚪"
+                        st.caption("↔️ Balanced market — carrier likely near DAT Best Fit.")
 
+                    # --- Customer Quote Range ---
                     st.markdown("---")
-                    st.markdown("**Market Intelligence**")
+                    st.markdown("**Customer Quote Range**")
 
-                    mi1, mi2 = st.columns(2)
-                    with mi1:
-                        orig_ltr_str = f"LTR 8D: {result.get('orig_ltr_8d', '—')}"
-                        st.markdown(f"**Origin:** {orig_market} — "
-                                    f"<span style='color:{orig_color};font-weight:bold'>{orig_sig}</span> "
-                                    f"({orig_ltr_str})", unsafe_allow_html=True)
-                    with mi2:
-                        dest_ltr_str = f"LTR 8D: {result.get('dest_ltr_8d', '—')}"
-                        st.markdown(f"**Dest:** {dest_market} — "
-                                    f"<span style='color:{dest_color};font-weight:bold'>{dest_sig}</span> "
-                                    f"({dest_ltr_str})", unsafe_allow_html=True)
+                    fsc_val = params_override.get("fsc_per_mile", 0.53)
+                    target_margin = params_override.get("target_margin", 0.12)
 
-                    st.markdown(f"{flow_icon} **Flow:** {flow_desc} — {flow_label}")
-                    if result.get("momentum_applied"):
-                        st.caption("Momentum confirms direction — additional ±2% applied")
+                    # Use carrier_adjusted as the cost basis (directionally informed)
+                    aggressive_margin = max(target_margin - 0.04, 0.05)
+                    defensive_margin = target_margin + 0.04
 
-                # --- Core Pricing ---
-                st.markdown("---")
-                st.markdown("**Pricing Breakdown**")
+                    quote_aggressive = round(carrier_adjusted * (1 + aggressive_margin), 2)
+                    quote_target = round(carrier_adjusted * (1 + target_margin), 2)
+                    quote_defensive = round(carrier_adjusted * (1 + defensive_margin), 2)
 
-                r1, r2, r3, r4 = st.columns(4)
-                r1.metric("DAT Spot RPM", f"${result['dat_spot_rpm']:.4f}")
-                r2.metric("Vol / Liq Tier", f"{result['vol_tier']} / {result['liq_tier']}")
-                dir_label = f"{dir_adj:+.1%}" if dir_adj != 0 else "0.0%"
-                r3.metric("Dir Adjustment", dir_label)
-                r4.metric("Total Buffer", f"{result['total_buffer']:.1%}")
+                    q1, q2, q3 = st.columns(3)
+                    agg_margin_pct = (quote_aggressive - carrier_adjusted) / quote_aggressive * 100
+                    tgt_margin_pct = (quote_target - carrier_adjusted) / quote_target * 100
+                    def_margin_pct = (quote_defensive - carrier_adjusted) / quote_defensive * 100
 
-                r5, r6, r7, r8 = st.columns(4)
-                r5.metric("Carrier + FSC", format_currency(result['carrier_fsc']))
-                rpm_label = "Spot RPM" if term == 0 else "Contract RPM"
-                r6.metric(rpm_label, f"${result['contract_rpm']:.4f}")
-                r7.metric("Margin $", format_currency(result['margin_dollar']))
-                r8.metric("Margin %", format_pct(result['margin_pct']))
+                    q1.metric("Aggressive", format_currency(quote_aggressive),
+                              delta=f"↑ {agg_margin_pct:.1f}% margin")
+                    q2.metric("Target", format_currency(quote_target),
+                              delta=f"↑ {tgt_margin_pct:.1f}% margin")
+                    q3.metric("Defensive", format_currency(quote_defensive),
+                              delta=f"↑ {def_margin_pct:.1f}% margin")
 
-                # --- Quote Range (Spot) ---
-                if result.get("quote_aggressive") is not None:
+                    # --- Model Comparison ---
                     st.markdown("---")
-                    st.markdown("**Quote Range**")
+                    st.markdown("**Model Comparison** _(for reference)_")
+                    mc1, mc2, mc3 = st.columns(3)
+                    mc1.metric("Model Carrier Est.", format_currency(result['carrier_fsc']),
+                               delta=f"{((result['carrier_fsc'] / dat_best_fit - 1) * 100):+.1f}% vs DAT",
+                               delta_color="off")
+                    mc2.metric("DAT Spot RPM (Feb data)", f"${result['dat_spot_rpm']:.4f}")
+                    mc3.metric("DAT Best Fit RPM (current)", f"${dat_linehaul_rpm:.2f}/mi")
+
+                    # Model vs reality comparison
+                    model_vs_dat = (result['carrier_fsc'] / dat_best_fit - 1) * 100
+                    if abs(model_vs_dat) > 15:
+                        st.caption(f"⚠️ Model is {model_vs_dat:+.1f}% vs DAT — significant gap. "
+                                   f"DAT-based quote is more reliable for this lane.")
+                    elif abs(model_vs_dat) > 5:
+                        st.caption(f"Model is {model_vs_dat:+.1f}% vs DAT — moderate gap. "
+                                   f"DAT-based quote recommended.")
+                    else:
+                        st.caption(f"Model and DAT are within {abs(model_vs_dat):.1f}% — both reliable.")
+
+                # --- SPOT MODE without DAT input (model-only fallback) ---
+                elif is_spot and dat_best_fit == 0:
+                    st.success(f"**{orig_market} → {dest_market}** | {miles} miles")
+                    st.info("💡 **Tip:** Enter the DAT 3-Day Best Fit above for more accurate spot pricing. "
+                            "Without it, the quote uses model estimates only.")
+
+                    # Show directional intelligence
+                    orig_sig = result.get("orig_signal")
+                    dest_sig = result.get("dest_signal")
+                    dir_adj = result.get("dir_adj_pct", 0)
+
+                    if orig_sig and dest_sig:
+                        sig_colors = {
+                            "Acute Imbalance": "#f85149", "Tightening": "#e07b39",
+                            "Firming": "#d29922", "Balanced": "#8b949e",
+                            "Loosening": "#3fb950", "Soft": "#58a6ff",
+                        }
+                        st.markdown("---")
+                        st.markdown("**Market Intelligence**")
+                        mi1, mi2 = st.columns(2)
+                        with mi1:
+                            st.markdown(f"**Origin:** {orig_market} — "
+                                        f"<span style='color:{sig_colors.get(orig_sig, '#8b949e')};font-weight:bold'>"
+                                        f"{orig_sig}</span> (LTR 8D: {result.get('orig_ltr_8d', '—')})",
+                                        unsafe_allow_html=True)
+                        with mi2:
+                            st.markdown(f"**Dest:** {dest_market} — "
+                                        f"<span style='color:{sig_colors.get(dest_sig, '#8b949e')};font-weight:bold'>"
+                                        f"{dest_sig}</span> (LTR 8D: {result.get('dest_ltr_8d', '—')})",
+                                        unsafe_allow_html=True)
+
+                        if dir_adj < -0.03:
+                            st.markdown("🟢 **Carrier-friendly lane — push hard on rate**")
+                        elif dir_adj > 0.03:
+                            st.markdown("🔴 **Carrier-unfriendly lane — protect margin**")
+                        else:
+                            st.markdown("⚪ **Balanced flow — quote at market**")
+
+                    # Model-based quote range
+                    st.markdown("---")
+                    st.markdown("**Model Quote Range** _(based on Feb market data + directional adjustment)_")
                     q1, q2, q3 = st.columns(3)
                     q1.metric("Aggressive", format_currency(result["quote_aggressive"]),
-                              delta=f"{((result['quote_aggressive'] - result['carrier_fsc']) / result['quote_aggressive'] * 100):.1f}% margin")
+                              delta=f"↑ {((result['quote_aggressive'] - result['carrier_fsc']) / result['quote_aggressive'] * 100):.1f}% margin")
                     q2.metric("Target", format_currency(result["quote_target"]),
-                              delta=f"{((result['quote_target'] - result['carrier_fsc']) / result['quote_target'] * 100):.1f}% margin")
+                              delta=f"↑ {((result['quote_target'] - result['carrier_fsc']) / result['quote_target'] * 100):.1f}% margin")
                     q3.metric("Defensive", format_currency(result["quote_defensive"]),
-                              delta=f"{((result['quote_defensive'] - result['carrier_fsc']) / result['quote_defensive'] * 100):.1f}% margin")
+                              delta=f"↑ {((result['quote_defensive'] - result['carrier_fsc']) / result['quote_defensive'] * 100):.1f}% margin")
+
+                # --- CONTRACT MODE ---
                 else:
-                    # Contract quote - single number
+                    st.success(f"**{orig_market} → {dest_market}** | {miles} miles")
+
+                    # Directional Intelligence
+                    orig_sig = result.get("orig_signal")
+                    dest_sig = result.get("dest_signal")
+                    dir_adj = result.get("dir_adj_pct", 0)
+
+                    if orig_sig and dest_sig:
+                        sig_colors = {
+                            "Acute Imbalance": "#f85149", "Tightening": "#e07b39",
+                            "Firming": "#d29922", "Balanced": "#8b949e",
+                            "Loosening": "#3fb950", "Soft": "#58a6ff",
+                        }
+                        st.markdown("---")
+                        st.markdown("**Market Intelligence**")
+                        mi1, mi2 = st.columns(2)
+                        with mi1:
+                            st.markdown(f"**Origin:** {orig_market} — "
+                                        f"<span style='color:{sig_colors.get(orig_sig, '#8b949e')};font-weight:bold'>"
+                                        f"{orig_sig}</span> (LTR 8D: {result.get('orig_ltr_8d', '—')})",
+                                        unsafe_allow_html=True)
+                        with mi2:
+                            st.markdown(f"**Dest:** {dest_market} — "
+                                        f"<span style='color:{sig_colors.get(dest_sig, '#8b949e')};font-weight:bold'>"
+                                        f"{dest_sig}</span> (LTR 8D: {result.get('dest_ltr_8d', '—')})",
+                                        unsafe_allow_html=True)
+
+                    # Core Pricing
+                    st.markdown("---")
+                    st.markdown("**Pricing Breakdown**")
+
+                    r1, r2, r3, r4 = st.columns(4)
+                    r1.metric("DAT Spot RPM", f"${result['dat_spot_rpm']:.4f}")
+                    r2.metric("Vol / Liq Tier", f"{result['vol_tier']} / {result['liq_tier']}")
+                    dir_label = f"{dir_adj:+.1%}" if dir_adj != 0 else "0.0%"
+                    r3.metric("Dir Adjustment", dir_label)
+                    r4.metric("Total Buffer", f"{result['total_buffer']:.1%}")
+
+                    r5, r6, r7, r8 = st.columns(4)
+                    r5.metric("Carrier + FSC", format_currency(result['carrier_fsc']))
+                    r6.metric("Contract RPM", f"${result['contract_rpm']:.4f}")
+                    r7.metric("Margin $", format_currency(result['margin_dollar']))
+                    r8.metric("Margin %", format_pct(result['margin_pct']))
+
+                    # Contract quote
                     st.markdown("---")
                     r9, r10 = st.columns(2)
                     r9.metric("Model Quote", format_currency(result['customer_fsc']))
                     r10.metric("All-in RPM", f"${result['customer_fsc'] / result['miles']:.4f}" if result['miles'] > 0 else "—")
-
-                # --- State-to-State Signal (if available) ---
-                if state_rates is not None:
-                    from engine import compute_nowcast
-                    fsc_val = params_override.get("fsc_per_mile", 0.53)
-                    nowcast_fsc, state_rpm_val = compute_nowcast(
-                        orig_market, dest_market, state_rates, result["miles"], fsc_val)
-                    if nowcast_fsc:
-                        fresh_ratio = state_rpm_val / result["dat_spot_rpm"] if result["dat_spot_rpm"] else None
-                        st.markdown("---")
-                        st.markdown("**State-to-State Reference**")
-                        s1, s2, s3 = st.columns(3)
-                        s1.metric("State RPM", f"${state_rpm_val:.4f}")
-                        s2.metric("Freshness Ratio", f"{fresh_ratio:.2f}x" if fresh_ratio else "—")
-                        s3.metric("State Mkt Signal (w/FSC)", format_currency(nowcast_fsc))
