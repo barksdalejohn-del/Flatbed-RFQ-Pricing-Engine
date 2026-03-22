@@ -1,0 +1,26 @@
+# Secrets - NEVER commit this
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Temp files
+data/_tmp_*
+*.tmp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Original Excel workbook (too large, data already extracted)
+Master_Flatbed_RFQ_Pricing_Engine.xlsx
+
+# Claude internal
+.claude/
