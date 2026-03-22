@@ -100,6 +100,8 @@ def get_cycle_buffer(params):
         multiplier = 1.15
     elif phase == 4:
         multiplier = 0.9
+    elif phase == 5:
+        multiplier = 1.1
     else:
         multiplier = 1.0
     return cycle_adj * multiplier

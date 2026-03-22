@@ -139,7 +139,7 @@ params = data["params"]
 st.sidebar.markdown("### Market Regime")
 col1, col2 = st.sidebar.columns(2)
 regime = col1.selectbox("Regime", ["EXPANSION", "CONTRACTION"], index=0 if params["regime"] == "EXPANSION" else 1)
-phase = col2.selectbox("Phase", [0, 1, 2, 3, 4], index=[0, 1, 2, 3, 4].index(params["phase"]))
+phase = col2.selectbox("Phase", [0, 1, 2, 3, 4, 5], index=[0, 1, 2, 3, 4, 5].index(params["phase"]))
 ltr_dir = col1.selectbox("LTR Direction", ["RISING", "FALLING"], index=0 if params["ltr_direction"] == "RISING" else 1)
 nat_ltr = col2.number_input("National LTR", value=float(params["national_ltr"]), format="%.2f")
 
