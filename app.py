@@ -248,29 +248,18 @@ if same_day_on:
                                          help="Defaults to today (Central time). Change to backtest past scenarios.")
     same_day_dow = day_names.index(selected_day)
 
-    # Time selector — 6 AM through 5 PM
-    time_options = {}
-    for h in range(6, 18):
-        if h < 12:
-            label = f"{h}:00 AM"
-        elif h == 12:
-            label = "12:00 PM"
-        else:
-            label = f"{h - 12}:00 PM"
-        hours_remaining = max(0.5, 18 - h)
-        time_options[label] = hours_remaining
+    # Hours remaining selector — 1 to 8
+    hours_options = [8, 7, 6, 5, 4, 3, 2, 1]
+    # Default: estimate hours left based on Central time (6pm cutoff)
+    est_hours_left = max(1, min(8, 18 - current_hour_central))
+    default_index = hours_options.index(est_hours_left) if est_hours_left in hours_options else 4
 
-    # Default to current hour in Central (clamped to 6am-5pm range)
-    default_hour = max(6, min(17, current_hour_central))
-    default_index = default_hour - 6
+    same_day_hours = st.sidebar.selectbox("Hours remaining", hours_options,
+                                           index=default_index,
+                                           help="Estimated hours left to find a truck. Defaults based on current time (Central).")
+    same_day_time_label = f"{same_day_hours}h remaining"
 
-    selected_time = st.sidebar.selectbox("Time of quote", list(time_options.keys()),
-                                          index=default_index,
-                                          help="Defaults to current hour (Central time). Change to backtest past scenarios.")
-    same_day_hours = time_options[selected_time]
-    same_day_time_label = selected_time
-
-    st.sidebar.caption(f"📅 {selected_day} · {selected_time} · {same_day_hours:.1f} hours remaining")
+    st.sidebar.caption(f"📅 {selected_day} · {same_day_hours} hours remaining")
 
 st.sidebar.markdown("---")
 if dashboard_signals is not None:
