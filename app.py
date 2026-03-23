@@ -753,7 +753,7 @@ if quote_clicked:
 
                     ev_df = pd.DataFrame(ev_rows)
                     display_ev = ev_df[["Quote", "EV/Load", "100-Load", "P(Profit)", "Signal"]]
-                    st.dataframe(display_ev, hide_index=True, use_container_width=True)
+                    st.dataframe(display_ev, hide_index=True, use_container_width=True, height=600)
 
                     # Highlight key insight
                     best_ev_row = max(ev_rows, key=lambda r: r["_ev"])
