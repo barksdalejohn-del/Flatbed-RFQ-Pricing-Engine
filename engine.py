@@ -248,6 +248,85 @@ def compute_directional_adjustment(orig_market, dest_market, signals, term=0,
     }
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# SAME-DAY PRICING MULTIPLIER
+# ──────────────────────────────────────────────────────────────────────────────
+
+SAME_DAY_BASE_URGENCY = 1.08  # 8% baseline premium for same-day
+SAME_DAY_MAX_PREMIUM = 0.60  # Max time decay premium (60% at zero hours)
+SAME_DAY_POWER = 1.5  # Curve steepness (>1 = ramps faster near end)
+SAME_DAY_MAX_HOURS = 12  # Full business day window (6am - 6pm)
+
+# Market tightness factor — uses signal labels, not raw LTR
+SAME_DAY_MARKET_FACTOR = {
+    "Soft": 1.00,
+    "Loosening": 1.03,
+    "Balanced": 1.06,
+    "Firming": 1.10,
+    "Tightening": 1.15,
+    "Acute Imbalance": 1.20,
+}
+
+# Day of week factor
+SAME_DAY_DOW_FACTOR = {
+    0: 1.00,  # Monday
+    1: 1.00,  # Tuesday
+    2: 1.00,  # Wednesday
+    3: 1.00,  # Thursday
+    4: 1.05,  # Friday
+    5: 1.15,  # Saturday
+    6: 1.15,  # Sunday
+}
+
+
+def compute_same_day_multiplier(hours_remaining, origin_signal=None, day_of_week=None):
+    """
+    Compute same-day urgency multiplier.
+
+    Args:
+        hours_remaining: float, hours until end of business day (0-12)
+        origin_signal: str, signal label from dashboard (e.g. "Firming")
+        day_of_week: int, 0=Monday through 6=Sunday (auto-detected if None)
+
+    Returns dict with:
+        multiplier: float, total same-day multiplier (e.g. 1.57)
+        base_urgency: float, base component
+        time_decay: float, time decay component
+        market_factor: float, market tightness component
+        day_factor: float, day of week component
+        hours_remaining: float, hours used in calculation
+    """
+    import math
+
+    # Clamp hours to valid range
+    hours = max(0.5, min(SAME_DAY_MAX_HOURS, float(hours_remaining)))
+
+    # Time decay: power curve — ramps gradually early, steeper near end
+    # At 10h: ~1.04, at 6h: ~1.21, at 4h: ~1.33, at 2h: ~1.46, at 1h: ~1.53
+    urgency_ratio = (SAME_DAY_MAX_HOURS - hours) / SAME_DAY_MAX_HOURS
+    time_decay = 1.0 + SAME_DAY_MAX_PREMIUM * (urgency_ratio ** SAME_DAY_POWER)
+
+    # Market tightness from origin signal
+    market_factor = SAME_DAY_MARKET_FACTOR.get(origin_signal, 1.06)  # Default to Balanced
+
+    # Day of week
+    if day_of_week is None:
+        day_of_week = datetime.now().weekday()
+    day_factor = SAME_DAY_DOW_FACTOR.get(day_of_week, 1.00)
+
+    # Combined multiplier
+    multiplier = SAME_DAY_BASE_URGENCY * time_decay * market_factor * day_factor
+
+    return {
+        "multiplier": round(multiplier, 3),
+        "base_urgency": SAME_DAY_BASE_URGENCY,
+        "time_decay": round(time_decay, 3),
+        "market_factor": market_factor,
+        "day_factor": day_factor,
+        "hours_remaining": hours,
+    }
+
+
 def load_data():
     rate = pd.read_csv(os.path.join(DATA_DIR, "rate_matrix.csv"), index_col=0)
     stddev = pd.read_csv(os.path.join(DATA_DIR, "stddev_matrix.csv"), index_col=0)

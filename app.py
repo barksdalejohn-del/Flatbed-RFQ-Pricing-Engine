@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import io
+from datetime import datetime
 
 st.set_page_config(page_title="Flatbed Spot Pricing Tool", page_icon="🚛", layout="wide")
 
@@ -35,7 +36,7 @@ if not check_password():
     st.stop()
 
 from engine import (load_data, resolve_market, load_dashboard_signals, get_signal_staleness,
-                     compute_directional_adjustment, lookup_lane)
+                     compute_directional_adjustment, compute_same_day_multiplier, lookup_lane)
 from vision_reader import extract_rateview_data
 
 
@@ -224,9 +225,36 @@ target_margin = st.sidebar.slider("Target Margin %", 0, 25,
                                   format="%d%%") / 100
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("### Alerts")
+st.sidebar.markdown("### Alerts & Modes")
 deadhead_alert_on = st.sidebar.toggle("Soft Destination Alert (LTR < 20)", value=True,
                                        help="Warn when destination market LTR is below 20. Carriers may price in deadhead. Turn off in bear markets when low LTR is widespread.")
+
+# Same-Day Mode
+same_day_on = st.sidebar.toggle("⚡ Same-Day Quoting", value=False,
+                                 help="Apply urgency multiplier for same-day pickup. Adjusts carrier target based on time remaining, market tightness, and day of week.")
+same_day_hours = None
+same_day_time_label = None
+if same_day_on:
+    from datetime import datetime as dt_now
+    now = dt_now.now()
+    current_hour = now.hour
+    # Calculate hours remaining (assume 6pm cutoff)
+    hours_left_now = max(0.5, 18 - current_hour - (now.minute / 60))
+    now_label = f"Now ({now.strftime('%I:%M %p').lstrip('0')})"
+
+    time_options = {now_label: round(hours_left_now, 1)}
+    for h in range(max(7, current_hour + 1), 18):
+        label = f"{h if h <= 12 else h - 12}:00 {'AM' if h < 12 else 'PM'}"
+        time_options[label] = max(0.5, 18 - h)
+
+    selected_time = st.sidebar.selectbox("Pickup window", list(time_options.keys()),
+                                          help="When does the truck need to be there? Defaults to now.")
+    same_day_hours = time_options[selected_time]
+    same_day_time_label = selected_time
+
+    day_name = now.strftime("%A")
+    st.sidebar.caption(f"📅 {day_name} · {same_day_hours:.1f} hours remaining")
+
 st.sidebar.markdown("---")
 if dashboard_signals is not None:
     sig_staleness, sig_factor = get_signal_staleness(dashboard_signals)
@@ -437,10 +465,36 @@ quote_clicked = btn_col1.button("Get Quote", type="primary", use_container_width
 reset_clicked = btn_col2.button("🔄 New Quote", use_container_width=True)
 
 if reset_clicked:
-    for key in list(st.session_state.keys()):
-        if key not in ["password_correct"]:
-            del st.session_state[key]
-    st.rerun()
+    # If same-day is on, warn before resetting
+    if same_day_on:
+        if "same_day_confirm_reset" not in st.session_state:
+            st.session_state["same_day_confirm_reset"] = True
+            st.rerun()
+        else:
+            # Already showing confirmation — wait for button click below
+            pass
+    else:
+        for key in list(st.session_state.keys()):
+            if key not in ["password_correct"]:
+                del st.session_state[key]
+        st.rerun()
+
+# Same-day reset confirmation dialog
+if st.session_state.get("same_day_confirm_reset"):
+    st.warning("⚡ **Same-Day Mode is still ON.** Are you quoting another same-day load?")
+    confirm_col1, confirm_col2 = st.columns(2)
+    if confirm_col1.button("Yes, keep Same-Day ON", use_container_width=True):
+        del st.session_state["same_day_confirm_reset"]
+        for key in list(st.session_state.keys()):
+            if key not in ["password_correct", "same_day_confirm_reset"]:
+                del st.session_state[key]
+        st.rerun()
+    if confirm_col2.button("No, turn it OFF", use_container_width=True):
+        del st.session_state["same_day_confirm_reset"]
+        for key in list(st.session_state.keys()):
+            if key not in ["password_correct"]:
+                del st.session_state[key]
+        st.rerun()
 
 if quote_clicked:
 
@@ -580,23 +634,55 @@ if quote_clicked:
                 # 3. CARRIER TARGET
                 # ──────────────────────────────────────────────────────────
                 st.markdown("---")
-                st.markdown("### Carrier Target")
+
+                # Same-day multiplier
+                same_day_result = None
+                same_day_mult = 1.0
+                if same_day_on and same_day_hours is not None:
+                    orig_signal_label = directional.get("orig_signal") if directional else None
+                    same_day_result = compute_same_day_multiplier(
+                        same_day_hours,
+                        origin_signal=orig_signal_label,
+                        day_of_week=datetime.now().weekday()
+                    )
+                    same_day_mult = same_day_result["multiplier"]
+
+                if same_day_on and same_day_result:
+                    st.markdown("### ⚡ Carrier Target — Same-Day")
+                    # Show multiplier breakdown
+                    sd_cols = st.columns(4)
+                    sd_cols[0].metric("Base Urgency", f"{same_day_result['base_urgency']:.0%}")
+                    sd_cols[1].metric("Time Decay", f"{same_day_result['time_decay']:.2f}x",
+                                      delta=f"{same_day_result['hours_remaining']:.1f}h left")
+                    sd_cols[2].metric("Market Factor", f"{same_day_result['market_factor']:.2f}x",
+                                      delta=directional.get("orig_signal", "Unknown") if directional else "Unknown")
+                    sd_cols[3].metric("Day Factor", f"{same_day_result['day_factor']:.2f}x",
+                                      delta=datetime.now().strftime("%A"))
+
+                    st.caption(f"**Combined Same-Day Multiplier: {same_day_mult:.2f}x** "
+                               f"({(same_day_mult - 1) * 100:+.0f}% above regular pricing)")
+                    st.markdown("")
+                else:
+                    st.markdown("### Carrier Target")
 
                 carrier_base = best_fit
-                carrier_adjusted = carrier_base * (1 + dir_adj)
-                carrier_low = min(carrier_base, carrier_adjusted)
-                carrier_high = max(carrier_base, carrier_adjusted)
+                carrier_adjusted = carrier_base * (1 + dir_adj) * same_day_mult
+                carrier_low = min(carrier_base * same_day_mult, carrier_adjusted)
+                carrier_high = max(carrier_base * same_day_mult, carrier_adjusted)
 
                 ct1, ct2, ct3 = st.columns(3)
                 ct1.metric("Target Low", format_currency(carrier_low),
-                           delta=f"{((carrier_low / carrier_base - 1) * 100):+.1f}% vs Best Fit"
-                           if abs(carrier_low - carrier_base) > 1 else "At market")
-                ct2.metric("DAT Best Fit", format_currency(carrier_base))
+                           delta=f"{((carrier_low / best_fit - 1) * 100):+.1f}% vs Best Fit"
+                           if abs(carrier_low - best_fit) > 1 else "At market")
+                ct2.metric("DAT Best Fit", format_currency(best_fit))
                 ct3.metric("Target High", format_currency(carrier_high),
-                           delta=f"{((carrier_high / carrier_base - 1) * 100):+.1f}% vs Best Fit"
-                           if abs(carrier_high - carrier_base) > 1 else "At market")
+                           delta=f"{((carrier_high / best_fit - 1) * 100):+.1f}% vs Best Fit"
+                           if abs(carrier_high - best_fit) > 1 else "At market")
 
-                if dir_adj < -0.03:
+                if same_day_on:
+                    st.caption(f"⚡ Same-day adjusted. Regular Target High would be "
+                               f"{format_currency(best_fit * (1 + dir_adj))}.")
+                elif dir_adj < -0.03:
                     st.caption(f"Directional signal suggests carrier will discount "
                                f"{abs(dir_adj):.1%} below Best Fit. Push toward Target Low.")
                 elif dir_adj > 0.03:
@@ -701,9 +787,11 @@ if quote_clicked:
                     st.caption(f"StdDev: ${std_dev_used:,.0f} (source: {std_source}) | "
                                f"DAT Range: ${range_low:,.0f} - ${range_high:,.0f}")
 
-                    # Find breakeven
-                    carrier_mean = carrier_adjusted if abs(dir_adj) > 0.001 else best_fit
-                    breakeven = find_breakeven(best_fit, std_dev_used, carrier_mean)
+                    # Find breakeven — use same-day adjusted carrier if active
+                    carrier_mean = carrier_high if (abs(dir_adj) > 0.001 or same_day_mult > 1.0) else best_fit
+                    # Scale StdDev for same-day (wider uncertainty)
+                    ev_std_dev = std_dev_used * same_day_mult if same_day_mult > 1.0 else std_dev_used
+                    breakeven = find_breakeven(best_fit * same_day_mult, ev_std_dev, carrier_mean)
 
                     st.markdown(f"**Breakeven (EV=0): {format_currency(breakeven)}**")
 
@@ -774,7 +862,7 @@ if quote_clicked:
                     # Build EV table
                     ev_rows = []
                     for price in price_points:
-                        ev_result = calculate_ev(price, best_fit, std_dev_used, carrier_mean)
+                        ev_result = calculate_ev(price, best_fit * same_day_mult, ev_std_dev, carrier_mean)
                         ev_val = ev_result["ev_per_load"]
 
                         # Signal: red for negative, white for near-breakeven, green for positive
