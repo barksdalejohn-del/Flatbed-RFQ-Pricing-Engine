@@ -341,7 +341,7 @@ with qq1:
     st.markdown("**Origin**")
     # Default to City + State if vision extracted origin
     orig_method_options = ["Zip3", "City + State", "Market Code"]
-    orig_method_default = 1 if has_vision_origin else 0
+    orig_method_default = 1
     orig_method = st.radio("Input method", orig_method_options,
                            index=orig_method_default,
                            key="orig_method", horizontal=True)
@@ -362,7 +362,7 @@ with qq1:
 with qq2:
     st.markdown("**Destination**")
     dest_method_options = ["Zip3", "City + State", "Market Code"]
-    dest_method_default = 1 if has_vision_dest else 0
+    dest_method_default = 1
     dest_method = st.radio("Input method", dest_method_options,
                            index=dest_method_default,
                            key="dest_method", horizontal=True)
