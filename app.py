@@ -504,14 +504,14 @@ if quote_clicked:
                     with mi1:
                         ltr_8d_orig = directional.get("orig_ltr_8d", "---")
                         st.markdown(
-                            f"**Origin:** {orig_market} — "
+                            f"**Origin:** {orig_display} — "
                             f"<span style='color:{orig_color};font-weight:bold'>{orig_sig}</span> "
                             f"(LTR 8D: {ltr_8d_orig})",
                             unsafe_allow_html=True)
                     with mi2:
                         ltr_8d_dest = directional.get("dest_ltr_8d", "---")
                         st.markdown(
-                            f"**Dest:** {dest_market} — "
+                            f"**Dest:** {dest_display} — "
                             f"<span style='color:{dest_color};font-weight:bold'>{dest_sig}</span> "
                             f"(LTR 8D: {ltr_8d_dest})",
                             unsafe_allow_html=True)
@@ -654,47 +654,105 @@ if quote_clicked:
 
                     st.markdown(f"**Breakeven (EV=0): {format_currency(breakeven)}**")
 
-                    # Generate price points from breakeven to defensive
+                    # Confidence band label
+                    cv = std_dev_used / best_fit if best_fit > 0 else 0
+
+                    if cv < 0.05:
+                        vol_label = "LOW VOLATILITY"
+                        vol_color = "\U0001f7e2"
+                        vol_advice = "Carrier cost is highly predictable — quote with confidence."
+                    elif cv < 0.10:
+                        vol_label = "MODERATE VOLATILITY"
+                        vol_color = "\U0001f7e1"
+                        vol_advice = "Some cost uncertainty — target quote recommended."
+                    else:
+                        vol_label = "HIGH VOLATILITY"
+                        vol_color = "\U0001f534"
+                        vol_advice = "Carrier cost is unpredictable — budget defensively."
+
+                    # Data quality label based on rate_strength
+                    if rate_strength >= 70:
+                        quality_label = "GOOD"
+                    elif rate_strength >= 40:
+                        quality_label = "MODERATE"
+                    else:
+                        quality_label = "THIN"
+
+                    st.markdown(f"""
+**{vol_color} {vol_label}** (StdDev: ${std_dev_used:,.0f} | {cv*100:.1f}% of Best Fit)
+**DAT data quality: {quality_label}** ({rate_strength} strength, {reports} reports, {companies} companies)
+{vol_advice}
+""")
+
+                    # Generate wide-range price points
+                    range_start = round((best_fit - 2 * std_dev_used) / 50) * 50
+                    range_end = round((best_fit + 4 * std_dev_used) / 50) * 50
+
                     price_points = set()
+                    # Add $50 increments across the range
+                    p = range_start
+                    while p <= range_end:
+                        price_points.add(round(p, 2))
+                        p += 50
+                    # Always include breakeven and named price points
                     price_points.add(breakeven)
                     price_points.add(floor_agg)
                     price_points.add(floor_tgt)
                     price_points.add(floor_def)
+                    price_points.add(ceil_agg)
                     price_points.add(ceil_tgt)
                     price_points.add(ceil_def)
                     price_points = sorted(price_points)
+
+                    # Named price point labels for annotation
+                    named_points = {
+                        breakeven: "Breakeven",
+                        floor_agg: "Floor Aggr",
+                        floor_tgt: "Floor Tgt",
+                        floor_def: "Floor Def",
+                        ceil_agg: "Ceil Aggr",
+                        ceil_tgt: "Ceil Tgt",
+                        ceil_def: "Ceil Def",
+                    }
+
+                    # Find which price point is closest to breakeven
+                    closest_be_price = min(price_points, key=lambda p: abs(p - breakeven))
 
                     # Build EV table
                     ev_rows = []
                     for price in price_points:
                         ev_result = calculate_ev(price, best_fit, std_dev_used, carrier_mean)
+                        ev_val = ev_result["ev_per_load"]
+
+                        # Signal: red for negative, white for near-breakeven, green for positive
+                        if abs(ev_val) <= 5:
+                            signal = "\u26aa"
+                        elif ev_val < 0:
+                            signal = "\U0001f534"
+                        else:
+                            signal = "\U0001f7e2"
+
+                        label = named_points.get(price, "")
+                        is_breakeven_row = (price == closest_be_price)
+
+                        quote_str = format_currency(price)
+                        if label:
+                            quote_str = f"{quote_str} ({label})"
+                        if is_breakeven_row:
+                            quote_str = f"**{quote_str}**"
+
                         ev_rows.append({
-                            "Quote": format_currency(price),
-                            "EV/Load": format_currency(ev_result["ev_per_load"]),
+                            "Quote": quote_str,
+                            "EV/Load": format_currency(ev_val),
                             "100-Load": format_currency(ev_result["expected_100"]),
                             "P(Profit)": f"{ev_result['p_profit']:.0%}",
-                            "Signal": ev_result["signal"],
-                            "_ev": ev_result["ev_per_load"],
+                            "Signal": signal,
+                            "_ev": ev_val,
                             "_price": price,
                         })
 
                     ev_df = pd.DataFrame(ev_rows)
-
-                    # Color code the table
-                    def color_ev_row(row):
-                        if row["_ev"] > 0:
-                            return ["background-color: rgba(63, 185, 80, 0.15)"] * len(row)
-                        elif row["_ev"] < 0:
-                            return ["background-color: rgba(248, 81, 73, 0.15)"] * len(row)
-                        return [""] * len(row)
-
                     display_ev = ev_df[["Quote", "EV/Load", "100-Load", "P(Profit)", "Signal"]]
-                    styled = ev_df.style.apply(color_ev_row, axis=1).format(
-                        subset=["Quote", "EV/Load", "100-Load", "P(Profit)", "Signal"],
-                        formatter=lambda x: x
-                    )
-
-                    # Use a simpler display approach
                     st.dataframe(display_ev, hide_index=True, use_container_width=True)
 
                     # Highlight key insight
