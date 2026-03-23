@@ -224,7 +224,9 @@ target_margin = st.sidebar.slider("Target Margin %", 0, 25,
                                   format="%d%%") / 100
 
 st.sidebar.markdown("---")
-# Dashboard signals status
+st.sidebar.markdown("### Alerts")
+deadhead_alert_on = st.sidebar.toggle("Soft Destination Alert (LTR < 20)", value=True,
+                                       help="Warn when destination market LTR is below 20. Carriers may price in deadhead. Turn off in bear markets when low LTR is widespread.")
 st.sidebar.markdown("---")
 if dashboard_signals is not None:
     sig_staleness, sig_factor = get_signal_staleness(dashboard_signals)
@@ -561,6 +563,16 @@ if quote_clicked:
 
                     if directional.get("momentum_applied"):
                         st.caption("Momentum confirms direction — additional +/-2% applied")
+
+                    # Soft destination alert
+                    if deadhead_alert_on:
+                        dest_ltr = directional.get("dest_ltr_8d")
+                        if dest_ltr is not None and isinstance(dest_ltr, (int, float)) and dest_ltr < 20:
+                            st.warning(
+                                f"**DESTINATION ALERT: {dest_mkt_display} — LTR {dest_ltr}**\n\n"
+                                f"Extremely low demand at destination. Carrier may price in deadhead. "
+                                f"Review market conditions before quoting."
+                            )
                 else:
                     st.caption("No directional signals available — using market-neutral pricing")
 
