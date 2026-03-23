@@ -411,9 +411,19 @@ else:
                                                step=1, value=0, key="manual_strength")
 
 
-# --- Get Quote Button ---
+# --- Get Quote / Reset Buttons ---
 st.markdown("---")
-if st.button("Get Quote", type="primary", use_container_width=True):
+btn_col1, btn_col2 = st.columns([3, 1])
+quote_clicked = btn_col1.button("Get Quote", type="primary", use_container_width=True)
+reset_clicked = btn_col2.button("🔄 New Quote", use_container_width=True)
+
+if reset_clicked:
+    for key in list(st.session_state.keys()):
+        if key not in ["authenticated"]:
+            del st.session_state[key]
+    st.rerun()
+
+if quote_clicked:
 
     # Resolve markets
     orig_market, orig_city, orig_st = resolve_market(orig_val, orig_state_val, data)
