@@ -30,6 +30,15 @@ Extract the Origin and Destination shown at the top of the screen:
 - dest_city: city name from the Destination field (e.g. "Sumner")
 - dest_state: two-letter state abbreviation from the Destination field (e.g. "WA")
 
+IMPORTANT - Extract the DAT MARKET names from the Lane Trend header. This is shown as
+"Lane Trend (Origin Mkt - Dest Mkt)" and these are the actual DAT market names, which
+may differ from the cities typed in the origin/destination fields above.
+For example if it says "Lane Trend (Savannah Mkt - Grand Rapids Mkt)" then:
+- origin_market_name: "Savannah" (just the city name, no "Mkt" suffix)
+- origin_market_state: the state for that market (e.g. "GA" for Savannah)
+- dest_market_name: "Grand Rapids" (just the city name, no "Mkt" suffix)
+- dest_market_state: the state for that market (e.g. "MI" for Grand Rapids)
+
 Extract from the rate panel:
 - best_fit: the Best Fit rate (total dollar amount including fuel, e.g. 3091)
 - range_low: the low end of the range (e.g. 2734)
@@ -49,21 +58,25 @@ If any field is not visible in the screenshot, set it to null.
 
 Return ONLY valid JSON, no other text. Example format:
 {
-  "origin_city": "Vernon",
-  "origin_state": "CA",
-  "dest_city": "Sumner",
-  "dest_state": "WA",
-  "best_fit": 3091,
-  "range_low": 2734,
-  "range_high": 3482,
-  "rate_strength": 57,
+  "origin_city": "Savannah",
+  "origin_state": "GA",
+  "dest_city": "Lansing",
+  "dest_state": "MI",
+  "origin_market_name": "Savannah",
+  "origin_market_state": "GA",
+  "dest_market_name": "Grand Rapids",
+  "dest_market_state": "MI",
+  "best_fit": 2951,
+  "range_low": 2643,
+  "range_high": 3372,
+  "rate_strength": 70,
   "reports": 7,
   "companies": 6,
-  "fuel_included": 848,
-  "miles": 1116,
+  "fuel_included": 710,
+  "miles": null,
   "lane_trend": [
-    {"date": "Feb 26", "low": 2355, "mid": 2578, "high": 2879},
-    {"date": "Jan 26", "low": 2433, "mid": 2623, "high": 3069}
+    {"date": "Feb 26", "low": 1728, "mid": 2214, "high": 2783},
+    {"date": "Jan 26", "low": 1877, "mid": 2027, "high": 2522}
   ]
 }"""
 

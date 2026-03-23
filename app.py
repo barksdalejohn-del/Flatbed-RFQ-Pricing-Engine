@@ -462,11 +462,19 @@ if quote_clicked:
         if best_fit <= 0:
             st.error("Enter a Best Fit rate (from screenshot or manual input) to generate a quote.")
         else:
+            # Use DAT market names from Lane Trend header for signal lookup (most accurate)
+            # Falls back to user-entered city names if market names not available
+            vd = st.session_state.get("vision_data") or {}
+            signal_orig_city = vd.get("origin_market_name") or orig_city
+            signal_orig_state = vd.get("origin_market_state") or orig_st
+            signal_dest_city = vd.get("dest_market_name") or dest_city
+            signal_dest_state = vd.get("dest_market_state") or dest_st
+
             # Get directional adjustment
             directional = compute_directional_adjustment(orig_market, dest_market,
                                                          dashboard_signals, term=0,
-                                                         orig_city=orig_city, orig_state=orig_st,
-                                                         dest_city=dest_city, dest_state=dest_st)
+                                                         orig_city=signal_orig_city, orig_state=signal_orig_state,
+                                                         dest_city=signal_dest_city, dest_state=signal_dest_state)
             dir_adj = directional["adjustment_pct"]
             orig_sig = directional.get("orig_signal")
             dest_sig = directional.get("dest_signal")
@@ -502,18 +510,22 @@ if quote_clicked:
                     orig_color = SIGNAL_COLORS.get(orig_sig, "#8b949e")
                     dest_color = SIGNAL_COLORS.get(dest_sig, "#8b949e")
 
+                    # Show market names (from Lane Trend header) for signal context
+                    orig_mkt_display = f"{signal_orig_city.title()}, {signal_orig_state.upper()}" if signal_orig_city else orig_display
+                    dest_mkt_display = f"{signal_dest_city.title()}, {signal_dest_state.upper()}" if signal_dest_city else dest_display
+
                     mi1, mi2 = st.columns(2)
                     with mi1:
                         ltr_8d_orig = directional.get("orig_ltr_8d", "---")
                         st.markdown(
-                            f"**Origin:** {orig_display} — "
+                            f"**Origin:** {orig_mkt_display} — "
                             f"<span style='color:{orig_color};font-weight:bold'>{orig_sig}</span> "
                             f"(LTR 8D: {ltr_8d_orig})",
                             unsafe_allow_html=True)
                     with mi2:
                         ltr_8d_dest = directional.get("dest_ltr_8d", "---")
                         st.markdown(
-                            f"**Dest:** {dest_display} — "
+                            f"**Dest:** {dest_mkt_display} — "
                             f"<span style='color:{dest_color};font-weight:bold'>{dest_sig}</span> "
                             f"(LTR 8D: {ltr_8d_dest})",
                             unsafe_allow_html=True)
