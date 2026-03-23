@@ -63,23 +63,25 @@ st.markdown("""
 # ──────────────────────────────────────────────────────────────────────────────
 
 def calculate_ev(quote_price, best_fit, std_dev, carrier_adj=None):
-    """Calculate Expected Value for a given quote price.
+    """Calculate Expected Value using log-normal distribution.
+
+    Trucking rates are right-skewed (hard floor, long right tail from spikes).
+    Log-normal captures this better than normal distribution.
 
     Args:
         quote_price: what we'd charge the customer (all-in)
         best_fit: DAT Best Fit (our best estimate of carrier cost)
-        std_dev: standard deviation of carrier costs
+        std_dev: standard deviation of carrier costs (in dollar terms)
         carrier_adj: directionally adjusted carrier cost (if different from best_fit)
 
     Returns dict with ev_per_load, p_profit, expected_100_loads, signal
     """
-    from scipy.stats import norm
+    import numpy as np
+    from scipy.stats import lognorm
 
-    # Use adjusted carrier cost as the mean if provided
     mean_cost = carrier_adj if carrier_adj else best_fit
 
-    if std_dev <= 0:
-        # No volatility data - simple margin calc
+    if std_dev <= 0 or mean_cost <= 0:
         margin = quote_price - mean_cost
         return {
             "ev_per_load": margin,
@@ -88,26 +90,39 @@ def calculate_ev(quote_price, best_fit, std_dev, carrier_adj=None):
             "signal": "+" if margin > 0 else "-"
         }
 
+    # Convert dollar-space mean/std to log-normal parameters
+    # If X ~ LogNormal(mu, sigma), then E[X] = exp(mu + sigma^2/2)
+    # and Var[X] = (exp(sigma^2) - 1) * exp(2*mu + sigma^2)
+    cv = std_dev / mean_cost  # coefficient of variation
+    sigma_sq = np.log(1 + cv**2)
+    sigma = np.sqrt(sigma_sq)
+    mu = np.log(mean_cost) - sigma_sq / 2
+
     # P(carrier cost <= quote_price) = P(we make money)
-    p_profit = norm.cdf(quote_price, loc=mean_cost, scale=std_dev)
+    if quote_price <= 0:
+        p_profit = 0.0
+    else:
+        p_profit = lognorm.cdf(quote_price, s=sigma, scale=np.exp(mu))
 
-    # Expected profit when we win (carrier cost < quote)
-    # E[profit | win] = quote - E[carrier_cost | carrier_cost < quote]
-    # E[X | X < a] = mu - sigma * phi((a-mu)/sigma) / Phi((a-mu)/sigma)
-    z = (quote_price - mean_cost) / std_dev
-    phi_z = norm.pdf(z)  # standard normal PDF at z
-    Phi_z = norm.cdf(z)  # standard normal CDF at z
-
-    if Phi_z > 0.001:
-        expected_cost_when_win = mean_cost - std_dev * (phi_z / Phi_z)
+    # E[X | X < a] for log-normal (truncated mean)
+    # E[X | X < a] = E[X] * Phi((log(a) - mu - sigma^2) / sigma) / Phi((log(a) - mu) / sigma)
+    from scipy.stats import norm
+    if p_profit > 0.001 and quote_price > 0:
+        log_a = np.log(quote_price)
+        z1 = (log_a - mu - sigma_sq) / sigma
+        z2 = (log_a - mu) / sigma
+        expected_cost_when_win = mean_cost * norm.cdf(z1) / norm.cdf(z2)
         expected_profit_when_win = quote_price - expected_cost_when_win
     else:
         expected_profit_when_win = 0
 
-    # Expected loss when we lose (carrier cost > quote)
+    # E[X | X > a] for log-normal
     p_loss = 1 - p_profit
-    if p_loss > 0.001:
-        expected_cost_when_lose = mean_cost + std_dev * (phi_z / (1 - Phi_z))
+    if p_loss > 0.001 and quote_price > 0:
+        log_a = np.log(quote_price)
+        z1 = (log_a - mu - sigma_sq) / sigma
+        z2 = (log_a - mu) / sigma
+        expected_cost_when_lose = mean_cost * (1 - norm.cdf(z1)) / (1 - norm.cdf(z2))
         expected_loss_when_lose = expected_cost_when_lose - quote_price
     else:
         expected_loss_when_lose = 0
@@ -640,24 +655,36 @@ if quote_clicked:
                     st.markdown("---")
                     st.markdown("### Expected Value Analysis")
 
-                    # Calculate StdDev from DAT range
+                    # Calculate StdDev — blended approach
+                    # 1. Current range StdDev (today's carrier spread)
                     dat_std_dev = (range_high - range_low) / 4.0
 
-                    # If 13-month history available, use historical StdDev
-                    hist_std_dev = None
-                    if lane_trend and len(lane_trend) >= 2:
-                        monthly_stds = []
-                        for month in lane_trend:
-                            m_low = month.get("low")
-                            m_high = month.get("high")
-                            if m_low and m_high and m_high > m_low:
-                                monthly_stds.append((m_high - m_low) / 4.0)
-                        if monthly_stds:
-                            hist_std_dev = sum(monthly_stds) / len(monthly_stds)
+                    # 2. Historical StdDev from 13-month Mid values (market movement)
+                    hist_mid_std = None
+                    hist_range_std = None
+                    if lane_trend and len(lane_trend) >= 3:
+                        import numpy as np
+                        # StdDev of Mid values — measures how much the market rate moves
+                        mids = [m.get("mid") for m in lane_trend if m.get("mid")]
+                        if len(mids) >= 3:
+                            hist_mid_std = float(np.std(mids, ddof=1))
 
-                    std_dev_used = hist_std_dev if hist_std_dev else dat_std_dev
-                    std_source = (f"Historical ({len(lane_trend)} months)"
-                                  if hist_std_dev else "DAT Range")
+                        # Recent 3-month Mid StdDev (weighted toward current conditions)
+                        recent_mids = mids[:3] if len(mids) >= 3 else mids
+                        recent_mid_std = float(np.std(recent_mids, ddof=1)) if len(recent_mids) >= 2 else None
+
+                    # Blended: 50% current range + 30% recent Mid + 20% full Mid
+                    if hist_mid_std and recent_mid_std:
+                        std_dev_used = (0.5 * dat_std_dev +
+                                        0.3 * recent_mid_std +
+                                        0.2 * hist_mid_std)
+                        std_source = f"Blended ({len(lane_trend)} months)"
+                    elif hist_mid_std:
+                        std_dev_used = (0.6 * dat_std_dev + 0.4 * hist_mid_std)
+                        std_source = f"Blended ({len(lane_trend)} months)"
+                    else:
+                        std_dev_used = dat_std_dev
+                        std_source = "DAT Range"
 
                     st.caption(f"StdDev: ${std_dev_used:,.0f} (source: {std_source}) | "
                                f"DAT Range: ${range_low:,.0f} - ${range_high:,.0f}")
