@@ -38,6 +38,19 @@ def load_dashboard_signals():
         return None
     with open(signals_path) as f:
         signals = json.load(f)
+
+    # Build city name lookup for direct matching (bypasses DAT market codes)
+    city_lookup = {}
+    for code, data in signals.get("markets", {}).items():
+        if isinstance(data, dict) and "market_name" in data:
+            name = data["market_name"].strip().upper()
+            city_lookup[name] = data
+            # Also add just city name without state for fuzzy matching
+            city_only = name.split(",")[0].strip()
+            if city_only not in city_lookup:
+                city_lookup[city_only] = data
+    signals["_city_lookup"] = city_lookup
+
     return signals
 
 
@@ -80,15 +93,30 @@ DAT_TO_DASHBOARD_MAP = {
 }
 
 
-def get_market_pressure(market_code, signals):
-    """Look up pressure score for a DAT market code. Falls back to state level."""
+def get_market_pressure(market_code, signals, city_name=None, state=None):
+    """Look up pressure score. Tries city name first, then DAT code, then state fallback."""
     if signals is None:
         return None, None, None
 
+    # Try city name lookup first (most reliable for spot quotes)
+    city_lookup = signals.get("_city_lookup", {})
+    if city_name:
+        # Try "CITY, ST" format
+        if state:
+            full_name = f"{city_name.strip().upper()}, {state.strip().upper()}"
+            if full_name in city_lookup:
+                m = city_lookup[full_name]
+                return m.get("pressure_score"), m.get("signal"), m.get("momentum")
+        # Try city name only
+        city_only = city_name.strip().upper()
+        if city_only in city_lookup:
+            m = city_lookup[city_only]
+            return m.get("pressure_score"), m.get("signal"), m.get("momentum")
+
     markets = signals.get("markets", {})
 
-    # Try market-level first (exact match)
-    if market_code in markets:
+    # Try market-level by code (exact match)
+    if market_code and market_code in markets:
         m = markets[market_code]
         return m.get("pressure_score"), m.get("signal"), m.get("momentum")
 
@@ -99,16 +127,18 @@ def get_market_pressure(market_code, signals):
         return m.get("pressure_score"), m.get("signal"), m.get("momentum")
 
     # Fall back to state-level
-    state = market_code[:2] if market_code else None
+    st = state or (market_code[:2] if market_code else None)
     states = signals.get("states", {})
-    if state and state in states:
-        s = states[state]
+    if st and st.upper() in states:
+        s = states[st.upper()]
         return s.get("pressure_score"), s.get("signal"), s.get("momentum")
 
     return None, None, None
 
 
-def compute_directional_adjustment(orig_market, dest_market, signals, term=0):
+def compute_directional_adjustment(orig_market, dest_market, signals, term=0,
+                                    orig_city=None, orig_state=None,
+                                    dest_city=None, dest_state=None):
     """
     Compute the directional pricing adjustment based on origin/destination market pressure.
 
@@ -135,9 +165,11 @@ def compute_directional_adjustment(orig_market, dest_market, signals, term=0):
     # Get staleness
     staleness_days, staleness_factor = get_signal_staleness(signals)
 
-    # Get pressure scores
-    orig_pressure, orig_signal, orig_momentum = get_market_pressure(orig_market, signals)
-    dest_pressure, dest_signal, dest_momentum = get_market_pressure(dest_market, signals)
+    # Get pressure scores (city name lookup first, then code fallback)
+    orig_pressure, orig_signal, orig_momentum = get_market_pressure(
+        orig_market, signals, city_name=orig_city, state=orig_state)
+    dest_pressure, dest_signal, dest_momentum = get_market_pressure(
+        dest_market, signals, city_name=dest_city, state=dest_state)
 
     # Get LTR values for display
     orig_ltr_8d, orig_ltr_30d = None, None
@@ -348,7 +380,8 @@ def get_liq_adjustment(liq_tier, params):
     return params["liq_adj_table"].get(liq_tier, 0.0)
 
 
-def price_lane(orig_market, dest_market, data, params_override=None, dashboard_signals=None):
+def price_lane(orig_market, dest_market, data, params_override=None, dashboard_signals=None,
+               orig_city=None, orig_state=None, dest_city=None, dest_state=None):
     params = data["params"].copy()
     if params_override:
         params.update(params_override)
@@ -373,7 +406,9 @@ def price_lane(orig_market, dest_market, data, params_override=None, dashboard_s
     fsc = params.get("fsc_per_mile", 0.53)
 
     # --- Compute directional adjustment ---
-    directional = compute_directional_adjustment(orig_market, dest_market, dashboard_signals, term)
+    directional = compute_directional_adjustment(orig_market, dest_market, dashboard_signals, term,
+                                                  orig_city=orig_city, orig_state=orig_state,
+                                                  dest_city=dest_city, dest_state=dest_state)
     dir_adj_pct = directional["adjustment_pct"]
 
     vol_buffer = get_vol_buffer(vol_tier, confidence, term, params)
@@ -632,7 +667,9 @@ def price_rfq(rfq_df, data, state_rates=None, params_override=None, dashboard_si
             })
             continue
 
-        pricing = price_lane(orig_market, dest_market, data, params_override, dashboard_signals)
+        pricing = price_lane(orig_market, dest_market, data, params_override, dashboard_signals,
+                             orig_city=orig_city, orig_state=orig_st,
+                             dest_city=dest_city, dest_state=dest_st)
         if pricing is None:
             results.append({"ta_id": idx + 1, "status": "NO DATA", "orig_market": orig_market, "dest_market": dest_market})
             continue

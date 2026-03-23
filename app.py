@@ -464,7 +464,9 @@ if quote_clicked:
         else:
             # Get directional adjustment
             directional = compute_directional_adjustment(orig_market, dest_market,
-                                                         dashboard_signals, term=0)
+                                                         dashboard_signals, term=0,
+                                                         orig_city=orig_city, orig_state=orig_st,
+                                                         dest_city=dest_city, dest_state=dest_st)
             dir_adj = directional["adjustment_pct"]
             orig_sig = directional.get("orig_signal")
             dest_sig = directional.get("dest_signal")
