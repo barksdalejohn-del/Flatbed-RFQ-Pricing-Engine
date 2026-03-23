@@ -68,15 +68,34 @@ def normalize_pressure(pressure_score):
     return (pressure_score - BALANCED_MIDPOINT) / NORMALIZATION_RANGE
 
 
+DAT_TO_DASHBOARD_MAP = {
+    "CA_FRS": "CA_FRE", "CA_LAX": "CA_LOS", "CA_SDI": "CA_SDI",  # San Diego — no match, use state
+    "CA_SFR": "CA_SAN", "CA_STK": "CA_STO", "FL_JAX": "FL_JAC",
+    "IL_RFD": "IL_ROC", "IN_FTW": "IN_FT ", "IN_GRY": "IN_GAR",
+    "IN_SBD": "IN_S B", "MI_RAP": "MI_GRA", "MN_STC": "MN_ST ",
+    "MO_GIR": "MO_CAP", "MO_STL": "MO_ST ", "NE_NPL": "NE_N P",
+    "NV_VEG": "NV_LAS", "NY_BRN": "NY_BRO", "OK_OKC": "OK_OKL",
+    "SD_SXF": "SD_SIO", "TX_ANT": "TX_ALB", "TX_ELP": "TX_EL ",
+    "TX_FTW": "TX_FT ", "UT_SLC": "UT_SAL", "VA_RCH": "VA_RIC",
+}
+
+
 def get_market_pressure(market_code, signals):
     """Look up pressure score for a DAT market code. Falls back to state level."""
     if signals is None:
         return None, None, None
 
-    # Try market-level first
     markets = signals.get("markets", {})
+
+    # Try market-level first (exact match)
     if market_code in markets:
         m = markets[market_code]
+        return m.get("pressure_score"), m.get("signal"), m.get("momentum")
+
+    # Try mapped code (DAT codes that differ from dashboard codes)
+    mapped = DAT_TO_DASHBOARD_MAP.get(market_code)
+    if mapped and mapped in markets:
+        m = markets[mapped]
         return m.get("pressure_score"), m.get("signal"), m.get("momentum")
 
     # Fall back to state-level
