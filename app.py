@@ -234,26 +234,43 @@ same_day_on = st.sidebar.toggle("⚡ Same-Day Quoting", value=False,
                                  help="Apply urgency multiplier for same-day pickup. Adjusts carrier target based on time remaining, market tightness, and day of week.")
 same_day_hours = None
 same_day_time_label = None
+same_day_dow = None
 if same_day_on:
-    from datetime import datetime as dt_now
-    now = dt_now.now()
-    current_hour = now.hour
-    # Calculate hours remaining (assume 6pm cutoff)
-    hours_left_now = max(0.5, 18 - current_hour - (now.minute / 60))
-    now_label = f"Now ({now.strftime('%I:%M %p').lstrip('0')})"
+    import pytz
+    central = pytz.timezone("US/Central")
+    now_central = datetime.now(central)
+    today_dow = now_central.weekday()  # 0=Mon through 6=Sun
+    current_hour_central = now_central.hour
 
-    time_options = {now_label: round(hours_left_now, 1)}
-    for h in range(max(7, current_hour + 1), 18):
-        label = f"{h if h <= 12 else h - 12}:00 {'AM' if h < 12 else 'PM'}"
-        time_options[label] = max(0.5, 18 - h)
+    # Day of week selector
+    day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    selected_day = st.sidebar.selectbox("Day", day_names, index=today_dow,
+                                         help="Defaults to today (Central time). Change to backtest past scenarios.")
+    same_day_dow = day_names.index(selected_day)
 
-    selected_time = st.sidebar.selectbox("Pickup window", list(time_options.keys()),
-                                          help="When does the truck need to be there? Defaults to now.")
+    # Time selector — 6 AM through 5 PM
+    time_options = {}
+    for h in range(6, 18):
+        if h < 12:
+            label = f"{h}:00 AM"
+        elif h == 12:
+            label = "12:00 PM"
+        else:
+            label = f"{h - 12}:00 PM"
+        hours_remaining = max(0.5, 18 - h)
+        time_options[label] = hours_remaining
+
+    # Default to current hour in Central (clamped to 6am-5pm range)
+    default_hour = max(6, min(17, current_hour_central))
+    default_index = default_hour - 6
+
+    selected_time = st.sidebar.selectbox("Time of quote", list(time_options.keys()),
+                                          index=default_index,
+                                          help="Defaults to current hour (Central time). Change to backtest past scenarios.")
     same_day_hours = time_options[selected_time]
     same_day_time_label = selected_time
 
-    day_name = now.strftime("%A")
-    st.sidebar.caption(f"📅 {day_name} · {same_day_hours:.1f} hours remaining")
+    st.sidebar.caption(f"📅 {selected_day} · {selected_time} · {same_day_hours:.1f} hours remaining")
 
 st.sidebar.markdown("---")
 if dashboard_signals is not None:
@@ -643,7 +660,7 @@ if quote_clicked:
                     same_day_result = compute_same_day_multiplier(
                         same_day_hours,
                         origin_signal=orig_signal_label,
-                        day_of_week=datetime.now().weekday()
+                        day_of_week=same_day_dow
                     )
                     same_day_mult = same_day_result["multiplier"]
 
@@ -656,8 +673,9 @@ if quote_clicked:
                                       delta=f"{same_day_result['hours_remaining']:.1f}h left")
                     sd_cols[2].metric("Market Factor", f"{same_day_result['market_factor']:.2f}x",
                                       delta=directional.get("orig_signal", "Unknown") if directional else "Unknown")
+                    day_names_display = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
                     sd_cols[3].metric("Day Factor", f"{same_day_result['day_factor']:.2f}x",
-                                      delta=datetime.now().strftime("%A"))
+                                      delta=day_names_display[same_day_dow] if same_day_dow is not None else "Unknown")
 
                     st.caption(f"**Combined Same-Day Multiplier: {same_day_mult:.2f}x** "
                                f"({(same_day_mult - 1) * 100:+.0f}% above regular pricing)")
