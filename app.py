@@ -359,12 +359,8 @@ with qq1:
         orig_val = st.text_input("Origin Zip3", placeholder="770", key="orig_zip")
         orig_state_val = None
     elif orig_method == "City + State":
-        orig_city_default = vd_for_lane.get("origin_city", "").upper() if has_vision_origin else ""
-        orig_state_default = vd_for_lane.get("origin_state", "").upper() if has_vision_origin else ""
-        orig_val = st.text_input("Origin City", value=orig_city_default,
-                                 placeholder="HOUSTON", key="orig_city_q")
-        orig_state_val = st.text_input("Origin State", value=orig_state_default,
-                                       placeholder="TX", key="orig_state_q")
+        orig_val = st.text_input("Origin City", placeholder="HOUSTON", key="orig_city_q")
+        orig_state_val = st.text_input("Origin State", placeholder="TX", key="orig_state_q")
     else:
         orig_val = st.text_input("Origin Market", placeholder="TX_HOU", key="orig_mkt")
         orig_state_val = None
@@ -380,12 +376,8 @@ with qq2:
         dest_val = st.text_input("Dest Zip3", placeholder="606", key="dest_zip")
         dest_state_val = None
     elif dest_method == "City + State":
-        dest_city_default = vd_for_lane.get("dest_city", "").upper() if has_vision_dest else ""
-        dest_state_default = vd_for_lane.get("dest_state", "").upper() if has_vision_dest else ""
-        dest_val = st.text_input("Dest City", value=dest_city_default,
-                                 placeholder="CHICAGO", key="dest_city_q")
-        dest_state_val = st.text_input("Dest State", value=dest_state_default,
-                                       placeholder="IL", key="dest_state_q")
+        dest_val = st.text_input("Dest City", placeholder="CHICAGO", key="dest_city_q")
+        dest_state_val = st.text_input("Dest State", placeholder="IL", key="dest_state_q")
     else:
         dest_val = st.text_input("Dest Market", placeholder="IL_CHI", key="dest_mkt")
         dest_state_val = None
