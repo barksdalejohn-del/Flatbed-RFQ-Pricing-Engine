@@ -485,7 +485,10 @@ if quote_clicked:
                 # ──────────────────────────────────────────────────────────
                 # 1. LANE HEADER
                 # ──────────────────────────────────────────────────────────
-                st.success(f"**{orig_market} -> {dest_market}** | {miles:,} miles")
+                # Display city/state if available, market code as fallback
+                orig_display = f"{orig_city}, {orig_st}" if orig_city and orig_st else orig_market
+                dest_display = f"{dest_city}, {dest_st}" if dest_city and dest_st else dest_market
+                st.success(f"**{orig_display} → {dest_display}** | {miles:,} miles")
 
                 # ──────────────────────────────────────────────────────────
                 # 2. MARKET INTELLIGENCE
