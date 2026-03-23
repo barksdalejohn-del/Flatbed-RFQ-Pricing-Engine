@@ -41,14 +41,21 @@ def load_dashboard_signals():
 
     # Build city name lookup for direct matching (bypasses DAT market codes)
     city_lookup = {}
+    # Track which city-only names have duplicates across states
+    city_only_entries = {}
     for code, data in signals.get("markets", {}).items():
         if isinstance(data, dict) and "market_name" in data:
             name = data["market_name"].strip().upper()
-            city_lookup[name] = data
-            # Also add just city name without state for fuzzy matching
+            city_lookup[name] = data  # "CITY, ST" format — always unique
             city_only = name.split(",")[0].strip()
-            if city_only not in city_lookup:
-                city_lookup[city_only] = data
+            if city_only not in city_only_entries:
+                city_only_entries[city_only] = []
+            city_only_entries[city_only].append(data)
+    # Only add city-only keys when there's no ambiguity (single state)
+    for city_only, entries in city_only_entries.items():
+        if len(entries) == 1:
+            city_lookup[city_only] = entries[0]
+        # Duplicates (e.g. Kansas City KS/MO) — skip city-only, require "City, ST" format
     signals["_city_lookup"] = city_lookup
 
     return signals

@@ -35,9 +35,15 @@ IMPORTANT - Extract the DAT MARKET names from the Lane Trend header. This is sho
 may differ from the cities typed in the origin/destination fields above.
 For example if it says "Lane Trend (Savannah Mkt - Grand Rapids Mkt)" then:
 - origin_market_name: "Savannah" (just the city name, no "Mkt" suffix)
-- origin_market_state: the state for that market (e.g. "GA" for Savannah)
+- origin_market_state: the state for that market. Determine this from the Origin field
+  at the top of the screen. For example if Origin shows "Pooler, GA" and the Lane Trend
+  says "Savannah Mkt", then origin_market_state is "GA".
 - dest_market_name: "Grand Rapids" (just the city name, no "Mkt" suffix)
-- dest_market_state: the state for that market (e.g. "MI" for Grand Rapids)
+- dest_market_state: the state for that market. Determine this from the Destination field.
+  For example if Destination shows "Lansing, MI" and Lane Trend says "Grand Rapids Mkt",
+  then dest_market_state is "MI".
+NOTE: Some market names exist in multiple states (e.g. Kansas City KS/MO, Greenville NC/SC).
+Getting the state correct is critical — always use the Origin/Destination state fields.
 
 Extract from the rate panel:
 - best_fit: the Best Fit rate (total dollar amount including fuel, e.g. 3091)
