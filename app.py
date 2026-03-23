@@ -280,7 +280,17 @@ if screenshot_image_bytes is not None:
             st.info("Use the manual input fields below instead.")
         else:
             st.session_state["vision_data"] = extracted
+            # Force-update origin/dest text input fields with extracted values
+            if extracted.get("origin_city"):
+                st.session_state["orig_city_q"] = extracted["origin_city"].upper()
+            if extracted.get("origin_state"):
+                st.session_state["orig_state_q"] = extracted["origin_state"].upper()
+            if extracted.get("dest_city"):
+                st.session_state["dest_city_q"] = extracted["dest_city"].upper()
+            if extracted.get("dest_state"):
+                st.session_state["dest_state_q"] = extracted["dest_state"].upper()
             st.success("Data extracted successfully!")
+            st.rerun()
 
     # Show extracted data for confirmation
     if st.session_state["vision_data"] is not None:
