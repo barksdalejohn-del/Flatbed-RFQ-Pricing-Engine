@@ -558,29 +558,7 @@ if st.button("Get Quote", type="primary", use_container_width=True):
                 aggressive_margin = max(target_margin - 0.04, 0.05)
                 defensive_margin = target_margin + 0.04
 
-                # Floor row — based on Target Low
-                st.markdown("**Floor** (cost basis: Target Low)")
-                f1, f2, f3 = st.columns(3)
-
-                floor_agg = round(carrier_low * (1 + aggressive_margin), 2)
-                floor_tgt = round(carrier_low * (1 + target_margin), 2)
-                floor_def = round(carrier_low * (1 + defensive_margin), 2)
-
-                floor_agg_margin_d = floor_agg - carrier_low
-                floor_agg_margin_p = floor_agg_margin_d / floor_agg * 100 if floor_agg else 0
-                floor_tgt_margin_d = floor_tgt - carrier_low
-                floor_tgt_margin_p = floor_tgt_margin_d / floor_tgt * 100 if floor_tgt else 0
-                floor_def_margin_d = floor_def - carrier_low
-                floor_def_margin_p = floor_def_margin_d / floor_def * 100 if floor_def else 0
-
-                f1.metric("Aggressive", format_currency(floor_agg),
-                          delta=f"${floor_agg_margin_d:,.0f} | {floor_agg_margin_p:.1f}%")
-                f2.metric("Target", format_currency(floor_tgt),
-                          delta=f"${floor_tgt_margin_d:,.0f} | {floor_tgt_margin_p:.1f}%")
-                f3.metric("Defensive", format_currency(floor_def),
-                          delta=f"${floor_def_margin_d:,.0f} | {floor_def_margin_p:.1f}%")
-
-                # Ceiling row — based on Target High
+                # Ceiling row — based on Target High (top)
                 st.markdown("**Ceiling** (cost basis: Target High)")
                 c1, c2, c3 = st.columns(3)
 
@@ -601,6 +579,28 @@ if st.button("Get Quote", type="primary", use_container_width=True):
                           delta=f"${ceil_tgt_margin_d:,.0f} | {ceil_tgt_margin_p:.1f}%")
                 c3.metric("Defensive", format_currency(ceil_def),
                           delta=f"${ceil_def_margin_d:,.0f} | {ceil_def_margin_p:.1f}%")
+
+                # Floor row — based on Target Low (bottom)
+                st.markdown("**Floor** (cost basis: Target Low)")
+                f1, f2, f3 = st.columns(3)
+
+                floor_agg = round(carrier_low * (1 + aggressive_margin), 2)
+                floor_tgt = round(carrier_low * (1 + target_margin), 2)
+                floor_def = round(carrier_low * (1 + defensive_margin), 2)
+
+                floor_agg_margin_d = floor_agg - carrier_low
+                floor_agg_margin_p = floor_agg_margin_d / floor_agg * 100 if floor_agg else 0
+                floor_tgt_margin_d = floor_tgt - carrier_low
+                floor_tgt_margin_p = floor_tgt_margin_d / floor_tgt * 100 if floor_tgt else 0
+                floor_def_margin_d = floor_def - carrier_low
+                floor_def_margin_p = floor_def_margin_d / floor_def * 100 if floor_def else 0
+
+                f1.metric("Aggressive", format_currency(floor_agg),
+                          delta=f"${floor_agg_margin_d:,.0f} | {floor_agg_margin_p:.1f}%")
+                f2.metric("Target", format_currency(floor_tgt),
+                          delta=f"${floor_tgt_margin_d:,.0f} | {floor_tgt_margin_p:.1f}%")
+                f3.metric("Defensive", format_currency(floor_def),
+                          delta=f"${floor_def_margin_d:,.0f} | {floor_def_margin_p:.1f}%")
 
                 # ──────────────────────────────────────────────────────────
                 # 5. EXPECTED VALUE ANALYSIS
