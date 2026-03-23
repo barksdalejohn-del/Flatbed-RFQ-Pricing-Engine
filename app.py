@@ -421,7 +421,7 @@ reset_clicked = btn_col2.button("🔄 New Quote", use_container_width=True)
 
 if reset_clicked:
     for key in list(st.session_state.keys()):
-        if key not in ["authenticated"]:
+        if key not in ["password_correct"]:
             del st.session_state[key]
     st.rerun()
 
