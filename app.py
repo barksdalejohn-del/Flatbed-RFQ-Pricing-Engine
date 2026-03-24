@@ -783,8 +783,11 @@ if quote_clicked:
                         std_dev_used = dat_std_dev
                         std_source = "DAT Range"
 
-                    st.markdown(f"**StdDev:** ${std_dev_used:,.0f} (source: {std_source}) &nbsp;|&nbsp; "
-                               f"**DAT Range:** ${range_low:,.0f} - ${range_high:,.0f}")
+                    st.markdown(
+                        f"<strong>StdDev:</strong> ${std_dev_used:,.0f} (source: {std_source}) "
+                        f"&nbsp;|&nbsp; "
+                        f"<strong>DAT Range:</strong> ${range_low:,.0f} - ${range_high:,.0f}",
+                        unsafe_allow_html=True)
 
                     # Find breakeven — use same-day adjusted carrier if active
                     carrier_mean = carrier_high if (abs(dir_adj) > 0.001 or same_day_mult > 1.0) else best_fit
