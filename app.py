@@ -750,7 +750,7 @@ if quote_clicked:
 
                 if has_range:
                     st.markdown("---")
-                    st.markdown("### Expected Value Analysis")
+                    st.markdown("### Expected Value Analysis *(Thinking In Bets)*")
 
                     # Calculate StdDev — blended approach
                     # 1. Current range StdDev (today's carrier spread)
