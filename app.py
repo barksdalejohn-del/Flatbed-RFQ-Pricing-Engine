@@ -1010,9 +1010,20 @@ if st.session_state.get("show_results"):
 
                 quoted_amount = save_col2.number_input("Amount quoted to customer ($)",
                                                         min_value=0.0, step=50.0, key="quoted_amount",
-                                                        help="Enter the actual amount you quoted the customer")
+                                                        help="Enter amount and press Enter, or click Save Quote")
 
-                if save_col3.button("\U0001f4be Save Quote", use_container_width=True, type="primary"):
+                save_button = save_col3.button("💾 Save Quote", use_container_width=True, type="primary")
+
+                # Save triggers on Enter (value change) OR button click
+                should_save = False
+                already_saved = st.session_state.get("quote_saved_for_amount")
+                if save_button and quoted_amount > 0 and analyst_name:
+                    should_save = True
+                elif quoted_amount > 0 and analyst_name and already_saved != quoted_amount:
+                    should_save = True
+
+                if should_save:
+                    st.session_state["quote_saved_for_amount"] = quoted_amount
                     if quoted_amount > 0 and analyst_name:
                         # Build quote data dict from all available session data
                         quote_data = {
