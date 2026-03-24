@@ -207,17 +207,6 @@ data = get_data()
 params = data["params"]
 dashboard_signals = get_dashboard_signals()
 
-# Market Regime
-st.sidebar.markdown("### Market Regime")
-col1, col2 = st.sidebar.columns(2)
-regime = col1.selectbox("Regime", ["EXPANSION", "CONTRACTION"],
-                        index=0 if params["regime"] == "EXPANSION" else 1)
-phase = col2.selectbox("Phase", [0, 1, 2, 3, 4, 5],
-                       index=[0, 1, 2, 3, 4, 5].index(params["phase"]))
-ltr_dir = col1.selectbox("LTR Direction", ["RISING", "FALLING"],
-                         index=0 if params["ltr_direction"] == "RISING" else 1)
-nat_ltr = col2.number_input("National LTR", value=float(params["national_ltr"]), format="%.2f")
-
 # Target Margin
 st.sidebar.markdown("### Pricing")
 target_margin = st.sidebar.slider("Target Margin %", 0, 25,
@@ -273,8 +262,11 @@ else:
     st.sidebar.caption("No dashboard signals loaded")
 
 params_override = {
-    "regime": regime, "phase": phase, "ltr_direction": ltr_dir,
-    "national_ltr": nat_ltr, "target_margin": target_margin,
+    "regime": params.get("regime", "EXPANSION"),
+    "phase": params.get("phase", 4),
+    "ltr_direction": params.get("ltr_direction", "RISING"),
+    "national_ltr": params.get("national_ltr", 57.11),
+    "target_margin": target_margin,
     "contract_term": 0,  # Always spot
 }
 
