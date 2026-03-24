@@ -20,10 +20,46 @@ QUOTE_COLUMNS = [
     "floor_aggressive", "floor_target", "floor_defensive",
     "ceiling_aggressive", "ceiling_target", "ceiling_defensive",
     "breakeven", "stddev", "volatility_band",
-    "quoted_amount", "ev_at_quote", "p_profit_at_quote",
+    "quoted_amount", "strategy", "ev_at_quote", "p_profit_at_quote",
     "outcome", "actual_carrier_cost", "actual_margin_dollars", "actual_margin_pct",
     "notes"
 ]
+
+
+def detect_strategy(quoted_amount, strategies):
+    """Find the closest strategy to the quoted amount.
+    strategies is a dict like {"Floor Aggressive": 3386.88, "Floor Target": 3512.32, ...}
+    Returns string like 'Ceiling Target ($3,512)' or '' if no strategies available."""
+    if not quoted_amount or not strategies:
+        return ""
+
+    closest_name = ""
+    closest_diff = float("inf")
+
+    for name, amount in strategies.items():
+        if amount and amount > 0:
+            diff = abs(quoted_amount - amount)
+            if diff < closest_diff:
+                closest_diff = diff
+                closest_name = name
+
+    if closest_name:
+        return f"{closest_name} (${strategies[closest_name]:,.0f})"
+    return ""
+
+
+def delete_quote(row_index):
+    """Delete a quote from the log by row index.
+    Returns (success, message)."""
+    df, sha = load_quote_log()
+    if df.empty or row_index >= len(df):
+        return False, "Quote not found"
+
+    df = df.drop(index=row_index).reset_index(drop=True)
+
+    csv_string = df.to_csv(index=False)
+    success, message = _push_file_to_github(csv_string, sha, f"Delete quote: row {row_index}")
+    return success, message
 
 def _get_github_token():
     """Get GitHub token from Streamlit secrets."""

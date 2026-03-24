@@ -50,7 +50,7 @@ if not check_password():
 from engine import (load_data, resolve_market, load_dashboard_signals, get_signal_staleness,
                      compute_directional_adjustment, compute_same_day_multiplier, lookup_lane)
 from vision_reader import extract_rateview_data
-from quote_log import ANALYSTS, save_quote, load_quote_log, update_outcome
+from quote_log import ANALYSTS, save_quote, load_quote_log, update_outcome, delete_quote, detect_strategy
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1053,6 +1053,14 @@ if st.session_state.get("show_results"):
                             "stddev": std_dev_used if 'std_dev_used' in dir() else "",
                             "volatility_band": vol_label if 'vol_label' in dir() else "",
                             "quoted_amount": quoted_amount,
+                            "strategy": detect_strategy(quoted_amount, {
+                                "Floor Aggr": floor_agg,
+                                "Floor Tgt": floor_tgt,
+                                "Floor Def": floor_def,
+                                "Ceil Aggr": ceil_agg,
+                                "Ceil Tgt": ceil_tgt,
+                                "Ceil Def": ceil_def,
+                            }),
                             "ev_at_quote": "",
                             "p_profit_at_quote": "",
                         }
@@ -1083,36 +1091,73 @@ with st.expander("View Quote History & Update Outcomes", expanded=False):
     if df_log.empty:
         st.info("No quotes logged yet. Save your first quote above.")
     else:
-        # Show summary stats
-        total_quotes = len(df_log)
-        won = len(df_log[df_log["outcome"] == "Won"])
-        lost = len(df_log[df_log["outcome"] == "Lost"])
-        pending = total_quotes - won - lost
+        # Monthly filter
+        df_log["_month"] = pd.to_datetime(df_log["date"], errors="coerce").dt.to_period("M")
+        available_months = sorted(df_log["_month"].dropna().unique(), reverse=True)
 
-        stat1, stat2, stat3, stat4 = st.columns(4)
+        if available_months:
+            month_labels = [str(m) for m in available_months]
+            selected_month = st.selectbox("Month", month_labels, index=0, key="month_filter")
+            df_filtered = df_log[df_log["_month"].astype(str) == selected_month].copy()
+        else:
+            df_filtered = df_log.copy()
+
+        # Show summary stats for filtered month
+        total_quotes = len(df_filtered)
+        won = len(df_filtered[df_filtered["outcome"] == "Won"])
+        lost = len(df_filtered[df_filtered["outcome"] == "Lost"])
+        pending = total_quotes - won - lost
+        decided = won + lost
+        win_rate = f"{(won / decided * 100):.1f}%" if decided > 0 else "—"
+
+        stat1, stat2, stat3, stat4, stat5 = st.columns(5)
         stat1.metric("Total Quotes", total_quotes)
         stat2.metric("Won", won)
         stat3.metric("Lost", lost)
         stat4.metric("Pending", pending)
+        stat5.metric("Win Rate", win_rate)
 
-        # Display the log (most recent first)
+        # Display the log (most recent first) with strategy column
         display_cols = ["date", "time_central", "analyst", "origin", "destination",
-                       "dat_best_fit", "quoted_amount", "outcome", "actual_carrier_cost",
-                       "actual_margin_dollars", "actual_margin_pct"]
-        display_df = df_log[display_cols].iloc[::-1].reset_index(drop=True)
-        st.dataframe(display_df, use_container_width=True, height=300)
+                       "dat_best_fit", "quoted_amount", "strategy", "outcome",
+                       "actual_carrier_cost", "actual_margin_dollars", "actual_margin_pct"]
+        available_display_cols = [c for c in display_cols if c in df_filtered.columns]
+        display_df = df_filtered[available_display_cols].iloc[::-1].reset_index(drop=False)
+        display_df = display_df.rename(columns={"index": "row_id"})
+        st.dataframe(display_df.drop(columns=["row_id"]), use_container_width=True, height=300)
+
+        # Delete quote section
+        st.markdown("#### Delete Quote")
+        del_col1, del_col2 = st.columns([3, 1])
+        all_labels = df_filtered.apply(
+            lambda r: f"{r['date']} | {r['analyst']} | {r['origin']} → {r['destination']} | ${r['quoted_amount']}", axis=1)
+        delete_options = list(zip(df_filtered.index.tolist(), all_labels.tolist()))
+
+        if delete_options:
+            selected_delete = del_col1.selectbox("Select quote to delete",
+                                                  [label for _, label in delete_options],
+                                                  key="delete_quote_select")
+            if selected_delete:
+                delete_idx = [idx for idx, label in delete_options if label == selected_delete][0]
+                if del_col2.button("🗑️ Delete", type="secondary", use_container_width=True):
+                    success, msg = delete_quote(delete_idx)
+                    if success:
+                        st.success("Quote deleted")
+                        st.rerun()
+                    else:
+                        st.error(f"Failed: {msg}")
 
         # Update outcome section
         st.markdown("#### Update Outcome")
-        update_col1, update_col2, update_col3, update_col4 = st.columns([1, 1, 1, 2])
+        update_col1, update_col2, update_col3, update_col4 = st.columns([2, 1, 1, 2])
 
         # Show quotes that don't have outcomes yet
-        pending_df = df_log[df_log["outcome"] == ""].copy()
+        pending_df = df_filtered[df_filtered["outcome"].isin(["", "None"]) | df_filtered["outcome"].isna()].copy()
         if pending_df.empty:
             st.info("All quotes have outcomes recorded.")
         else:
             pending_df["label"] = pending_df.apply(
-                lambda r: f"{r['date']} | {r['origin']} \u2192 {r['destination']} | ${r['quoted_amount']}", axis=1)
+                lambda r: f"{r['date']} | {r['origin']} → {r['destination']} | ${r['quoted_amount']}", axis=1)
 
             selected_quote = update_col1.selectbox("Select quote", pending_df["label"].tolist(),
                                                     key="update_quote_select")
@@ -1129,12 +1174,12 @@ with st.expander("View Quote History & Update Outcomes", expanded=False):
                                                    actual_cost if actual_cost > 0 else "",
                                                    update_notes)
                     if success:
-                        st.success("\u2705 Outcome updated")
+                        st.success("✅ Outcome updated")
                         st.rerun()
                     else:
                         st.error(f"Failed: {msg}")
 
         # Download button
         csv_download = df_log.to_csv(index=False)
-        st.download_button("\U0001f4e5 Download Full Log (CSV)", csv_download,
+        st.download_button("📥 Download Full Log (CSV)", csv_download,
                           "quote_log.csv", "text/csv", use_container_width=True)
