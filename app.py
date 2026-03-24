@@ -896,9 +896,60 @@ if quote_clicked:
                             "_price": price,
                         })
 
-                    ev_df = pd.DataFrame(ev_rows)
-                    display_ev = ev_df[["Quote", "EV/Load", "100-Load", "P(Profit)", "Signal"]]
-                    st.dataframe(display_ev, hide_index=True, use_container_width=True, height=min(400, 50 + len(ev_rows) * 40))
+                    # Build color-coded HTML table
+                    floor_prices = {floor_agg, floor_tgt, floor_def}
+                    ceil_prices = {ceil_agg, ceil_tgt, ceil_def}
+
+                    html_rows = ""
+                    for row in ev_rows:
+                        price = row["_price"]
+                        ev_val = row["_ev"]
+
+                        # Color coding
+                        if price in floor_prices:
+                            row_color = "#58a6ff"  # blue for floor
+                        elif price in ceil_prices:
+                            row_color = "#bc8cff"  # purple for ceiling
+                        elif abs(price - breakeven) < 1:
+                            row_color = "#ffffff"  # white bold for breakeven
+                        elif ev_val < 0:
+                            row_color = "#f85149"  # red for danger
+                        else:
+                            row_color = "#8b949e"  # grey for unmarked
+
+                        font_weight = "bold" if abs(price - breakeven) < 1 else "normal"
+
+                        html_rows += f"""<tr style="color:{row_color};font-weight:{font_weight}">
+                            <td>{row['Quote']}</td>
+                            <td>{row['EV/Load']}</td>
+                            <td>{row['100-Load']}</td>
+                            <td>{row['P(Profit)']}</td>
+                            <td>{row['Signal']}</td>
+                        </tr>"""
+
+                    ev_html = f"""
+                    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                        <thead>
+                            <tr style="color:#8b949e;border-bottom:1px solid #30363d;">
+                                <th style="text-align:left;padding:8px;">Quote</th>
+                                <th style="text-align:left;padding:8px;">EV/Load</th>
+                                <th style="text-align:left;padding:8px;">100-Load</th>
+                                <th style="text-align:left;padding:8px;">P(Profit)</th>
+                                <th style="text-align:left;padding:8px;">Signal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {html_rows}
+                        </tbody>
+                    </table>
+                    <div style="margin-top:8px;font-size:12px;color:#8b949e;">
+                        <span style="color:#f85149;">■</span> Danger zone &nbsp;
+                        <span style="color:#ffffff;">■</span> Breakeven &nbsp;
+                        <span style="color:#58a6ff;">■</span> Floor quotes &nbsp;
+                        <span style="color:#bc8cff;">■</span> Ceiling quotes
+                    </div>
+                    """
+                    st.markdown(ev_html, unsafe_allow_html=True)
 
                     # Highlight key insight
                     best_ev_row = max(ev_rows, key=lambda r: r["_ev"])
