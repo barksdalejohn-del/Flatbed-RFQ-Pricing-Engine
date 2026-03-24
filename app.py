@@ -824,25 +824,30 @@ if quote_clicked:
 {vol_advice}
 """)
 
-                    # Generate wide-range price points
-                    range_start = round((best_fit - 2 * std_dev_used) / 50) * 50
-                    range_end = round((best_fit + 4 * std_dev_used) / 50) * 50
-
+                    # Generate focused price points: 2 below breakeven, breakeven, then key quote points
                     price_points = set()
-                    # Add $50 increments across the range
-                    p = range_start
-                    while p <= range_end:
-                        price_points.add(round(p, 2))
-                        p += 50
-                    # Always include breakeven and named price points
+
+                    # 2 rows below breakeven (danger zone context)
+                    step_below = round(std_dev_used * 0.75 / 50) * 50
+                    if step_below < 50:
+                        step_below = 50
+                    price_points.add(round((breakeven - 2 * step_below) / 50) * 50)
+                    price_points.add(round((breakeven - step_below) / 50) * 50)
+
+                    # Breakeven
                     price_points.add(breakeven)
+
+                    # Named quote points (floor/ceiling)
                     price_points.add(floor_agg)
                     price_points.add(floor_tgt)
                     price_points.add(floor_def)
                     price_points.add(ceil_agg)
                     price_points.add(ceil_tgt)
                     price_points.add(ceil_def)
-                    price_points = sorted(price_points)
+
+                    # Remove any that are below the lowest danger row
+                    min_show = breakeven - 2.5 * step_below
+                    price_points = sorted(p for p in price_points if p >= min_show)
 
                     # Named price point labels for annotation
                     named_points = {
@@ -893,7 +898,7 @@ if quote_clicked:
 
                     ev_df = pd.DataFrame(ev_rows)
                     display_ev = ev_df[["Quote", "EV/Load", "100-Load", "P(Profit)", "Signal"]]
-                    st.dataframe(display_ev, hide_index=True, use_container_width=True, height=600)
+                    st.dataframe(display_ev, hide_index=True, use_container_width=True, height=min(400, 50 + len(ev_rows) * 40))
 
                     # Highlight key insight
                     best_ev_row = max(ev_rows, key=lambda r: r["_ev"])
