@@ -13,15 +13,27 @@ st.set_page_config(page_title="Flatbed Spot Pricing Tool", page_icon="🚛", lay
 # ──────────────────────────────────────────────────────────────────────────────
 
 def check_password():
-    """Returns True if the user has entered the correct password."""
+    """Returns True if the user has entered the correct password.
+    Uses both session_state and query_params for persistence across reconnections."""
+    import hashlib
+    correct_pw = st.secrets.get("APP_PASSWORD", st.secrets.get("app_password", "TA2026!pricing"))
+    auth_token = hashlib.sha256(correct_pw.encode()).hexdigest()[:16]
+
     def password_entered():
-        if st.session_state.get("password") == st.secrets.get("APP_PASSWORD", st.secrets.get("app_password", "TA2026!pricing")):
+        if st.session_state.get("password") == correct_pw:
             st.session_state["password_correct"] = True
+            st.query_params["auth"] = auth_token
             del st.session_state["password"]
         else:
             st.session_state["password_correct"] = False
 
+    # Check session state first
     if st.session_state.get("password_correct", False):
+        return True
+
+    # Check query params as backup (survives session drops)
+    if st.query_params.get("auth") == auth_token:
+        st.session_state["password_correct"] = True
         return True
 
     st.markdown("## Flatbed Spot Pricing Tool")
