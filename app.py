@@ -699,8 +699,8 @@ if quote_clicked:
                 aggressive_margin = max(target_margin - 0.04, 0.05)
                 defensive_margin = target_margin + 0.04
 
-                # Ceiling row — based on Target High (top)
-                st.markdown("**Ceiling** (cost basis: Target High)")
+                # Ceiling row (top)
+                st.markdown("**Ceiling**")
                 c1, c2, c3 = st.columns(3)
 
                 ceil_agg = round(carrier_high * (1 + aggressive_margin), 2)
@@ -721,8 +721,8 @@ if quote_clicked:
                 c3.metric("Defensive", format_currency(ceil_def),
                           delta=f"${ceil_def_margin_d:,.0f} | {ceil_def_margin_p:.1f}%")
 
-                # Floor row — based on Target Low (bottom)
-                st.markdown("**Floor** (cost basis: Target Low)")
+                # Floor row (bottom)
+                st.markdown("**Floor**")
                 f1, f2, f3 = st.columns(3)
 
                 floor_agg = round(carrier_low * (1 + aggressive_margin), 2)
@@ -897,34 +897,37 @@ if quote_clicked:
                         })
 
                     # Build color-coded HTML table
-                    floor_prices = {floor_agg, floor_tgt, floor_def}
-                    ceil_prices = {ceil_agg, ceil_tgt, ceil_def}
+                    aggressive_prices = {floor_agg, ceil_agg}
+                    target_prices = {floor_tgt, ceil_tgt}
+                    defensive_prices = {floor_def, ceil_def}
 
                     html_rows = ""
                     for row in ev_rows:
                         price = row["_price"]
                         ev_val = row["_ev"]
 
-                        # Color coding
-                        if price in floor_prices:
-                            row_color = "#58a6ff"  # blue for floor
-                        elif price in ceil_prices:
-                            row_color = "#bc8cff"  # purple for ceiling
+                        # Color coding by strategy
+                        if price in aggressive_prices:
+                            row_color = "#f85149"  # red for aggressive
+                        elif price in target_prices:
+                            row_color = "#e3b341"  # yellow for target
+                        elif price in defensive_prices:
+                            row_color = "#3fb950"  # green for defensive
                         elif abs(price - breakeven) < 1:
                             row_color = "#ffffff"  # white bold for breakeven
                         elif ev_val < 0:
-                            row_color = "#f85149"  # red for danger
+                            row_color = "#f8514980"  # faded red for danger zone
                         else:
                             row_color = "#8b949e"  # grey for unmarked
 
                         font_weight = "bold" if abs(price - breakeven) < 1 else "normal"
 
                         html_rows += f"""<tr style="color:{row_color};font-weight:{font_weight}">
-                            <td>{row['Quote']}</td>
-                            <td>{row['EV/Load']}</td>
-                            <td>{row['100-Load']}</td>
-                            <td>{row['P(Profit)']}</td>
-                            <td>{row['Signal']}</td>
+                            <td style="padding:6px 8px;">{row['Quote']}</td>
+                            <td style="padding:6px 8px;">{row['EV/Load']}</td>
+                            <td style="padding:6px 8px;">{row['100-Load']}</td>
+                            <td style="padding:6px 8px;">{row['P(Profit)']}</td>
+                            <td style="padding:6px 8px;">{row['Signal']}</td>
                         </tr>"""
 
                     ev_html = f"""
@@ -943,10 +946,11 @@ if quote_clicked:
                         </tbody>
                     </table>
                     <div style="margin-top:8px;font-size:12px;color:#8b949e;">
-                        <span style="color:#f85149;">■</span> Danger zone &nbsp;
+                        <span style="color:#f8514980;">■</span> Danger zone &nbsp;
                         <span style="color:#ffffff;">■</span> Breakeven &nbsp;
-                        <span style="color:#58a6ff;">■</span> Floor quotes &nbsp;
-                        <span style="color:#bc8cff;">■</span> Ceiling quotes
+                        <span style="color:#f85149;">■</span> Aggressive &nbsp;
+                        <span style="color:#e3b341;">■</span> Target &nbsp;
+                        <span style="color:#3fb950;">■</span> Defensive
                     </div>
                     """
                     st.markdown(ev_html, unsafe_allow_html=True)
