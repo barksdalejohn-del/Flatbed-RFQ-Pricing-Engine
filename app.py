@@ -508,6 +508,21 @@ if st.session_state.get("same_day_confirm_reset"):
         st.rerun()
 
 if quote_clicked:
+    # Store flag so results persist across reruns
+    st.session_state["show_results"] = True
+    st.session_state["result_inputs"] = {
+        "orig_val": orig_val, "orig_state_val": orig_state_val,
+        "dest_val": dest_val, "dest_state_val": dest_state_val,
+    }
+
+if st.session_state.get("show_results"):
+    # Recover inputs from session state if this is a rerun (not a fresh click)
+    if not quote_clicked:
+        ri = st.session_state.get("result_inputs", {})
+        orig_val = ri.get("orig_val", orig_val)
+        orig_state_val = ri.get("orig_state_val", orig_state_val)
+        dest_val = ri.get("dest_val", dest_val)
+        dest_state_val = ri.get("dest_state_val", dest_state_val)
 
     # Resolve markets
     orig_market, orig_city, orig_st = resolve_market(orig_val, orig_state_val, data)
