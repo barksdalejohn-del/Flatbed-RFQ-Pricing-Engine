@@ -50,6 +50,7 @@ if not check_password():
 from engine import (load_data, resolve_market, load_dashboard_signals, get_signal_staleness,
                      compute_directional_adjustment, compute_same_day_multiplier, lookup_lane)
 from vision_reader import extract_rateview_data
+from quote_log import ANALYSTS, save_quote, load_quote_log, update_outcome
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -980,3 +981,134 @@ if quote_clicked:
                             f"Best EV: {best_ev_row['Quote']} at "
                             f"{best_ev_row['EV/Load']}/load "
                             f"({best_ev_row['100-Load']} over 100 loads)")
+
+                # ──────────────────────────────────────────────────────────
+                # SAVE QUOTE
+                # ──────────────────────────────────────────────────────────
+                st.markdown("---")
+                st.markdown("### Save Quote")
+
+                save_col1, save_col2, save_col3 = st.columns([2, 2, 1])
+                analyst_name = save_col1.selectbox("Analyst", ANALYSTS, key="analyst_select")
+                if analyst_name == "Other":
+                    analyst_name = save_col1.text_input("Enter name", key="analyst_other")
+
+                quoted_amount = save_col2.number_input("Amount quoted to customer ($)",
+                                                        min_value=0.0, step=50.0, key="quoted_amount",
+                                                        help="Enter the actual amount you quoted the customer")
+
+                if save_col3.button("\U0001f4be Save Quote", use_container_width=True, type="primary"):
+                    if quoted_amount > 0 and analyst_name:
+                        # Build quote data dict from all available session data
+                        quote_data = {
+                            "analyst": analyst_name,
+                            "origin": orig_display,
+                            "destination": dest_display,
+                            "miles": miles,
+                            "dat_best_fit": best_fit,
+                            "dat_range_low": range_low,
+                            "dat_range_high": range_high,
+                            "rate_strength": rate_strength,
+                            "origin_signal": orig_sig if directional else "",
+                            "dest_signal": dest_sig if directional else "",
+                            "flow": f"{orig_sig} \u2192 {dest_sig}" if directional and orig_sig and dest_sig else "",
+                            "dir_adj_pct": round(dir_adj * 100, 1) if directional else "",
+                            "same_day": "Yes" if same_day_on else "No",
+                            "same_day_multiplier": round(same_day_mult, 3) if same_day_on and same_day_mult > 1 else "",
+                            "carrier_target_low": carrier_low,
+                            "carrier_target_high": carrier_high,
+                            "floor_aggressive": floor_agg,
+                            "floor_target": floor_tgt,
+                            "floor_defensive": floor_def,
+                            "ceiling_aggressive": ceil_agg,
+                            "ceiling_target": ceil_tgt,
+                            "ceiling_defensive": ceil_def,
+                            "breakeven": breakeven if 'breakeven' in dir() else "",
+                            "stddev": std_dev_used if 'std_dev_used' in dir() else "",
+                            "volatility_band": vol_label if 'vol_label' in dir() else "",
+                            "quoted_amount": quoted_amount,
+                            "ev_at_quote": "",
+                            "p_profit_at_quote": "",
+                        }
+
+                        # Compute EV at quoted amount if we have the data
+                        if 'ev_std_dev' in dir() and 'carrier_mean' in dir():
+                            ev_at_q = calculate_ev(quoted_amount, best_fit * same_day_mult, ev_std_dev, carrier_mean)
+                            quote_data["ev_at_quote"] = ev_at_q["ev_per_load"]
+                            quote_data["p_profit_at_quote"] = f"{ev_at_q['p_profit']:.0%}"
+
+                        success, message = save_quote(quote_data)
+                        if success:
+                            st.success("\u2705 Quote saved to log")
+                        else:
+                            st.error(f"Failed to save: {message}")
+                    else:
+                        st.warning("Enter the quoted amount and select an analyst")
+
+# ──────────────────────────────────────────────────────────
+# QUOTE HISTORY
+# ──────────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown("### \U0001f4cb Quote History")
+
+with st.expander("View Quote History & Update Outcomes", expanded=False):
+    df_log, log_sha = load_quote_log()
+
+    if df_log.empty:
+        st.info("No quotes logged yet. Save your first quote above.")
+    else:
+        # Show summary stats
+        total_quotes = len(df_log)
+        won = len(df_log[df_log["outcome"] == "Won"])
+        lost = len(df_log[df_log["outcome"] == "Lost"])
+        pending = total_quotes - won - lost
+
+        stat1, stat2, stat3, stat4 = st.columns(4)
+        stat1.metric("Total Quotes", total_quotes)
+        stat2.metric("Won", won)
+        stat3.metric("Lost", lost)
+        stat4.metric("Pending", pending)
+
+        # Display the log (most recent first)
+        display_cols = ["date", "time_central", "analyst", "origin", "destination",
+                       "dat_best_fit", "quoted_amount", "outcome", "actual_carrier_cost",
+                       "actual_margin_dollars", "actual_margin_pct"]
+        display_df = df_log[display_cols].iloc[::-1].reset_index(drop=True)
+        st.dataframe(display_df, use_container_width=True, height=300)
+
+        # Update outcome section
+        st.markdown("#### Update Outcome")
+        update_col1, update_col2, update_col3, update_col4 = st.columns([1, 1, 1, 2])
+
+        # Show quotes that don't have outcomes yet
+        pending_df = df_log[df_log["outcome"] == ""].copy()
+        if pending_df.empty:
+            st.info("All quotes have outcomes recorded.")
+        else:
+            pending_df["label"] = pending_df.apply(
+                lambda r: f"{r['date']} | {r['origin']} \u2192 {r['destination']} | ${r['quoted_amount']}", axis=1)
+
+            selected_quote = update_col1.selectbox("Select quote", pending_df["label"].tolist(),
+                                                    key="update_quote_select")
+            if selected_quote:
+                actual_idx = pending_df[pending_df["label"] == selected_quote].index[0]
+
+                outcome_val = update_col2.selectbox("Outcome", ["Won", "Lost", "No Bid"], key="outcome_select")
+                actual_cost = update_col3.number_input("Actual carrier cost ($)", min_value=0.0,
+                                                        step=50.0, key="actual_cost_input")
+                update_notes = update_col4.text_input("Notes (optional)", key="update_notes")
+
+                if st.button("Update Outcome", type="primary"):
+                    success, msg = update_outcome(actual_idx, outcome_val,
+                                                   actual_cost if actual_cost > 0 else "",
+                                                   update_notes)
+                    if success:
+                        st.success("\u2705 Outcome updated")
+                        st.rerun()
+                    else:
+                        st.error(f"Failed: {msg}")
+
+        # Download button
+        csv_download = df_log.to_csv(index=False)
+        st.download_button("\U0001f4e5 Download Full Log (CSV)", csv_download,
+                          "quote_log.csv", "text/csv", use_container_width=True)
