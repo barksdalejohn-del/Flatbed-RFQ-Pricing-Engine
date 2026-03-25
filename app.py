@@ -1137,7 +1137,9 @@ with st.expander("View Quote History & Update Outcomes", expanded=False):
         available_display_cols = [c for c in display_cols if c in df_filtered.columns]
         display_df = df_filtered[available_display_cols].iloc[::-1].reset_index(drop=False)
         display_df = display_df.rename(columns={"index": "row_id"})
-        st.dataframe(display_df.drop(columns=["row_id"]), use_container_width=True, height=300)
+        show_df = display_df.drop(columns=["row_id"])
+        show_df.index = range(1, len(show_df) + 1)
+        st.dataframe(show_df, use_container_width=True, height=300)
 
         # Delete quote section
         st.markdown("#### Delete Quote")
