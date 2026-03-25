@@ -1128,16 +1128,18 @@ with st.expander("View Quote History & Update Outcomes", expanded=False):
 
         # Delete quote section
         st.markdown("#### Delete Quote")
-        del_col1, del_col2 = st.columns([3, 1])
         all_labels = df_filtered.apply(
             lambda r: f"{r['date']} | {r['analyst']} | {r['origin']} → {r['destination']} | ${r['quoted_amount']}", axis=1)
         delete_options = list(zip(df_filtered.index.tolist(), all_labels.tolist()))
 
         if delete_options:
+            del_col1, del_col2 = st.columns([3, 1])
+            delete_labels = ["— Select —"] + [label for _, label in delete_options]
             selected_delete = del_col1.selectbox("Select quote to delete",
-                                                  [label for _, label in delete_options],
+                                                  delete_labels,
+                                                  index=0,
                                                   key="delete_quote_select")
-            if selected_delete:
+            if selected_delete and selected_delete != "— Select —":
                 delete_idx = [idx for idx, label in delete_options if label == selected_delete][0]
                 if del_col2.button("🗑️ Delete", type="secondary", use_container_width=True):
                     success, msg = delete_quote(delete_idx)
@@ -1149,7 +1151,6 @@ with st.expander("View Quote History & Update Outcomes", expanded=False):
 
         # Update outcome section
         st.markdown("#### Update Outcome")
-        update_col1, update_col2, update_col3, update_col4 = st.columns([2, 1, 1, 2])
 
         # Show quotes that don't have outcomes yet
         pending_df = df_filtered[df_filtered["outcome"].isin(["", "None"]) | df_filtered["outcome"].isna()].copy()
@@ -1159,25 +1160,36 @@ with st.expander("View Quote History & Update Outcomes", expanded=False):
             pending_df["label"] = pending_df.apply(
                 lambda r: f"{r['date']} | {r['origin']} → {r['destination']} | ${r['quoted_amount']}", axis=1)
 
-            selected_quote = update_col1.selectbox("Select quote", pending_df["label"].tolist(),
+            update_col1, update_col2, update_col3, update_col4 = st.columns([2, 1, 1, 2])
+
+            quote_labels = ["— Select —"] + pending_df["label"].tolist()
+            selected_quote = update_col1.selectbox("Select quote", quote_labels,
+                                                    index=0,
                                                     key="update_quote_select")
-            if selected_quote:
+            if selected_quote and selected_quote != "— Select —":
                 actual_idx = pending_df[pending_df["label"] == selected_quote].index[0]
 
-                outcome_val = update_col2.selectbox("Outcome", ["Won", "Lost", "No Bid"], key="outcome_select")
-                actual_cost = update_col3.number_input("Actual carrier cost ($)", min_value=0.0,
-                                                        step=50.0, key="actual_cost_input")
+                outcome_options = ["— Select —", "Won", "Lost", "No Bid"]
+                outcome_val = update_col2.selectbox("Outcome", outcome_options, index=0, key="outcome_select")
+                actual_cost_str = update_col3.text_input("Actual carrier cost ($)", value="", key="actual_cost_input")
                 update_notes = update_col4.text_input("Notes (optional)", key="update_notes")
 
                 if st.button("Update Outcome", type="primary"):
-                    success, msg = update_outcome(actual_idx, outcome_val,
-                                                   actual_cost if actual_cost > 0 else "",
-                                                   update_notes)
-                    if success:
-                        st.success("✅ Outcome updated")
-                        st.rerun()
+                    if outcome_val == "— Select —":
+                        st.warning("Select an outcome (Won, Lost, or No Bid)")
                     else:
-                        st.error(f"Failed: {msg}")
+                        try:
+                            actual_cost = float(actual_cost_str) if actual_cost_str.strip() else ""
+                        except ValueError:
+                            actual_cost = ""
+                        success, msg = update_outcome(actual_idx, outcome_val,
+                                                       actual_cost if actual_cost and actual_cost > 0 else "",
+                                                       update_notes)
+                        if success:
+                            st.success("✅ Outcome updated")
+                            st.rerun()
+                        else:
+                            st.error(f"Failed: {msg}")
 
         # Download button
         csv_download = df_log.to_csv(index=False)
