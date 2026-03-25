@@ -1141,6 +1141,7 @@ with st.expander("View Quote History & Update Outcomes", expanded=False):
                                                   key="delete_quote_select")
             if selected_delete and selected_delete != "— Select —":
                 delete_idx = [idx for idx, label in delete_options if label == selected_delete][0]
+                del_col2.markdown("<br>", unsafe_allow_html=True)
                 if del_col2.button("🗑️ Delete", type="secondary", use_container_width=True):
                     success, msg = delete_quote(delete_idx)
                     if success:
