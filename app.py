@@ -1012,6 +1012,7 @@ if st.session_state.get("show_results"):
                                                         min_value=0.0, step=50.0, key="quoted_amount",
                                                         help="Enter amount and press Enter, or click Save Quote")
 
+                save_col3.markdown("<div style='height: 28px'></div>", unsafe_allow_html=True)
                 save_button = save_col3.button("💾 Save Quote", use_container_width=True, type="primary")
 
                 # Save triggers on Enter (value change) OR button click
@@ -1053,17 +1054,29 @@ if st.session_state.get("show_results"):
                             "stddev": std_dev_used if 'std_dev_used' in dir() else "",
                             "volatility_band": vol_label if 'vol_label' in dir() else "",
                             "quoted_amount": quoted_amount,
-                            "strategy": detect_strategy(quoted_amount, {
-                                "Floor Aggr": floor_agg,
-                                "Floor Tgt": floor_tgt,
-                                "Floor Def": floor_def,
-                                "Ceil Aggr": ceil_agg,
-                                "Ceil Tgt": ceil_tgt,
-                                "Ceil Def": ceil_def,
-                            }),
+                            "strategy": "",
+                            "p_profit_at_strategy": "",
                             "ev_at_quote": "",
                             "p_profit_at_quote": "",
                         }
+
+                        # Detect strategy and compute P(Profit) for each strategy
+                        strat_dict = {
+                            "Floor Aggr": floor_agg, "Floor Tgt": floor_tgt,
+                            "Floor Def": floor_def, "Ceil Aggr": ceil_agg,
+                            "Ceil Tgt": ceil_tgt, "Ceil Def": ceil_def
+                        }
+                        p_profit_dict = None
+                        if 'ev_std_dev' in dir() and ev_std_dev > 0 and 'carrier_mean' in dir():
+                            p_profit_dict = {}
+                            for sname, samt in strat_dict.items():
+                                if samt and samt > 0:
+                                    ev_result = calculate_ev(samt, best_fit * same_day_mult, ev_std_dev, carrier_mean)
+                                    p_profit_dict[sname] = ev_result["p_profit"]
+
+                        strat_str, p_profit_str = detect_strategy(quoted_amount, strat_dict, p_profit_dict)
+                        quote_data["strategy"] = strat_str
+                        quote_data["p_profit_at_strategy"] = p_profit_str
 
                         # Compute EV at quoted amount if we have the data
                         if 'ev_std_dev' in dir() and 'carrier_mean' in dir():
@@ -1119,8 +1132,8 @@ with st.expander("View Quote History & Update Outcomes", expanded=False):
 
         # Display the log (most recent first) with strategy column
         display_cols = ["date", "time_central", "analyst", "origin", "destination",
-                       "dat_best_fit", "quoted_amount", "strategy", "outcome",
-                       "actual_carrier_cost", "actual_margin_dollars", "actual_margin_pct"]
+                       "dat_best_fit", "quoted_amount", "strategy", "p_profit_at_strategy",
+                       "outcome", "actual_carrier_cost", "actual_margin_dollars", "actual_margin_pct"]
         available_display_cols = [c for c in display_cols if c in df_filtered.columns]
         display_df = df_filtered[available_display_cols].iloc[::-1].reset_index(drop=False)
         display_df = display_df.rename(columns={"index": "row_id"})

@@ -20,18 +20,20 @@ QUOTE_COLUMNS = [
     "floor_aggressive", "floor_target", "floor_defensive",
     "ceiling_aggressive", "ceiling_target", "ceiling_defensive",
     "breakeven", "stddev", "volatility_band",
-    "quoted_amount", "strategy", "ev_at_quote", "p_profit_at_quote",
+    "quoted_amount", "strategy", "p_profit_at_strategy", "ev_at_quote", "p_profit_at_quote",
     "outcome", "actual_carrier_cost", "actual_margin_dollars", "actual_margin_pct",
     "notes"
 ]
 
 
-def detect_strategy(quoted_amount, strategies):
+def detect_strategy(quoted_amount, strategies, p_profits=None):
     """Find the closest strategy to the quoted amount.
-    strategies is a dict like {"Floor Aggressive": 3386.88, "Floor Target": 3512.32, ...}
-    Returns string like 'Ceiling Target ($3,512)' or '' if no strategies available."""
+    strategies is a dict like {"Floor Aggr": 3386.88, "Floor Tgt": 3512.32, ...}
+    p_profits is an optional dict like {"Floor Aggr": 0.69, "Floor Tgt": 0.89, ...}
+    Returns (strategy_str, p_profit_str) tuple.
+    strategy_str like 'Ceil Tgt ($3,512)', p_profit_str like '89%'."""
     if not quoted_amount or not strategies:
-        return ""
+        return "", ""
 
     closest_name = ""
     closest_diff = float("inf")
@@ -44,8 +46,15 @@ def detect_strategy(quoted_amount, strategies):
                 closest_name = name
 
     if closest_name:
-        return f"{closest_name} (${strategies[closest_name]:,.0f})"
-    return ""
+        amount_str = f"${strategies[closest_name]:,.0f}"
+        strategy_str = f"{closest_name} ({amount_str})"
+        p_profit_str = ""
+        if p_profits and closest_name in p_profits:
+            p_pct = p_profits[closest_name]
+            if isinstance(p_pct, (int, float)):
+                p_profit_str = f"{p_pct:.0%}"
+        return strategy_str, p_profit_str
+    return "", ""
 
 
 def delete_quote(row_index):
