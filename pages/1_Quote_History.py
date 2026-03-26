@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-st.set_page_config(page_title="Quote History", page_icon="📋", layout="wide")
-
 # ──────────────────────────────────────────────────────────────────────────────
 # PASSWORD PROTECTION (shared with main app)
 # ──────────────────────────────────────────────────────────────────────────────
