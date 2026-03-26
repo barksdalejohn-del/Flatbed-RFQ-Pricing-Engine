@@ -1,0 +1,9 @@
+[[pages]]
+path = "app.py"
+name = "Spot Quote"
+icon = "🚛"
+
+[[pages]]
+path = "pages/1_Quote_History.py"
+name = "Quote History"
+icon = "📋"
