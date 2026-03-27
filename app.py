@@ -861,7 +861,7 @@ if st.session_state.get("show_results"):
                             sd_result = compute_same_day_multiplier(
                                 h, origin_signal=orig_signal_for_rc, day_of_week=tomorrow_dow
                             )
-                            rc_costs.append(round(best_fit * sd_result["multiplier"], 2))
+                            rc_costs.append(round(carrier_high * sd_result["multiplier"], 2))
 
                         # Build Plotly chart
                         import plotly.graph_objects as go
