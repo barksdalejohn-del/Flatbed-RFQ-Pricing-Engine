@@ -882,7 +882,7 @@ if st.session_state.get("show_results"):
                         fig.add_trace(go.Scatter(
                             x=hours_list, y=[ceil_def] * len(hours_list),
                             mode='lines',
-                            name=f'Your Quote (Ceil Def): {format_currency(ceil_def)}',
+                            name=f'Ceiling Defensive: {format_currency(ceil_def)}',
                             line=dict(color='#8b949e', width=2, dash='dash'),
                             hovertemplate=f'{format_currency(ceil_def)}<extra>Ceiling Defensive</extra>'
                         ))
@@ -923,7 +923,7 @@ if st.session_state.get("show_results"):
                         st.plotly_chart(fig, use_container_width=True)
 
                         st.caption("If this load slips to same-day, here's what you could face. "
-                                   "Consider adding cushion or booking aggressively today.")
+                                   "Consider adding cushion or booking aggressively prior to ship day.")
 
                 # ──────────────────────────────────────────────────────────
                 # 5. EXPECTED VALUE ANALYSIS
