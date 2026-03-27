@@ -83,7 +83,8 @@ if not check_password():
     st.stop()
 
 from engine import (load_data, resolve_market, load_dashboard_signals, get_signal_staleness,
-                     compute_directional_adjustment, compute_same_day_multiplier, lookup_lane)
+                     compute_directional_adjustment, compute_same_day_multiplier,
+                     check_rate_cast_triggers, lookup_lane)
 from vision_reader import extract_rateview_data
 from quote_log import ANALYSTS, save_quote, load_quote_log, update_outcome, delete_quote, detect_strategy
 
@@ -297,6 +298,11 @@ if same_day_on:
     same_day_time_label = f"{same_day_hours}h remaining"
 
     st.sidebar.caption(f"📅 {selected_day} · {same_day_hours} hours remaining")
+
+# Rate Cast
+rate_cast_on = st.sidebar.toggle("📡 Rate Cast", value=True,
+    help="Shows same-day risk curve when live origin LTR spikes above the weekly 8-day average. "
+         "Useful in tight/bull markets. Disable during contraction when capacity is abundant.")
 
 st.sidebar.markdown("---")
 if dashboard_signals is not None:
@@ -805,6 +811,119 @@ if st.session_state.get("show_results"):
                           delta=f"${floor_tgt_margin_d:,.0f} | {floor_tgt_margin_p:.1f}%")
                 f3.metric("Defensive", format_currency(floor_def),
                           delta=f"${floor_def_margin_d:,.0f} | {floor_def_margin_p:.1f}%")
+
+                # ──────────────────────────────────────────────────────────
+                # 4b. RATE CAST — Same-Day Risk Curve
+                # ──────────────────────────────────────────────────────────
+                if rate_cast_on and not same_day_on:
+                    vd = st.session_state.get("vision_data") or {}
+                    live_ltr_raw = vd.get("origin_live_ltr")
+                    live_ltr = float(live_ltr_raw) if live_ltr_raw is not None else None
+                    ltr_8d_val = directional.get("orig_ltr_8d") if directional else None
+                    rc_state = signal_orig_state if signal_orig_state else orig_st
+
+                    rc = check_rate_cast_triggers(live_ltr, ltr_8d_val, rc_state, dashboard_signals)
+
+                    if rc["triggered"]:
+                        st.markdown("---")
+                        st.markdown("### ⚠ Rate Cast — Same-Day Risk Curve")
+
+                        # Alert banner
+                        alert_parts = []
+                        if rc["divergence_pct"] is not None and rc["trigger_reason"] in ("live_divergence", "both"):
+                            alert_parts.append(
+                                f"**Origin LTR spiking:** {rc['live_ltr']:.0f} current vs "
+                                f"{rc['ltr_8d']:.0f} 8-day avg "
+                                f"(**+{rc['divergence_pct']:.0%}**)"
+                            )
+                        if rc["z_score"] is not None and rc["trigger_reason"] in ("state_zscore", "both"):
+                            alert_parts.append(
+                                f"**State z-score:** {rc['z_score']:.1f} (threshold: 2.0)"
+                            )
+                        st.warning(" · ".join(alert_parts))
+
+                        # Compute same-day rate curve at each hour (8→1)
+                        # Use next business day (tomorrow) for the day factor
+                        import pytz
+                        central = pytz.timezone("US/Central")
+                        now_ct = datetime.now(central)
+                        tomorrow_dow = (now_ct.weekday() + 1) % 7
+                        # If tomorrow is weekend, use Monday
+                        if tomorrow_dow == 5:
+                            tomorrow_dow = 0
+                        elif tomorrow_dow == 6:
+                            tomorrow_dow = 0
+
+                        orig_signal_for_rc = directional.get("orig_signal") if directional else None
+                        hours_list = [8, 7, 6, 5, 4, 3, 2, 1]
+                        rc_costs = []
+                        for h in hours_list:
+                            sd_result = compute_same_day_multiplier(
+                                h, origin_signal=orig_signal_for_rc, day_of_week=tomorrow_dow
+                            )
+                            rc_costs.append(round(best_fit * sd_result["multiplier"], 2))
+
+                        # Build Plotly chart
+                        import plotly.graph_objects as go
+
+                        fig = go.Figure()
+
+                        # Same-day rate curve
+                        fig.add_trace(go.Scatter(
+                            x=hours_list, y=rc_costs,
+                            mode='lines+markers',
+                            name='Same-Day Carrier Cost',
+                            line=dict(color='#f85149', width=3),
+                            marker=dict(size=7, color='#f85149'),
+                            hovertemplate='%{y:$,.0f} at %{x}h remaining<extra></extra>'
+                        ))
+
+                        # Ceiling Defensive reference line
+                        fig.add_trace(go.Scatter(
+                            x=hours_list, y=[ceil_def] * len(hours_list),
+                            mode='lines',
+                            name=f'Your Quote (Ceil Def): {format_currency(ceil_def)}',
+                            line=dict(color='#8b949e', width=2, dash='dash'),
+                            hovertemplate=f'{format_currency(ceil_def)}<extra>Ceiling Defensive</extra>'
+                        ))
+
+                        # Best Fit reference line
+                        fig.add_trace(go.Scatter(
+                            x=hours_list, y=[best_fit] * len(hours_list),
+                            mode='lines',
+                            name=f'DAT Best Fit: {format_currency(best_fit)}',
+                            line=dict(color='#58a6ff', width=1, dash='dot'),
+                            hovertemplate=f'{format_currency(best_fit)}<extra>DAT Best Fit</extra>'
+                        ))
+
+                        fig.update_layout(
+                            xaxis_title='Hours Remaining',
+                            yaxis_title='Carrier Cost ($)',
+                            xaxis=dict(
+                                tickmode='array', tickvals=hours_list,
+                                autorange='reversed',
+                                gridcolor='rgba(48,54,61,0.4)',
+                            ),
+                            yaxis=dict(
+                                tickformat='$,.0f',
+                                gridcolor='rgba(48,54,61,0.4)',
+                            ),
+                            template='plotly_dark',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            height=320,
+                            margin=dict(l=60, r=20, t=20, b=50),
+                            legend=dict(
+                                orientation='h', yanchor='bottom', y=1.02,
+                                xanchor='left', x=0, font=dict(size=11)
+                            ),
+                            hovermode='x unified',
+                        )
+
+                        st.plotly_chart(fig, use_container_width=True)
+
+                        st.caption("If this load slips to same-day, here's what you could face. "
+                                   "Consider adding cushion or booking aggressively today.")
 
                 # ──────────────────────────────────────────────────────────
                 # 5. EXPECTED VALUE ANALYSIS

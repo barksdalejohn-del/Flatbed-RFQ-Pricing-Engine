@@ -327,6 +327,67 @@ def compute_same_day_multiplier(hours_remaining, origin_signal=None, day_of_week
     }
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# RATE CAST — REAL-TIME LTR DIVERGENCE DETECTION
+# ──────────────────────────────────────────────────────────────────────────────
+
+RATE_CAST_LTR_DIVERGENCE_THRESHOLD = 0.38  # 38% live vs 8-day
+RATE_CAST_ZSCORE_THRESHOLD = 2.0
+
+
+def check_rate_cast_triggers(live_ltr, ltr_8d, state, signals):
+    """
+    Check if Rate Cast should appear.
+
+    Triggers (either fires = show Rate Cast):
+      1. State z-score > 2.0
+      2. Live LTR vs 8-day LTR divergence > 38%
+
+    Returns dict with:
+      triggered: bool
+      trigger_reason: str or None ('live_divergence', 'state_zscore', 'both')
+      live_ltr: float
+      ltr_8d: float
+      divergence_pct: float or None
+      z_score: float or None
+    """
+    result = {
+        "triggered": False,
+        "trigger_reason": None,
+        "live_ltr": live_ltr,
+        "ltr_8d": ltr_8d,
+        "divergence_pct": None,
+        "z_score": None,
+    }
+
+    if live_ltr is None or live_ltr <= 0:
+        return result
+
+    # Trigger 2: Live vs 8-day divergence
+    if ltr_8d and ltr_8d > 0:
+        div_pct = (live_ltr - ltr_8d) / ltr_8d
+        result["divergence_pct"] = div_pct
+        if div_pct > RATE_CAST_LTR_DIVERGENCE_THRESHOLD:
+            result["triggered"] = True
+            result["trigger_reason"] = "live_divergence"
+
+    # Trigger 1: State z-score
+    if signals and state:
+        states = signals.get("states", {})
+        st_upper = state.upper() if state else None
+        if st_upper and st_upper in states:
+            z = states[st_upper].get("z_score")
+            result["z_score"] = z
+            if z is not None and z > RATE_CAST_ZSCORE_THRESHOLD:
+                result["triggered"] = True
+                if result["trigger_reason"]:
+                    result["trigger_reason"] = "both"
+                else:
+                    result["trigger_reason"] = "state_zscore"
+
+    return result
+
+
 def load_data():
     rate = pd.read_csv(os.path.join(DATA_DIR, "rate_matrix.csv"), index_col=0)
     stddev = pd.read_csv(os.path.join(DATA_DIR, "stddev_matrix.csv"), index_col=0)

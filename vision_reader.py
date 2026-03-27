@@ -60,6 +60,11 @@ Extract from Lane Trend table (if visible):
   Dates should be in format "Mon YY" (e.g. "Feb 26")
   Values should be numbers without $ signs
 
+Extract from the Outbound Market Conditions panel (right side of screen):
+IMPORTANT: Only extract data for the ORIGIN market (the FIRST/TOP market shown in this panel).
+Do NOT extract data for the destination market (the second/lower market shown).
+- origin_live_ltr: the L/T Ratio number shown for the origin market (e.g. 492.3)
+
 If any field is not visible in the screenshot, set it to null.
 
 Return ONLY valid JSON, no other text. Example format:
@@ -80,6 +85,7 @@ Return ONLY valid JSON, no other text. Example format:
   "companies": 6,
   "fuel_included": 710,
   "miles": null,
+  "origin_live_ltr": 492.3,
   "lane_trend": [
     {"date": "Feb 26", "low": 1728, "mid": 2214, "high": 2783},
     {"date": "Jan 26", "low": 1877, "mid": 2027, "high": 2522}
