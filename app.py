@@ -846,15 +846,14 @@ if st.session_state.get("show_results"):
                         # Use next business day (tomorrow) for the day factor
                         import pytz
                         central = pytz.timezone("US/Central")
-                        now_ct = datetime.now(central)
-                        rc_dow = now_ct.weekday()
-
                         orig_signal_for_rc = directional.get("orig_signal") if directional else None
                         hours_list = [8, 7, 6, 5, 4, 3, 2, 1]
                         rc_costs = []
                         for h in hours_list:
+                            # Use Monday (day_of_week=0) to force neutral 1.00 day factor
+                            # Rate Cast doesn't know the ship day, so no day premium applied
                             sd_result = compute_same_day_multiplier(
-                                h, origin_signal=orig_signal_for_rc, day_of_week=rc_dow
+                                h, origin_signal=orig_signal_for_rc, day_of_week=0
                             )
                             rc_costs.append(round(carrier_high * sd_result["multiplier"], 2))
 
