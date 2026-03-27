@@ -839,7 +839,7 @@ if st.session_state.get("show_results"):
 
                     if rc["triggered"]:
                         st.markdown("---")
-                        st.markdown("### ⚠ Rate Cast — Same-Day Risk Curve")
+                        st.markdown("### ⚠ Rate Cast — Same-Day Risk")
 
                         # Alert banner
                         alert_parts = []
@@ -855,79 +855,46 @@ if st.session_state.get("show_results"):
                             )
                         st.warning(" · ".join(alert_parts))
 
-                        # Compute same-day rate curve at each hour (8→1)
-                        # Use next business day (tomorrow) for the day factor
-                        import pytz
-                        central = pytz.timezone("US/Central")
+                        # Reference line — current Ceiling Defensive
+                        st.markdown(
+                            f"**Ceiling Defensive: {format_currency(ceil_def)}**"
+                        )
+
+                        # Compute same-day costs at key time points
                         orig_signal_for_rc = directional.get("orig_signal") if directional else None
-                        hours_list = [8, 7, 6, 5, 4, 3, 2, 1]
-                        rc_costs = []
-                        for h in hours_list:
+                        key_hours = [8, 5, 3, 1]
+                        rc_costs = {}
+                        for h in key_hours:
                             # Use Monday (day_of_week=0) to force neutral 1.00 day factor
                             # Rate Cast doesn't know the ship day, so no day premium applied
                             sd_result = compute_same_day_multiplier(
                                 h, origin_signal=orig_signal_for_rc, day_of_week=0
                             )
-                            rc_costs.append(round(carrier_high * sd_result["multiplier"], 2))
+                            rc_costs[h] = round(carrier_high * sd_result["multiplier"], 2)
 
-                        # Build Plotly chart
-                        import plotly.graph_objects as go
-
-                        fig = go.Figure()
-
-                        # Same-day rate curve
-                        fig.add_trace(go.Scatter(
-                            x=hours_list, y=rc_costs,
-                            mode='lines+markers',
-                            name='Same-Day Carrier Cost',
-                            line=dict(color='#f85149', width=3),
-                            marker=dict(size=7, color='#f85149'),
-                            hovertemplate='%{y:$,.0f} at %{x}h remaining<extra></extra>'
-                        ))
-
-                        # Ceiling Defensive reference line
-                        fig.add_trace(go.Scatter(
-                            x=hours_list, y=[ceil_def] * len(hours_list),
-                            mode='lines',
-                            name=f'Ceiling Defensive: {format_currency(ceil_def)}',
-                            line=dict(color='#8b949e', width=2, dash='dash'),
-                            hovertemplate=f'{format_currency(ceil_def)}<extra>Ceiling Defensive</extra>'
-                        ))
-
-                        # Best Fit reference line
-                        fig.add_trace(go.Scatter(
-                            x=hours_list, y=[best_fit] * len(hours_list),
-                            mode='lines',
-                            name=f'DAT Best Fit: {format_currency(best_fit)}',
-                            line=dict(color='#58a6ff', width=1, dash='dot'),
-                            hovertemplate=f'{format_currency(best_fit)}<extra>DAT Best Fit</extra>'
-                        ))
-
-                        fig.update_layout(
-                            xaxis_title='Hours Remaining',
-                            yaxis_title='Carrier Cost ($)',
-                            xaxis=dict(
-                                tickmode='array', tickvals=hours_list,
-                                autorange='reversed',
-                                gridcolor='rgba(48,54,61,0.4)',
-                            ),
-                            yaxis=dict(
-                                tickformat='$,.0f',
-                                gridcolor='rgba(48,54,61,0.4)',
-                            ),
-                            template='plotly_dark',
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            plot_bgcolor='rgba(0,0,0,0)',
-                            height=320,
-                            margin=dict(l=60, r=20, t=20, b=50),
-                            legend=dict(
-                                orientation='h', yanchor='bottom', y=1.02,
-                                xanchor='left', x=0, font=dict(size=11)
-                            ),
-                            hovermode='x unified',
-                        )
-
-                        st.plotly_chart(fig, use_container_width=True)
+                        # Compact card strip — 4 key time points
+                        h_cols = st.columns(4)
+                        for i, h in enumerate(key_hours):
+                            cost = rc_costs[h]
+                            gap = cost - ceil_def
+                            gap_pct = (gap / ceil_def * 100) if ceil_def else 0
+                            with h_cols[i]:
+                                # Color gradient: green-ish at 8h → red at 1h
+                                border_color = (
+                                    "#f0883e" if h >= 8 else
+                                    "#f85149" if h <= 1 else
+                                    "#da3633" if h <= 3 else "#e3b341"
+                                )
+                                st.markdown(f"""
+                                <div style="border:1px solid {border_color}; border-radius:8px;
+                                            padding:12px 14px; text-align:center;">
+                                    <div style="color:#8b949e; font-size:0.78rem; margin-bottom:4px;">
+                                        {h}h remaining</div>
+                                    <div style="font-size:1.5rem; font-weight:700; color:#f0f6fc;">
+                                        {format_currency(cost)}</div>
+                                    <div style="color:#f85149; font-size:0.8rem; margin-top:4px;">
+                                        ↑ +{format_currency(gap)} | +{gap_pct:.1f}% vs quote</div>
+                                </div>""", unsafe_allow_html=True)
 
                         st.caption("If this load slips to same-day, here's what you could face. "
                                    "Consider adding cushion or booking aggressively prior to ship day.")
