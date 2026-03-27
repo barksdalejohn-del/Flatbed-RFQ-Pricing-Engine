@@ -7,6 +7,37 @@ from datetime import datetime
 
 st.set_page_config(page_title="Flatbed Spot Pricing Tool", page_icon="🚛", layout="wide")
 
+# ──────────────────────────────────────────────────────────────────────────────
+# SIDEBAR NAV RENAME — must run before password check so it applies on login page
+# ──────────────────────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+    /* Navigation header above page links in sidebar */
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::before {
+        content: "Navigation";
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #ffffff;
+        padding: 0.5rem 1rem 0.25rem 1rem;
+    }
+</style>
+<script>
+// Rename "app" to "Spot Quote" in sidebar nav
+const renameNav = () => {
+    const links = document.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a span');
+    links.forEach(span => {
+        if (span.textContent.trim().toLowerCase() === 'app') {
+            span.textContent = 'Spot Quote';
+        }
+    });
+};
+// Run immediately and on DOM changes (Streamlit re-renders)
+renameNav();
+const obs = new MutationObserver(renameNav);
+obs.observe(document.body, {childList: true, subtree: true});
+</script>
+""", unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # PASSWORD PROTECTION
@@ -68,27 +99,6 @@ st.markdown("""
     }
     div[data-testid="stMetric"] label { color: #a0a0b0 !important; }
     div[data-testid="stMetric"] [data-testid="stMetricValue"] { color: #ffffff !important; }
-    /* Navigation header above page links in sidebar */
-    section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::before {
-        content: "Navigation";
-        display: block;
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #ffffff;
-        padding: 0.5rem 1rem 0.25rem 1rem;
-    }
-    /* Rename "app" to "Spot Quote" in sidebar nav */
-    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[href=""] span,
-    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[href="/"] span,
-    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] li:first-child a span {
-        font-size: 0;
-    }
-    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[href=""] span::after,
-    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[href="/"] span::after,
-    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] li:first-child a span::after {
-        content: "Spot Quote";
-        font-size: 0.875rem;
-    }
 </style>
 """, unsafe_allow_html=True)
 

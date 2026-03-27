@@ -3,6 +3,35 @@ import pandas as pd
 from datetime import datetime
 
 # ──────────────────────────────────────────────────────────────────────────────
+# SIDEBAR NAV RENAME
+# ──────────────────────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::before {
+        content: "Navigation";
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #ffffff;
+        padding: 0.5rem 1rem 0.25rem 1rem;
+    }
+</style>
+<script>
+const renameNav = () => {
+    const links = document.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a span');
+    links.forEach(span => {
+        if (span.textContent.trim().toLowerCase() === 'app') {
+            span.textContent = 'Spot Quote';
+        }
+    });
+};
+renameNav();
+const obs = new MutationObserver(renameNav);
+obs.observe(document.body, {childList: true, subtree: true});
+</script>
+""", unsafe_allow_html=True)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # PASSWORD PROTECTION (shared with main app)
 # ──────────────────────────────────────────────────────────────────────────────
 
