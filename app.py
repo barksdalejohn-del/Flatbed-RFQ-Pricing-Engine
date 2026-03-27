@@ -847,19 +847,14 @@ if st.session_state.get("show_results"):
                         import pytz
                         central = pytz.timezone("US/Central")
                         now_ct = datetime.now(central)
-                        tomorrow_dow = (now_ct.weekday() + 1) % 7
-                        # If tomorrow is weekend, use Monday
-                        if tomorrow_dow == 5:
-                            tomorrow_dow = 0
-                        elif tomorrow_dow == 6:
-                            tomorrow_dow = 0
+                        rc_dow = now_ct.weekday()
 
                         orig_signal_for_rc = directional.get("orig_signal") if directional else None
                         hours_list = [8, 7, 6, 5, 4, 3, 2, 1]
                         rc_costs = []
                         for h in hours_list:
                             sd_result = compute_same_day_multiplier(
-                                h, origin_signal=orig_signal_for_rc, day_of_week=tomorrow_dow
+                                h, origin_signal=orig_signal_for_rc, day_of_week=rc_dow
                             )
                             rc_costs.append(round(carrier_high * sd_result["multiplier"], 2))
 
