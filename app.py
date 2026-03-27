@@ -10,6 +10,8 @@ st.set_page_config(page_title="Flatbed Spot Pricing Tool", page_icon="🚛", lay
 # ──────────────────────────────────────────────────────────────────────────────
 # SIDEBAR NAV RENAME — must run before password check so it applies on login page
 # ──────────────────────────────────────────────────────────────────────────────
+import streamlit.components.v1 as components
+
 st.markdown("""
 <style>
     /* Navigation header above page links in sidebar */
@@ -22,22 +24,24 @@ st.markdown("""
         padding: 0.5rem 1rem 0.25rem 1rem;
     }
 </style>
+""", unsafe_allow_html=True)
+
+components.html("""
 <script>
-// Rename "app" to "Spot Quote" in sidebar nav
-const renameNav = () => {
-    const links = document.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a span');
-    links.forEach(span => {
+function renameNav() {
+    const doc = window.parent.document;
+    const links = doc.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a span');
+    links.forEach(function(span) {
         if (span.textContent.trim().toLowerCase() === 'app') {
             span.textContent = 'Spot Quote';
         }
     });
-};
-// Run immediately and on DOM changes (Streamlit re-renders)
+}
 renameNav();
-const obs = new MutationObserver(renameNav);
-obs.observe(document.body, {childList: true, subtree: true});
+var obs = new MutationObserver(renameNav);
+obs.observe(window.parent.document.body, {childList: true, subtree: true});
 </script>
-""", unsafe_allow_html=True)
+""", height=0)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # PASSWORD PROTECTION

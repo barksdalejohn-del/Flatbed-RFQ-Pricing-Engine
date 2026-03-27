@@ -5,6 +5,8 @@ from datetime import datetime
 # ──────────────────────────────────────────────────────────────────────────────
 # SIDEBAR NAV RENAME
 # ──────────────────────────────────────────────────────────────────────────────
+import streamlit.components.v1 as components
+
 st.markdown("""
 <style>
     section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::before {
@@ -16,20 +18,24 @@ st.markdown("""
         padding: 0.5rem 1rem 0.25rem 1rem;
     }
 </style>
+""", unsafe_allow_html=True)
+
+components.html("""
 <script>
-const renameNav = () => {
-    const links = document.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a span');
-    links.forEach(span => {
+function renameNav() {
+    var doc = window.parent.document;
+    var links = doc.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a span');
+    links.forEach(function(span) {
         if (span.textContent.trim().toLowerCase() === 'app') {
             span.textContent = 'Spot Quote';
         }
     });
-};
+}
 renameNav();
-const obs = new MutationObserver(renameNav);
-obs.observe(document.body, {childList: true, subtree: true});
+var obs = new MutationObserver(renameNav);
+obs.observe(window.parent.document.body, {childList: true, subtree: true});
 </script>
-""", unsafe_allow_html=True)
+""", height=0)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # PASSWORD PROTECTION (shared with main app)
