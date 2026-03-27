@@ -839,7 +839,7 @@ if st.session_state.get("show_results"):
 
                     if rc["triggered"]:
                         st.markdown("---")
-                        st.markdown("### ⚠ Rate Cast — Same-Day Risk")
+                        st.markdown("### ⚠ Rate Cast Alert — Same-Day Risk")
 
                         # Alert banner
                         alert_parts = []
