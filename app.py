@@ -526,8 +526,13 @@ if reset_clicked:
             # Already showing confirmation — wait for button click below
             pass
     else:
+        # Clear form fields explicitly (set to empty, not delete, so widgets reset)
+        form_keys = ["orig_city_q", "orig_state_q", "dest_city_q", "dest_state_q",
+                     "orig_zip3_q", "dest_zip3_q", "orig_mkt_q", "dest_mkt_q"]
+        for key in form_keys:
+            st.session_state[key] = ""
         for key in list(st.session_state.keys()):
-            if key not in ["password_correct"]:
+            if key not in ["password_correct"] and key not in form_keys:
                 del st.session_state[key]
         st.rerun()
 
@@ -537,14 +542,22 @@ if st.session_state.get("same_day_confirm_reset"):
     confirm_col1, confirm_col2 = st.columns(2)
     if confirm_col1.button("Yes, keep Same-Day ON", use_container_width=True):
         del st.session_state["same_day_confirm_reset"]
+        form_keys = ["orig_city_q", "orig_state_q", "dest_city_q", "dest_state_q",
+                     "orig_zip3_q", "dest_zip3_q", "orig_mkt_q", "dest_mkt_q"]
+        for key in form_keys:
+            st.session_state[key] = ""
         for key in list(st.session_state.keys()):
-            if key not in ["password_correct", "same_day_confirm_reset"]:
+            if key not in ["password_correct", "same_day_confirm_reset"] and key not in form_keys:
                 del st.session_state[key]
         st.rerun()
     if confirm_col2.button("No, turn it OFF", use_container_width=True):
         del st.session_state["same_day_confirm_reset"]
+        form_keys = ["orig_city_q", "orig_state_q", "dest_city_q", "dest_state_q",
+                     "orig_zip3_q", "dest_zip3_q", "orig_mkt_q", "dest_mkt_q"]
+        for key in form_keys:
+            st.session_state[key] = ""
         for key in list(st.session_state.keys()):
-            if key not in ["password_correct"]:
+            if key not in ["password_correct"] and key not in form_keys:
                 del st.session_state[key]
         st.rerun()
 
