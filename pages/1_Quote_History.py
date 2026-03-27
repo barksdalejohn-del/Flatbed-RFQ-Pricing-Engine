@@ -15,7 +15,7 @@ st.markdown("""
         font-size: 1.25rem;
         font-weight: 700;
         color: #ffffff;
-        padding: 0.5rem 0.5rem 0.25rem 0.75rem;
+        padding: 0.5rem 0.5rem 0.25rem 0.55rem;
     }
 </style>
 """, unsafe_allow_html=True)
