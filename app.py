@@ -77,6 +77,18 @@ st.markdown("""
         color: #ffffff;
         padding: 0.5rem 1rem 0.25rem 1rem;
     }
+    /* Rename "app" to "Spot Quote" in sidebar nav */
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[href=""] span,
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[href="/"] span,
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] li:first-child a span {
+        font-size: 0;
+    }
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[href=""] span::after,
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[href="/"] span::after,
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] li:first-child a span::after {
+        content: "Spot Quote";
+        font-size: 0.875rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
