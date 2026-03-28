@@ -299,9 +299,9 @@ if same_day_on:
 
     st.sidebar.caption(f"📅 {selected_day} · {same_day_hours} hours remaining")
 
-# Rate Cast
-rate_cast_on = st.sidebar.toggle("📡 Rate Cast", value=True,
-    help="Shows same-day risk curve when live origin LTR spikes above the weekly 8-day average. "
+# RateRisk Alert
+rate_cast_on = st.sidebar.toggle("📡 RateRisk Alert", value=True,
+    help="Shows same-day risk when live origin LTR spikes above the weekly 8-day average. "
          "Useful in tight/bull markets. Disable during contraction when capacity is abundant.")
 
 st.sidebar.markdown("---")
@@ -839,7 +839,7 @@ if st.session_state.get("show_results"):
 
                     if rc["triggered"]:
                         st.markdown("---")
-                        st.markdown("### ⚠ Rate Cast Alert — Same-Day Risk")
+                        st.markdown("### ⚠ RateRisk Alert — Same-Day Risk")
 
                         # Alert banner
                         alert_parts = []
@@ -866,7 +866,7 @@ if st.session_state.get("show_results"):
                         rc_costs = {}
                         for h in key_hours:
                             # Use Monday (day_of_week=0) to force neutral 1.00 day factor
-                            # Rate Cast doesn't know the ship day, so no day premium applied
+                            # RateRisk doesn't know the ship day, so no day premium applied
                             sd_result = compute_same_day_multiplier(
                                 h, origin_signal=orig_signal_for_rc, day_of_week=0
                             )
