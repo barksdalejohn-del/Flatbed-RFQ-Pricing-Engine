@@ -707,14 +707,8 @@ if st.session_state.get("show_results"):
 
                     if dest_ltr_live is not None and dest_ltr_30d is not None:
                         live_dest_signal = compute_live_signal(dest_ltr_live, dest_ltr_30d)
-                        # Determine origin live signal (use origin live LTR if available)
-                        orig_live_raw = vd_flow.get("origin_live_ltr")
-                        orig_ltr_live = float(orig_live_raw) if orig_live_raw is not None else None
-                        orig_ltr_30d = directional.get("orig_ltr_30d")
-                        if orig_ltr_live is not None and orig_ltr_30d is not None:
-                            live_orig_signal = compute_live_signal(orig_ltr_live, orig_ltr_30d)
-                        else:
-                            live_orig_signal = orig_sig  # Fall back to 8-day signal
+                        # Origin keeps its existing 8-day signal — Live Flow is about destination changes
+                        live_orig_signal = orig_sig
 
                         # Show Live Flow when: signal changed, or dest < 20, or dest 38%+ above 8-day
                         show_live_flow = False
@@ -730,7 +724,7 @@ if st.session_state.get("show_results"):
 
                         if show_live_flow and live_dest_signal:
                             live_dest_color = SIGNAL_COLORS.get(live_dest_signal, "#8b949e")
-                            live_orig_color = SIGNAL_COLORS.get(live_orig_signal, "#8b949e")
+                            orig_color_flow = SIGNAL_COLORS.get(orig_sig, "#8b949e")
                             if dest_ltr_live < 20:
                                 live_flow_icon = "⚠️"
                             elif dest_label == "Strong destination":
@@ -739,7 +733,7 @@ if st.session_state.get("show_results"):
                                 live_flow_icon = "⚠️"
                             st.markdown(
                                 f"{live_flow_icon} **Live Flow:** "
-                                f"<span style='color:{live_orig_color};font-weight:bold'>{live_orig_signal}</span>"
+                                f"<span style='color:{orig_color_flow};font-weight:bold'>{orig_sig}</span>"
                                 f" → "
                                 f"<span style='color:{live_dest_color};font-weight:bold'>{live_dest_signal}</span>"
                                 f" (LTR live: {dest_ltr_live:.1f})"
@@ -753,7 +747,7 @@ if st.session_state.get("show_results"):
                             ltr_source = "live" if dest_ltr_live is not None else "8D"
                             st.warning(
                                 f"**DESTINATION ALERT: {dest_mkt_display} — LTR {dest_ltr_for_alert:.1f} ({ltr_source})**\n\n"
-                                f"Extremely low demand at destination. Carrier may price in deadhead. "
+                                f"Demand weakening at destination. Carrier may price in deadhead. "
                                 f"Review market conditions before quoting."
                             )
                 else:
