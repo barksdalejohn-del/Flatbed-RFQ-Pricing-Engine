@@ -84,7 +84,7 @@ if not check_password():
 
 from engine import (load_data, resolve_market, load_dashboard_signals, get_signal_staleness,
                      compute_directional_adjustment, compute_same_day_multiplier,
-                     check_rate_cast_triggers, lookup_lane)
+                     check_rate_cast_triggers, compute_live_signal, lookup_lane)
 from vision_reader import extract_rateview_data
 from quote_log import ANALYSTS, save_quote, load_quote_log, update_outcome, delete_quote, detect_strategy
 
@@ -698,12 +698,61 @@ if st.session_state.get("show_results"):
                     if directional.get("momentum_applied"):
                         st.caption("Momentum confirms direction — additional +/-2% applied")
 
-                    # Soft destination alert
+                    # Live Flow line — compare live destination LTR to weekly data
+                    vd_flow = st.session_state.get("vision_data") or {}
+                    dest_live_raw = vd_flow.get("dest_live_ltr")
+                    dest_ltr_live = float(dest_live_raw) if dest_live_raw is not None else None
+                    dest_ltr_8d = directional.get("dest_ltr_8d")
+                    dest_ltr_30d = directional.get("dest_ltr_30d")
+
+                    if dest_ltr_live is not None and dest_ltr_30d is not None:
+                        live_dest_signal = compute_live_signal(dest_ltr_live, dest_ltr_30d)
+                        # Determine origin live signal (use origin live LTR if available)
+                        orig_live_raw = vd_flow.get("origin_live_ltr")
+                        orig_ltr_live = float(orig_live_raw) if orig_live_raw is not None else None
+                        orig_ltr_30d = directional.get("orig_ltr_30d")
+                        if orig_ltr_live is not None and orig_ltr_30d is not None:
+                            live_orig_signal = compute_live_signal(orig_ltr_live, orig_ltr_30d)
+                        else:
+                            live_orig_signal = orig_sig  # Fall back to 8-day signal
+
+                        # Show Live Flow when: signal changed, or dest < 20, or dest 38%+ above 8-day
+                        show_live_flow = False
+                        dest_label = ""
+                        if live_dest_signal and live_dest_signal != dest_sig:
+                            show_live_flow = True
+                        if dest_ltr_live < 20:
+                            show_live_flow = True
+                            dest_label = "Weak destination"
+                        if dest_ltr_8d and dest_ltr_8d > 0 and (dest_ltr_live - dest_ltr_8d) / dest_ltr_8d > 0.38:
+                            show_live_flow = True
+                            dest_label = "Strong destination"
+
+                        if show_live_flow and live_dest_signal:
+                            live_dest_color = SIGNAL_COLORS.get(live_dest_signal, "#8b949e")
+                            live_orig_color = SIGNAL_COLORS.get(live_orig_signal, "#8b949e")
+                            if dest_ltr_live < 20:
+                                live_flow_icon = "⚠️"
+                            elif dest_label == "Strong destination":
+                                live_flow_icon = "✅"
+                            else:
+                                live_flow_icon = "⚠️"
+                            st.markdown(
+                                f"{live_flow_icon} **Live Flow:** "
+                                f"<span style='color:{live_orig_color};font-weight:bold'>{live_orig_signal}</span>"
+                                f" → "
+                                f"<span style='color:{live_dest_color};font-weight:bold'>{live_dest_signal}</span>"
+                                f" (LTR live: {dest_ltr_live:.1f})"
+                                f"{' — ' + dest_label if dest_label else ''}",
+                                unsafe_allow_html=True)
+
+                    # Soft destination alert — use live LTR when available, fall back to 8-day
                     if deadhead_alert_on:
-                        dest_ltr = directional.get("dest_ltr_8d")
-                        if dest_ltr is not None and isinstance(dest_ltr, (int, float)) and dest_ltr < 20:
+                        dest_ltr_for_alert = dest_ltr_live if dest_ltr_live is not None else directional.get("dest_ltr_8d")
+                        if dest_ltr_for_alert is not None and isinstance(dest_ltr_for_alert, (int, float)) and dest_ltr_for_alert < 20:
+                            ltr_source = "live" if dest_ltr_live is not None else "8D"
                             st.warning(
-                                f"**DESTINATION ALERT: {dest_mkt_display} — LTR {dest_ltr}**\n\n"
+                                f"**DESTINATION ALERT: {dest_mkt_display} — LTR {dest_ltr_for_alert:.1f} ({ltr_source})**\n\n"
                                 f"Extremely low demand at destination. Carrier may price in deadhead. "
                                 f"Review market conditions before quoting."
                             )

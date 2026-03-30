@@ -388,6 +388,28 @@ def check_rate_cast_triggers(live_ltr, ltr_8d, state, signals):
     return result
 
 
+# --- Live signal from LTR divergence ---
+LIVE_SIGNAL_THRESHOLDS = [
+    (0.60, "Acute Imbalance"),
+    (0.50, "Tightening"),
+    (0.12, "Firming"),
+    (-0.12, "Balanced"),
+    (-0.15, "Loosening"),
+]
+
+
+def compute_live_signal(live_ltr, ltr_30d):
+    """Compute a signal label from live LTR vs 30-day LTR divergence.
+    Uses the same divergence thresholds as the dashboard export."""
+    if live_ltr is None or ltr_30d is None or ltr_30d <= 0:
+        return None
+    pct_diff = (live_ltr - ltr_30d) / ltr_30d
+    for threshold, label in LIVE_SIGNAL_THRESHOLDS:
+        if pct_diff >= threshold:
+            return label
+    return "Soft"
+
+
 def load_data():
     rate = pd.read_csv(os.path.join(DATA_DIR, "rate_matrix.csv"), index_col=0)
     stddev = pd.read_csv(os.path.join(DATA_DIR, "stddev_matrix.csv"), index_col=0)
