@@ -705,8 +705,8 @@ if st.session_state.get("show_results"):
                     dest_ltr_8d = directional.get("dest_ltr_8d")
                     dest_ltr_30d = directional.get("dest_ltr_30d")
 
-                    if dest_ltr_live is not None and dest_ltr_30d is not None:
-                        live_dest_signal = compute_live_signal(dest_ltr_live, dest_ltr_30d)
+                    if dest_ltr_live is not None and dest_ltr_8d is not None:
+                        live_dest_signal = compute_live_signal(dest_ltr_live, dest_ltr_8d)
                         # Override: if live LTR is below 20, it's Soft regardless of divergence math
                         if dest_ltr_live < 20:
                             live_dest_signal = "Soft"
