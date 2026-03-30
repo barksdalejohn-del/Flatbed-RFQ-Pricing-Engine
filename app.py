@@ -684,13 +684,13 @@ if st.session_state.get("show_results"):
                     # Flow description
                     if dir_adj < -0.03:
                         flow_icon = "<span style='color:#3fb950;font-size:1.2em'>&#9679;</span>"
-                        flow_label = "Carrier-friendly — push hard on rate"
+                        flow_label = "Carrier-friendly"
                     elif dir_adj > 0.03:
                         flow_icon = "<span style='color:#f85149;font-size:1.2em'>&#9679;</span>"
-                        flow_label = "Carrier-unfriendly — protect margin"
+                        flow_label = "Carrier-unfriendly"
                     else:
                         flow_icon = "<span style='color:#8b949e;font-size:1.2em'>&#9679;</span>"
-                        flow_label = "Balanced flow — quote at market"
+                        flow_label = "Balanced flow"
 
                     st.markdown(f"{flow_icon} **Flow:** {orig_sig} -> {dest_sig} — {flow_label}",
                                 unsafe_allow_html=True)
