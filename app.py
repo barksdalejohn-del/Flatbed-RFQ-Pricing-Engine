@@ -717,17 +717,15 @@ if st.session_state.get("show_results"):
                             show_live_flow = True
                         if dest_ltr_live < 20:
                             show_live_flow = True
-                            dest_label = "Weak destination"
+                            dest_label = "Demand weakening at destination"
                         if dest_ltr_8d and dest_ltr_8d > 0 and (dest_ltr_live - dest_ltr_8d) / dest_ltr_8d > 0.38:
                             show_live_flow = True
-                            dest_label = "Strong destination"
+                            dest_label = "Demand improving at destination"
 
                         if show_live_flow and live_dest_signal:
                             live_dest_color = SIGNAL_COLORS.get(live_dest_signal, "#8b949e")
                             orig_color_flow = SIGNAL_COLORS.get(orig_sig, "#8b949e")
-                            if dest_ltr_live < 20:
-                                live_flow_icon = "⚠️"
-                            elif dest_label == "Strong destination":
+                            if dest_label == "Demand improving at destination":
                                 live_flow_icon = "✅"
                             else:
                                 live_flow_icon = "⚠️"
