@@ -713,8 +713,11 @@ if st.session_state.get("show_results"):
                         # Show Live Flow when: signal changed, or dest < 20, or dest 38%+ above 8-day
                         show_live_flow = False
                         dest_label = ""
+                        # Determine direction from live vs 8-day LTR
+                        dest_weakening = dest_ltr_live < dest_ltr_8d if dest_ltr_8d else False
                         if live_dest_signal and live_dest_signal != dest_sig:
                             show_live_flow = True
+                            dest_label = "Demand weakening at destination" if dest_weakening else "Demand improving at destination"
                         if dest_ltr_live < 20:
                             show_live_flow = True
                             dest_label = "Demand weakening at destination"
