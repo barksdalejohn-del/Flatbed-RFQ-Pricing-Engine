@@ -745,7 +745,7 @@ if st.session_state.get("show_results"):
                             ltr_source = "live" if dest_ltr_live is not None else "8D"
                             st.warning(
                                 f"**DESTINATION ALERT: {dest_mkt_display} — LTR {dest_ltr_for_alert:.1f} ({ltr_source})**\n\n"
-                                f"Demand weakening at destination. Carrier may price in deadhead. "
+                                f"Demand weakening at destination. "
                                 f"Review market conditions before quoting."
                             )
                 else:
