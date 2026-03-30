@@ -242,7 +242,7 @@ def get_data():
     return load_data()
 
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def get_dashboard_signals():
     return load_dashboard_signals()
 
