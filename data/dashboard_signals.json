@@ -1,10 +1,31 @@
 {
-  "exported_at": "2026-03-30 09:08:37",
+  "exported_at": "2026-03-31 18:45:33",
   "as_of": "2026-03-28",
   "national": {
     "ltr_8d": 96.4,
     "ltr_30d": 91.8,
-    "divergence": 0.0502
+    "divergence": 0.0502,
+    "national_ltr_weekly": 81.57,
+    "national_ema": 67.6,
+    "national_roc": 0.259,
+    "ltr_direction": "RISING"
+  },
+  "macro": {
+    "regime": "EXPANSION",
+    "regime_date": "2026-02-01",
+    "phase": 4,
+    "conviction_score": 5,
+    "monthly_structural_score": 2.0,
+    "weekly_momentum_score": 3.0,
+    "output_label": "EXTREME TIGHTENING",
+    "operational_bias": "Defensive quoting — protect cost risk aggressively",
+    "summary": "Monthly tightening + strong weekly momentum → expect rapid carrier repricing; quote defensively."
+  },
+  "quoting_posture": {
+    "posture": "DEFENSIVE",
+    "margin_bias": 0.03,
+    "guidance": "Market tightening strongly. Protect cost risk, quote conservatively.",
+    "tension": null
   },
   "states": {
     "AL": {
@@ -2312,6 +2333,479 @@
       "divergence": -0.2729,
       "signal": "Soft",
       "pressure_score": 9.1
+    }
+  },
+  "demand_indicators": {
+    "ISM_New_Orders": {
+      "label": "ISM Manufacturing New Orders",
+      "unit": "index",
+      "layers": [
+        "ISM-Grid"
+      ],
+      "latest": 55.8,
+      "prior": 57.1,
+      "three_mo_ago": 47.4,
+      "direction": "FALLING",
+      "latest_date": "2026-02",
+      "bullish_above": 50,
+      "data": [
+        {
+          "d": "2025-09",
+          "v": 48.9
+        },
+        {
+          "d": "2025-10",
+          "v": 49.4
+        },
+        {
+          "d": "2025-11",
+          "v": 47.4
+        },
+        {
+          "d": "2025-12",
+          "v": 47.4
+        },
+        {
+          "d": "2026-01",
+          "v": 57.1
+        },
+        {
+          "d": "2026-02",
+          "v": 55.8
+        }
+      ]
+    },
+    "Rig_Count": {
+      "label": "Baker Hughes Total Rig Count",
+      "unit": "rigs",
+      "layers": [
+        "Energy"
+      ],
+      "latest": 550.0,
+      "prior": 546.0,
+      "three_mo_ago": 544.0,
+      "direction": "RISING",
+      "latest_date": "2026-02",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-09",
+          "v": 549.0
+        },
+        {
+          "d": "2025-10",
+          "v": 546.0
+        },
+        {
+          "d": "2025-11",
+          "v": 544.0
+        },
+        {
+          "d": "2025-12",
+          "v": 546.0
+        },
+        {
+          "d": "2026-01",
+          "v": 546.0
+        },
+        {
+          "d": "2026-02",
+          "v": 550.0
+        }
+      ]
+    },
+    "Housing_Starts": {
+      "label": "Housing Starts (SF, SAAR)",
+      "unit": "thousands",
+      "layers": [
+        "Permits-Starts",
+        "Construction"
+      ],
+      "latest": 935.0,
+      "prior": 962.0,
+      "three_mo_ago": 894.0,
+      "direction": "FALLING",
+      "latest_date": "2026-01",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-08",
+          "v": 869.0
+        },
+        {
+          "d": "2025-09",
+          "v": 836.0
+        },
+        {
+          "d": "2025-10",
+          "v": 894.0
+        },
+        {
+          "d": "2025-11",
+          "v": 931.0
+        },
+        {
+          "d": "2025-12",
+          "v": 962.0
+        },
+        {
+          "d": "2026-01",
+          "v": 935.0
+        }
+      ]
+    },
+    "Building_Permits": {
+      "label": "Building Permits (SF)",
+      "unit": "thousands",
+      "layers": [
+        "Permits-Starts",
+        "Construction"
+      ],
+      "latest": 876.0,
+      "prior": 881.0,
+      "three_mo_ago": 878.0,
+      "direction": "FALLING",
+      "latest_date": "2026-01",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-08",
+          "v": 858.0
+        },
+        {
+          "d": "2025-09",
+          "v": 880.0
+        },
+        {
+          "d": "2025-10",
+          "v": 878.0
+        },
+        {
+          "d": "2025-11",
+          "v": 896.0
+        },
+        {
+          "d": "2025-12",
+          "v": 881.0
+        },
+        {
+          "d": "2026-01",
+          "v": 876.0
+        }
+      ]
+    },
+    "Construction_Spending": {
+      "label": "Construction Spending (Mfg)",
+      "unit": "millions_USD",
+      "layers": [
+        "Construction"
+      ],
+      "latest": 15222.0,
+      "prior": 16818.0,
+      "three_mo_ago": 18708.0,
+      "direction": "FALLING",
+      "latest_date": "2026-01",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-08",
+          "v": 18802.0
+        },
+        {
+          "d": "2025-09",
+          "v": 18395.0
+        },
+        {
+          "d": "2025-10",
+          "v": 18708.0
+        },
+        {
+          "d": "2025-11",
+          "v": 17278.0
+        },
+        {
+          "d": "2025-12",
+          "v": 16818.0
+        },
+        {
+          "d": "2026-01",
+          "v": 15222.0
+        }
+      ]
+    },
+    "Lumber_Futures": {
+      "label": "Lumber Futures",
+      "unit": "USD_per_mbf",
+      "layers": [
+        "Lumber",
+        "Lumber-PNW"
+      ],
+      "latest": 604.5,
+      "prior": 558.0,
+      "three_mo_ago": 539.0,
+      "direction": "RISING",
+      "latest_date": "2026-03",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-10",
+          "v": 539.5
+        },
+        {
+          "d": "2025-11",
+          "v": 544.0
+        },
+        {
+          "d": "2025-12",
+          "v": 539.0
+        },
+        {
+          "d": "2026-01",
+          "v": 594.0
+        },
+        {
+          "d": "2026-02",
+          "v": 558.0
+        },
+        {
+          "d": "2026-03",
+          "v": 604.5
+        }
+      ]
+    },
+    "HRC_Steel": {
+      "label": "Hot-Rolled Coil Steel Futures",
+      "unit": "USD_per_ton",
+      "layers": [
+        "Steel"
+      ],
+      "latest": 1045.0,
+      "prior": 1016.0,
+      "three_mo_ago": 940.0,
+      "direction": "RISING",
+      "latest_date": "2026-03",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-10",
+          "v": 847.0
+        },
+        {
+          "d": "2025-11",
+          "v": 904.0
+        },
+        {
+          "d": "2025-12",
+          "v": 940.0
+        },
+        {
+          "d": "2026-01",
+          "v": 972.0
+        },
+        {
+          "d": "2026-02",
+          "v": 1016.0
+        },
+        {
+          "d": "2026-03",
+          "v": 1045.0
+        }
+      ]
+    },
+    "Crude_Oil_WTI": {
+      "label": "Crude Oil (WTI) Futures",
+      "unit": "USD_per_barrel",
+      "layers": [
+        "Energy"
+      ],
+      "latest": 104.87,
+      "prior": 67.29,
+      "three_mo_ago": 57.41,
+      "direction": "RISING",
+      "latest_date": "2026-03",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-10",
+          "v": 60.88
+        },
+        {
+          "d": "2025-11",
+          "v": 58.48
+        },
+        {
+          "d": "2025-12",
+          "v": 57.41
+        },
+        {
+          "d": "2026-01",
+          "v": 65.74
+        },
+        {
+          "d": "2026-02",
+          "v": 67.29
+        },
+        {
+          "d": "2026-03",
+          "v": 104.87
+        }
+      ]
+    },
+    "Corn_Futures": {
+      "label": "Corn Futures",
+      "unit": "cents_per_bushel",
+      "layers": [
+        "HeavyEquip-Ag"
+      ],
+      "latest": 455.25,
+      "prior": 448.25,
+      "three_mo_ago": 441.0,
+      "direction": "RISING",
+      "latest_date": "2026-03",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-10",
+          "v": 431.0
+        },
+        {
+          "d": "2025-11",
+          "v": 447.75
+        },
+        {
+          "d": "2025-12",
+          "v": 441.0
+        },
+        {
+          "d": "2026-01",
+          "v": 428.25
+        },
+        {
+          "d": "2026-02",
+          "v": 448.25
+        },
+        {
+          "d": "2026-03",
+          "v": 455.25
+        }
+      ]
+    },
+    "Soybean_Futures": {
+      "label": "Soybean Futures",
+      "unit": "cents_per_bushel",
+      "layers": [
+        "HeavyEquip-Ag"
+      ],
+      "latest": 1159.5,
+      "prior": 1170.0,
+      "three_mo_ago": 1047.25,
+      "direction": "FALLING",
+      "latest_date": "2026-03",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-10",
+          "v": 1115.0
+        },
+        {
+          "d": "2025-11",
+          "v": 1137.25
+        },
+        {
+          "d": "2025-12",
+          "v": 1047.25
+        },
+        {
+          "d": "2026-01",
+          "v": 1064.25
+        },
+        {
+          "d": "2026-02",
+          "v": 1170.0
+        },
+        {
+          "d": "2026-03",
+          "v": 1159.5
+        }
+      ]
+    },
+    "Wheat_Futures": {
+      "label": "Wheat Futures",
+      "unit": "cents_per_bushel",
+      "layers": [
+        "HeavyEquip-Ag"
+      ],
+      "latest": 608.5,
+      "prior": 591.5,
+      "three_mo_ago": 506.5,
+      "direction": "RISING",
+      "latest_date": "2026-03",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-10",
+          "v": 533.75
+        },
+        {
+          "d": "2025-11",
+          "v": 538.5
+        },
+        {
+          "d": "2025-12",
+          "v": 506.5
+        },
+        {
+          "d": "2026-01",
+          "v": 538.5
+        },
+        {
+          "d": "2026-02",
+          "v": 591.5
+        },
+        {
+          "d": "2026-03",
+          "v": 608.5
+        }
+      ]
+    },
+    "Wind_Energy_ETF": {
+      "label": "First Trust Global Wind Energy ETF",
+      "unit": "USD",
+      "layers": [
+        "Renewables"
+      ],
+      "latest": 24.74,
+      "prior": 24.47,
+      "three_mo_ago": 20.47,
+      "direction": "RISING",
+      "latest_date": "2026-03",
+      "bullish_above": null,
+      "data": [
+        {
+          "d": "2025-10",
+          "v": 20.23
+        },
+        {
+          "d": "2025-11",
+          "v": 19.87
+        },
+        {
+          "d": "2025-12",
+          "v": 20.47
+        },
+        {
+          "d": "2026-01",
+          "v": 22.52
+        },
+        {
+          "d": "2026-02",
+          "v": 24.47
+        },
+        {
+          "d": "2026-03",
+          "v": 24.74
+        }
+      ]
     }
   },
   "signal_thresholds": {

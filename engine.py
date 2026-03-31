@@ -508,10 +508,20 @@ def classify_liquidity(reports):
     return "DEEP"
 
 
-def get_cycle_buffer(params):
-    regime = params.get("regime", "EXPANSION")
-    phase = params.get("phase", 4)
-    ltr_dir = params.get("ltr_direction", "RISING")
+def get_cycle_buffer(params, dashboard_signals=None):
+    """Compute cycle buffer.  Prefers live macro data from the enriched
+    dashboard_signals bridge; falls back to control_panel.json values."""
+    # --- Try live macro from bridge first ---
+    if dashboard_signals and "macro" in dashboard_signals:
+        macro = dashboard_signals["macro"]
+        regime = macro.get("regime") or params.get("regime", "EXPANSION")
+        phase = macro.get("phase") if macro.get("phase") is not None else params.get("phase", 4)
+        ltr_dir = dashboard_signals.get("national", {}).get("ltr_direction") or params.get("ltr_direction", "RISING")
+    else:
+        regime = params.get("regime", "EXPANSION")
+        phase = params.get("phase", 4)
+        ltr_dir = params.get("ltr_direction", "RISING")
+
     if regime == "CONTRACTION":
         cycle_adj = 0.05 if ltr_dir == "RISING" else 0.03
     else:
@@ -582,7 +592,15 @@ def price_lane(orig_market, dest_market, data, params_override=None, dashboard_s
 
     vol_buffer = get_vol_buffer(vol_tier, confidence, term, params)
     liq_adj = get_liq_adjustment(liq_tier, params)
-    cycle_buffer = get_cycle_buffer(params)
+    cycle_buffer = get_cycle_buffer(params, dashboard_signals)
+
+    # --- Quoting posture margin bias (from enriched bridge) ---
+    posture_bias = 0.0
+    posture_label = None
+    if dashboard_signals and "quoting_posture" in dashboard_signals:
+        qp = dashboard_signals["quoting_posture"]
+        posture_bias = qp.get("margin_bias", 0.0)
+        posture_label = qp.get("posture")
 
     # --- For SPOT: directional replaces vol buffer AND cycle buffer ---
     #     The directional adjustment IS the cycle at the market level.
@@ -616,11 +634,12 @@ def price_lane(orig_market, dest_market, data, params_override=None, dashboard_s
     quote_target = None
     quote_defensive = None
     if term == 0:
-        # Show a range: aggressive (10%), target (margin%), defensive (margin%+4%)
-        aggressive_margin = max(target_margin - 0.04, 0.06)
-        defensive_margin = target_margin + 0.04
+        # Apply quoting posture bias to margin targets
+        effective_margin = target_margin + posture_bias
+        aggressive_margin = max(effective_margin - 0.04, 0.06)
+        defensive_margin = effective_margin + 0.04
         quote_aggressive = round(carrier_fsc * (1 + aggressive_margin), 2)
-        quote_target = round(carrier_fsc * (1 + target_margin), 2)
+        quote_target = round(carrier_fsc * (1 + effective_margin), 2)
         quote_defensive = round(carrier_fsc * (1 + defensive_margin), 2)
 
     return {
@@ -660,6 +679,9 @@ def price_lane(orig_market, dest_market, data, params_override=None, dashboard_s
         "quote_aggressive": quote_aggressive,
         "quote_target": quote_target,
         "quote_defensive": quote_defensive,
+        # Quoting posture (from enriched bridge)
+        "posture": posture_label,
+        "posture_margin_bias": posture_bias,
     }
 
 

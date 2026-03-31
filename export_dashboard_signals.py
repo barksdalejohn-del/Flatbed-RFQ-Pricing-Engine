@@ -5,8 +5,13 @@ market intelligence data for the Pricing Engine to consume.
 
 Run this after updating the dashboard weekly (or whenever LTR data refreshes).
 Output: data/dashboard_signals.json
+
+Enriched bridge: now also reads conviction score, cycle phase, regime,
+quoting posture, national LTR, and demand signal indicators from the
+full dashboard workbook suite.
 """
 
+import csv
 import json
 import os
 import sys
@@ -18,6 +23,9 @@ import openpyxl
 DASHBOARD_DIR = r"C:\Users\johnb\OneDrive - PS Logistics\Dashboard"
 STATE_WB_PATH = os.path.join(DASHBOARD_DIR, "ltr_8day_vs_30day.xlsx")
 MARKET_WB_PATH = os.path.join(DASHBOARD_DIR, "market_ltr_8day_vs_30day.xlsx")
+REGIME_WB_PATH = os.path.join(DASHBOARD_DIR, "flatbed_ltr_analysis.xlsx")
+USMNO_WB_PATH = os.path.join(DASHBOARD_DIR, "Flatbed_IP_USMNO_Enhanced.xlsx")
+DEMAND_SIGNALS_DIR = os.path.join(DASHBOARD_DIR, "Dashboard Map Data")
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 OUTPUT_PATH = os.path.join(OUTPUT_DIR, "dashboard_signals.json")
 
@@ -40,6 +48,22 @@ PRESSURE_THRESHOLDS = [
     (15, "Loosening"),
 ]
 # Below 15 = Soft
+
+# --- Demand signal indicator definitions (matches build_demand_signals.py) ---
+DEMAND_INDICATORS = [
+    {'pattern': 'USMNO',  'key': 'ISM_New_Orders',       'label': 'ISM Manufacturing New Orders',      'unit': 'index',           'layers': ['ISM-Grid'],                    'bullish_above': 50},
+    {'pattern': 'USTRG',  'key': 'Rig_Count',            'label': 'Baker Hughes Total Rig Count',      'unit': 'rigs',            'layers': ['Energy'],                      'bullish_above': None},
+    {'pattern': 'HOUST1F','key': 'Housing_Starts',        'label': 'Housing Starts (SF, SAAR)',         'unit': 'thousands',       'layers': ['Permits-Starts','Construction'],'bullish_above': None},
+    {'pattern': 'PERMIT1','key': 'Building_Permits',      'label': 'Building Permits (SF)',             'unit': 'thousands',       'layers': ['Permits-Starts','Construction'],'bullish_above': None},
+    {'pattern': 'TLMFGCON','key':'Construction_Spending',  'label': 'Construction Spending (Mfg)',       'unit': 'millions_USD',    'layers': ['Construction'],                'bullish_above': None},
+    {'pattern': 'LBR1',   'key': 'Lumber_Futures',        'label': 'Lumber Futures',                    'unit': 'USD_per_mbf',     'layers': ['Lumber','Lumber-PNW'],          'bullish_above': None},
+    {'pattern': 'HRC1',   'key': 'HRC_Steel',             'label': 'Hot-Rolled Coil Steel Futures',     'unit': 'USD_per_ton',     'layers': ['Steel'],                       'bullish_above': None},
+    {'pattern': 'CL1',    'key': 'Crude_Oil_WTI',         'label': 'Crude Oil (WTI) Futures',           'unit': 'USD_per_barrel',  'layers': ['Energy'],                      'bullish_above': None},
+    {'pattern': 'ZC1',    'key': 'Corn_Futures',           'label': 'Corn Futures',                      'unit': 'cents_per_bushel','layers': ['HeavyEquip-Ag'],               'bullish_above': None},
+    {'pattern': 'ZS1',    'key': 'Soybean_Futures',        'label': 'Soybean Futures',                   'unit': 'cents_per_bushel','layers': ['HeavyEquip-Ag'],               'bullish_above': None},
+    {'pattern': 'ZW1',    'key': 'Wheat_Futures',          'label': 'Wheat Futures',                     'unit': 'cents_per_bushel','layers': ['HeavyEquip-Ag'],               'bullish_above': None},
+    {'pattern': 'FAN',    'key': 'Wind_Energy_ETF',        'label': 'First Trust Global Wind Energy ETF','unit': 'USD',             'layers': ['Renewables'],                  'bullish_above': None},
+]
 
 
 def classify_signal_from_divergence(pct_diff):
@@ -67,7 +91,6 @@ def divergence_to_pressure_score(pct_diff, signal):
     base = score_map.get(signal, 37)
     # Refine within the band using the divergence magnitude
     if signal == "Firming" and pct_diff is not None:
-        # Firming range is 0.12-0.50, map to 45-64
         ratio = min(max((pct_diff - 0.12) / 0.38, 0), 1)
         base = 45 + ratio * 19
     elif signal == "Tightening" and pct_diff is not None:
@@ -97,6 +120,316 @@ def map_market_name_to_dat_code(market_name, state_abbrev):
     city_code = city[:3].upper()
     return f"{state_abbrev}_{city_code}"
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# NEW: Conviction, Phase, Regime readers
+# ──────────────────────────────────────────────────────────────────────────────
+
+def read_regime_dashboard(wb_path):
+    """Read conviction score, output label, operational bias, and national
+    LTR from the Regime_Dashboard and Data_Weekly sheets of
+    flatbed_ltr_analysis.xlsx.
+
+    Returns dict with:
+      conviction_score, monthly_structural, weekly_momentum,
+      output_label, operational_bias, summary,
+      national_ltr, national_ema, national_roc,
+      ltr_direction (RISING/FALLING based on 4-week RoC)
+    """
+    result = {}
+    try:
+        wb = openpyxl.load_workbook(wb_path, data_only=True)
+
+        # --- Regime_Dashboard sheet ---
+        ws = wb["Regime_Dashboard"]
+        result["monthly_structural_score"] = _safe_num(ws.cell(5, 2).value)
+        result["weekly_momentum_score"] = _safe_num(ws.cell(6, 2).value)
+        result["conviction_score"] = _safe_num(ws.cell(7, 2).value)
+        result["output_label"] = _safe_str(ws.cell(9, 2).value)
+        result["operational_bias"] = _safe_str(ws.cell(10, 2).value)
+        result["summary"] = _safe_str(ws.cell(12, 2).value)
+        result["monthly_date"] = _safe_date(ws.cell(3, 2).value)
+        result["weekly_date"] = _safe_date(ws.cell(3, 5).value)
+
+        # --- Data_Weekly sheet (last row for national LTR) ---
+        ws2 = wb["Data_Weekly"]
+        max_r = ws2.max_row
+        # Walk backwards to find last non-empty row
+        for r in range(max_r, 1, -1):
+            ltr_val = ws2.cell(r, 4).value  # Col D = National Flatbed LTR
+            if ltr_val is not None:
+                result["national_ltr"] = round(float(ltr_val), 2)
+                result["national_ema"] = _safe_round(ws2.cell(r, 5).value, 2)  # Col E = 8 Period EMA
+                result["national_roc"] = _safe_round(ws2.cell(r, 6).value, 4)  # Col F = 4 Week RoC
+                week_date = ws2.cell(r, 1).value  # Col A = Week Ending
+                result["national_ltr_date"] = _safe_date(week_date)
+                # Derive direction from RoC
+                roc = result["national_roc"]
+                if roc is not None:
+                    result["ltr_direction"] = "RISING" if roc > 0 else "FALLING"
+                else:
+                    result["ltr_direction"] = "UNKNOWN"
+                break
+
+        wb.close()
+    except Exception as e:
+        print(f"WARNING: Could not read regime dashboard: {e}")
+    return result
+
+
+def read_regime_from_usmno(wb_path):
+    """Read the macro regime from the last row of the USMNO Integration sheet
+    in Flatbed_IP_USMNO_Enhanced.xlsx.
+
+    Returns dict with: regime (e.g. 'EXPANSION'), regime_date
+    """
+    result = {}
+    try:
+        wb = openpyxl.load_workbook(wb_path, data_only=True)
+        ws = wb["USMNO Integration"]
+        max_r = ws.max_row
+        for r in range(max_r, 1, -1):
+            date_val = ws.cell(r, 1).value
+            if date_val is not None:
+                # Column 7 = regime from Option A, Column 12 = regime from Option C
+                regime_a = _safe_str(ws.cell(r, 7).value)
+                regime_c = _safe_str(ws.cell(r, 12).value)
+                # Use Option C (most comprehensive) as primary, fallback to A
+                result["regime"] = regime_c or regime_a or "UNKNOWN"
+                result["regime_date"] = _safe_date(date_val)
+                break
+        wb.close()
+    except Exception as e:
+        print(f"WARNING: Could not read USMNO regime: {e}")
+    return result
+
+
+def _safe_num(val):
+    """Convert to number or None."""
+    if val is None:
+        return None
+    try:
+        return round(float(val), 4)
+    except (ValueError, TypeError):
+        return None
+
+
+def _safe_round(val, decimals=2):
+    """Round a numeric value or return None."""
+    if val is None:
+        return None
+    try:
+        return round(float(val), decimals)
+    except (ValueError, TypeError):
+        return None
+
+
+def _safe_str(val):
+    """Convert to clean string or None."""
+    if val is None:
+        return None
+    s = str(val).strip()
+    return s if s else None
+
+
+def _safe_date(val):
+    """Convert datetime to ISO date string."""
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val.strftime("%Y-%m-%d")
+    return str(val).strip()
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# NEW: Demand signal indicator reader
+# ──────────────────────────────────────────────────────────────────────────────
+
+def parse_date_str(s):
+    """Auto-detect date format from CSV."""
+    s = s.strip()
+    for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%m/%d/%y', '%Y-%m-%dT%H:%M:%S'):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def find_indicator_csv(pattern):
+    """Find the CSV file matching the indicator pattern in the Dashboard Map Data folder."""
+    if not os.path.exists(DEMAND_SIGNALS_DIR):
+        return None
+    for f in os.listdir(DEMAND_SIGNALS_DIR):
+        if not f.lower().endswith('.csv'):
+            continue
+        cleaned = f.replace('!', '').replace(',', '').replace(' ', '')
+        if pattern in cleaned or pattern in f:
+            return os.path.join(DEMAND_SIGNALS_DIR, f)
+    return None
+
+
+def read_demand_indicators():
+    """Read the last 6 months of each demand signal indicator from CSVs.
+    Returns a dict of indicator_key -> {label, unit, layers, latest, prior, direction, data[]}
+    """
+    indicators = {}
+    for ind in DEMAND_INDICATORS:
+        fp = find_indicator_csv(ind['pattern'])
+        if not fp:
+            continue
+
+        rows = []
+        try:
+            with open(fp, 'r', encoding='utf-8-sig') as fh:
+                reader = csv.reader(fh)
+                next(reader)  # skip header
+                for row in reader:
+                    if len(row) < 2 or not row[0].strip() or not row[1].strip():
+                        continue
+                    dt = parse_date_str(row[0])
+                    if dt is None:
+                        continue
+                    try:
+                        val = float(row[1].replace(',', ''))
+                    except ValueError:
+                        continue
+                    rows.append((dt, val))
+            rows.sort(key=lambda x: x[0])
+        except Exception as e:
+            print(f"  WARNING: Could not read {ind['key']}: {e}")
+            continue
+
+        if len(rows) < 2:
+            continue
+
+        # Last 6 months for the bridge (keep it compact)
+        recent = rows[-6:]
+        latest_val = recent[-1][1]
+        prior_val = recent[-2][1]
+
+        # Direction
+        if latest_val > prior_val * 1.005:
+            direction = "RISING"
+        elif latest_val < prior_val * 0.995:
+            direction = "FALLING"
+        else:
+            direction = "FLAT"
+
+        # 3-month-ago for trend context
+        three_mo_ago = rows[-4][1] if len(rows) >= 4 else None
+
+        indicators[ind['key']] = {
+            "label": ind['label'],
+            "unit": ind['unit'],
+            "layers": ind['layers'],
+            "latest": round(latest_val, 2),
+            "prior": round(prior_val, 2),
+            "three_mo_ago": round(three_mo_ago, 2) if three_mo_ago else None,
+            "direction": direction,
+            "latest_date": recent[-1][0].strftime("%Y-%m"),
+            "bullish_above": ind.get('bullish_above'),
+            "data": [{"d": dt.strftime("%Y-%m"), "v": round(v, 2)} for dt, v in recent],
+        }
+
+    return indicators
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Quoting posture logic (derives from conviction + regime)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def derive_quoting_posture(conviction_score, regime, ltr_direction):
+    """Derive a quoting posture recommendation from conviction + regime + direction.
+
+    Returns dict with posture label + margin guidance.
+    """
+    if conviction_score is None:
+        return {"posture": "NEUTRAL", "margin_bias": 0.0, "guidance": "Insufficient data for posture"}
+
+    cs = int(conviction_score)
+
+    # Conviction score ranges -6 to +6
+    # Positive = tightening pressure, negative = loosening pressure
+    if cs >= 4:
+        posture = "DEFENSIVE"
+        margin_bias = 0.03  # +3% margin floor
+        guidance = "Market tightening strongly. Protect cost risk, quote conservatively."
+    elif cs >= 2:
+        posture = "CAUTIOUS"
+        margin_bias = 0.015  # +1.5%
+        guidance = "Market firming. Lean toward higher margins, limit aggressive discounting."
+    elif cs >= -1:
+        posture = "NEUTRAL"
+        margin_bias = 0.0
+        guidance = "Market balanced. Standard margin targets apply."
+    elif cs >= -3:
+        posture = "OPPORTUNISTIC"
+        margin_bias = -0.01  # -1% — can be slightly more aggressive
+        guidance = "Market softening. Opportunity to win volume with competitive pricing."
+    else:
+        posture = "AGGRESSIVE"
+        margin_bias = -0.02  # -2%
+        guidance = "Market in oversupply. Pursue volume aggressively."
+
+    # If regime contradicts conviction, note the tension
+    tension = None
+    if regime == "CONTRACTION" and cs >= 3:
+        tension = "High conviction tightening during contraction — likely transitional; monitor weekly."
+    elif regime == "EXPANSION" and cs <= -3:
+        tension = "Deep loosening during expansion — unusual; verify demand signal data."
+
+    return {
+        "posture": posture,
+        "margin_bias": margin_bias,
+        "guidance": guidance,
+        "tension": tension,
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Cycle phase mapping (for engine.py get_cycle_buffer compatibility)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def derive_phase(conviction_score, ltr_direction, regime):
+    """Map conviction + direction + regime to a numeric phase (0-5) that
+    engine.py's get_cycle_buffer() understands.
+
+    Phase mapping:
+      0 = Bottom / Recovery start (low conviction, direction turning up)
+      1 = Early expansion (moderate conviction rising)
+      2 = Mid expansion (stable, moderate)
+      3 = Late expansion / peak (high conviction, rising slowing)
+      4 = Early contraction (conviction turning negative)
+      5 = Deep contraction (strong negative conviction)
+    """
+    if conviction_score is None:
+        return 2  # Default to mid-expansion (safest neutral)
+
+    cs = int(conviction_score)
+    rising = (ltr_direction == "RISING")
+
+    if regime == "EXPANSION":
+        if cs <= 0:
+            return 1 if rising else 0  # Early expansion or bottom
+        elif cs <= 2:
+            return 2  # Mid expansion
+        elif cs <= 4:
+            return 3 if not rising else 4  # Late expansion or early contraction signal
+        else:
+            return 4  # Peak / transition
+    else:  # CONTRACTION or unknown
+        if cs >= 3:
+            return 4  # Early contraction with tightening (rebound signal)
+        elif cs >= 0:
+            return 3  # Late contraction, stabilizing
+        else:
+            return 5 if cs <= -3 else 4  # Deep or early contraction
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MAIN EXPORT
+# ══════════════════════════════════════════════════════════════════════════════
 
 def export_signals():
     """Main export function. Reads dashboard workbooks and writes JSON."""
@@ -224,13 +557,67 @@ def export_signals():
 
     market_wb.close()
 
+    # ──────────────────────────────────────────────────────────────────────
+    # NEW: Read conviction, regime, and demand indicators
+    # ──────────────────────────────────────────────────────────────────────
+    print(f"Reading regime dashboard: {REGIME_WB_PATH}")
+    regime_data = read_regime_dashboard(REGIME_WB_PATH)
+
+    print(f"Reading USMNO regime: {USMNO_WB_PATH}")
+    usmno_data = read_regime_from_usmno(USMNO_WB_PATH)
+
+    print(f"Reading demand signal indicators from: {DEMAND_SIGNALS_DIR}")
+    demand_indicators = read_demand_indicators()
+
+    # Merge national data with regime data
+    national_ltr_from_regime = regime_data.get("national_ltr")
+    if national_ltr_from_regime is not None:
+        national_data["national_ltr_weekly"] = national_ltr_from_regime
+        national_data["national_ema"] = regime_data.get("national_ema")
+        national_data["national_roc"] = regime_data.get("national_roc")
+        national_data["ltr_direction"] = regime_data.get("ltr_direction")
+
+    # Derive quoting posture
+    conviction = regime_data.get("conviction_score")
+    regime = usmno_data.get("regime", "UNKNOWN")
+    ltr_dir = regime_data.get("ltr_direction", "UNKNOWN")
+    posture_data = derive_quoting_posture(conviction, regime, ltr_dir)
+
+    # Derive engine-compatible phase
+    phase = derive_phase(conviction, ltr_dir, regime)
+
     # --- Build the output JSON ---
     output = {
         "exported_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "as_of": as_of_date or latest_date,
+
+        # National-level (enriched)
         "national": national_data,
+
+        # Macro intelligence (NEW)
+        "macro": {
+            "regime": regime,
+            "regime_date": usmno_data.get("regime_date"),
+            "phase": phase,
+            "conviction_score": int(conviction) if conviction is not None else None,
+            "monthly_structural_score": regime_data.get("monthly_structural_score"),
+            "weekly_momentum_score": regime_data.get("weekly_momentum_score"),
+            "output_label": regime_data.get("output_label"),
+            "operational_bias": regime_data.get("operational_bias"),
+            "summary": regime_data.get("summary"),
+        },
+
+        # Quoting posture (NEW)
+        "quoting_posture": posture_data,
+
+        # State and market data (existing)
         "states": states,
         "markets": markets,
+
+        # Demand signal indicators (NEW)
+        "demand_indicators": demand_indicators,
+
+        # Signal thresholds (existing)
         "signal_thresholds": {
             "Acute Imbalance": {"min_pressure": 80, "min_divergence": 0.60},
             "Tightening": {"min_pressure": 65, "min_divergence": 0.50},
@@ -243,22 +630,59 @@ def export_signals():
 
     # Write JSON
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    with open(OUTPUT_PATH, "w") as f:
-        json.dump(output, f, indent=2)
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print(f"\nExported to: {OUTPUT_PATH}")
+    print(f"\n{'='*60}")
+    print(f"Exported to: {OUTPUT_PATH}")
     print(f"As of: {output['as_of']}")
-    print(f"States: {len(output['states'])}")
-    print(f"Markets: {len(output['markets'])}")
+    print(f"{'='*60}")
+    print(f"\n--- NATIONAL ---")
+    print(f"  National LTR (weekly): {national_data.get('national_ltr_weekly', 'N/A')}")
+    print(f"  Direction: {national_data.get('ltr_direction', 'N/A')}")
+    print(f"  EMA: {national_data.get('national_ema', 'N/A')}")
+    print(f"  RoC: {national_data.get('national_roc', 'N/A')}")
 
-    # Summary
+    print(f"\n--- MACRO ---")
+    macro = output["macro"]
+    print(f"  Regime: {macro['regime']}")
+    print(f"  Phase: {macro['phase']}")
+    print(f"  Conviction: {macro['conviction_score']}")
+    print(f"  Label: {macro['output_label']}")
+    print(f"  Bias: {macro['operational_bias']}")
+
+    print(f"\n--- QUOTING POSTURE ---")
+    qp = output["quoting_posture"]
+    print(f"  Posture: {qp['posture']}")
+    print(f"  Margin Bias: {qp['margin_bias']:+.1%}")
+    print(f"  Guidance: {qp['guidance']}")
+    if qp.get("tension"):
+        print(f"  Tension: {qp['tension']}")
+
+    print(f"\n--- COVERAGE ---")
+    print(f"  States: {len(output['states'])}")
+    print(f"  Markets: {len(output['markets'])}")
+    print(f"  Demand Indicators: {len(output['demand_indicators'])}")
+
+    # State signal distribution
     signal_counts = {}
     for s_data in output["states"].values():
         sig = s_data.get("signal", "Unknown")
         signal_counts[sig] = signal_counts.get(sig, 0) + 1
-    print(f"\nState signal distribution:")
+    print(f"\n--- STATE SIGNAL DISTRIBUTION ---")
     for sig, count in sorted(signal_counts.items()):
         print(f"  {sig}: {count}")
+
+    # Demand indicator summary
+    if demand_indicators:
+        print(f"\n--- DEMAND INDICATORS ---")
+        rising = sum(1 for v in demand_indicators.values() if v["direction"] == "RISING")
+        falling = sum(1 for v in demand_indicators.values() if v["direction"] == "FALLING")
+        flat = sum(1 for v in demand_indicators.values() if v["direction"] == "FLAT")
+        print(f"  Rising: {rising}  |  Falling: {falling}  |  Flat: {flat}")
+        for k, v in demand_indicators.items():
+            arrow = {"RISING": "+", "FALLING": "-", "FLAT": "="}[v["direction"]]
+            print(f"    [{arrow}] {v['label']}: {v['latest']} {v['unit']}")
 
     return output
 
