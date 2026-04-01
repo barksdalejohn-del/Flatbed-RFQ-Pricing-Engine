@@ -874,6 +874,8 @@ if st.session_state.get("show_results"):
                 # ──────────────────────────────────────────────────────────
                 # 4b. RATE CAST — Same-Day Risk Curve
                 # ──────────────────────────────────────────────────────────
+                brief_rate_risk_triggered = False
+                brief_rate_risk_costs = {}
                 if rate_cast_on and not same_day_on:
                     vd = st.session_state.get("vision_data") or {}
                     live_ltr_raw = vd.get("origin_live_ltr")
@@ -917,6 +919,10 @@ if st.session_state.get("show_results"):
                                 h, origin_signal=orig_signal_for_rc, day_of_week=0
                             )
                             rc_costs[h] = round(carrier_high * sd_result["multiplier"], 2)
+
+                        # Store for Intelligence Brief
+                        brief_rate_risk_triggered = True
+                        brief_rate_risk_costs = rc_costs.copy()
 
                         # Compact card strip — 4 key time points
                         h_cols = st.columns(4)
@@ -1250,6 +1256,10 @@ if st.session_state.get("show_results"):
                                 staleness_days=directional.get("staleness_days"),
                                 origin_live_ltr=origin_live,
                                 dest_live_ltr=dest_live,
+                                orig_state=orig_st,
+                                dest_state=dest_st,
+                                rate_risk_triggered=brief_rate_risk_triggered,
+                                rate_risk_costs=brief_rate_risk_costs,
                             )
 
                             brief_text = generate_intel_brief(context)
