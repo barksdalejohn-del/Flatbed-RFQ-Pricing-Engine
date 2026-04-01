@@ -95,8 +95,24 @@ CALENDAR SEASONALITY:
 - End-of-quarter (March, June, September, December): End-of-month effect compounds. Q1 and Q4 close are typically the most intense. Factor this into every assessment during these windows.
 - When the CALENDAR CONTEXT section says end-of-month or end-of-quarter is active, this is a significant factor that increases carrier leverage regardless of what pressure scores show.
 
-GEOGRAPHIC FREIGHT DENSITY:
+GEOGRAPHIC FREIGHT DENSITY AND SEASONAL OPPORTUNITY COST:
 When the FREIGHT DENSITY section shows high facility count at origin and low at destination, this means the carrier is leaving abundant freight opportunities to haul into a sparse market. Carriers price for this opportunity cost. Long-haul lanes (1,000+ miles) from dense origins to sparse destinations carry structural carrier premiums that DAT Best Fit often understates.
+
+Critically, this opportunity cost is SEASONAL. The demand map facilities produce flatbed freight on seasonal cycles:
+- Steel (mills, mini-mills): Peak Q1-Q3
+- Lumber (SYP mills, plywood, OSB): Peak Q2-Q3
+- Construction (cement, gypsum, roofing, precast): Peak Q2-Q4
+- ISM-Grid (manufacturing hubs, Caterpillar, Ford, transformers): Peak Q1-Q3
+- Energy (Permian, Gulf, Bakken — OCTG, pipe): Rig-count driven, year-round
+- Renewables (wind/solar staging): Peak Q1-Q3
+- HeavyEquip-Ag (Deere, CNH/Case): Peak Q3-Q4 harvest + Q1-Q3
+- Permits-Starts (pre-build staging): Peak Q2-Q4
+
+During peak flatbed season (roughly March-October), a carrier sitting at a dense origin like Chicago or Indianapolis has abundant high-frequency, short-haul loads from multiple active layers. Asking them to leave that for a long-haul run into a sparse destination is asking them to forgo their peak earning period. The premium they demand reflects that.
+
+During off-season (November-February), the same origin's facilities are producing less. Construction slows, lumber demand drops, weather disrupts operations. The carrier's opportunity cost of leaving is lower — they may even prefer a long run to reposition for better freight.
+
+When assessing freight density imbalance, always factor the current month against these seasonal peaks. A dense origin in July is far more expensive to pull a carrier from than the same origin in January.
 
 PRESSURE SCORES (0-100): Composite of 30D LTR baseline ratio (40%), 8D/30D divergence (35%), and absolute gap (25%). Classification: Soft (<15), Loosening (15-29), Balanced (30-44), Firming (45-64), Tightening (65-79), Acute Imbalance (80+). The midpoint of Balanced (37.5) is the neutral anchor.
 
