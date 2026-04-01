@@ -4,6 +4,7 @@ import numpy as np
 import os
 import io
 from datetime import datetime
+import hashlib
 
 st.set_page_config(page_title="Flatbed Spot Pricing Tool", page_icon="🚛", layout="wide")
 
@@ -87,6 +88,7 @@ from engine import (load_data, resolve_market, load_dashboard_signals, get_signa
                      check_rate_cast_triggers, compute_live_signal, lookup_lane)
 from vision_reader import extract_rateview_data
 from quote_log import ANALYSTS, save_quote, load_quote_log, update_outcome, delete_quote, detect_strategy
+from intel_brief import generate_intel_brief, build_brief_context, get_relevant_indicators
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1168,6 +1170,98 @@ if st.session_state.get("show_results"):
                             f"Best EV: {best_ev_row['Quote']} at "
                             f"{best_ev_row['EV/Load']}/load "
                             f"({best_ev_row['100-Load']} over 100 loads)")
+
+                # ──────────────────────────────────────────────────────────
+                # 6. INTELLIGENCE BRIEF
+                # ──────────────────────────────────────────────────────────
+                st.markdown("---")
+                st.markdown("### Intelligence Brief")
+
+                # Build a cache key from the quote inputs so we don't re-call
+                # the API on Streamlit reruns (only on new quotes)
+                brief_cache_key = hashlib.md5(
+                    f"{orig_market}|{dest_market}|{best_fit}|{dir_adj}|{same_day_mult}".encode()
+                ).hexdigest()
+
+                if st.session_state.get("intel_brief_key") == brief_cache_key:
+                    # Reuse cached brief on rerun
+                    cached_brief = st.session_state.get("intel_brief_text")
+                    if cached_brief:
+                        st.info(cached_brief)
+                    else:
+                        st.caption("Brief unavailable.")
+                else:
+                    # Generate new brief
+                    with st.spinner("Analyzing lane conditions..."):
+                        try:
+                            # Get demand indicators relevant to this lane
+                            ds = dashboard_signals or {}
+                            demand_ind = ds.get("demand_indicators", {})
+                            relevant_ind = get_relevant_indicators(
+                                orig_st or (orig_market[:2] if orig_market else ""),
+                                dest_st or (dest_market[:2] if dest_market else ""),
+                                demand_ind
+                            )
+
+                            # Get macro and posture from bridge
+                            macro_data = ds.get("macro")
+                            posture_data = ds.get("quoting_posture")
+
+                            # Get live LTR values if available
+                            vd_brief = st.session_state.get("vision_data") or {}
+                            origin_live = float(vd_brief["origin_live_ltr"]) if vd_brief.get("origin_live_ltr") else None
+                            dest_live = float(vd_brief["dest_live_ltr"]) if vd_brief.get("dest_live_ltr") else None
+
+                            # Volatility label
+                            cv_brief = std_dev_used / best_fit if best_fit > 0 else 0
+                            if cv_brief < 0.05:
+                                vol_label_brief = "LOW"
+                            elif cv_brief < 0.10:
+                                vol_label_brief = "MODERATE"
+                            else:
+                                vol_label_brief = "HIGH"
+
+                            context = build_brief_context(
+                                orig_display=orig_display,
+                                dest_display=dest_display,
+                                miles=miles,
+                                orig_sig=orig_sig,
+                                dest_sig=dest_sig,
+                                orig_pressure=directional.get("orig_pressure"),
+                                dest_pressure=directional.get("dest_pressure"),
+                                orig_ltr_8d=directional.get("orig_ltr_8d"),
+                                dest_ltr_8d=directional.get("dest_ltr_8d"),
+                                orig_ltr_30d=directional.get("orig_ltr_30d"),
+                                dest_ltr_30d=directional.get("dest_ltr_30d"),
+                                dir_adj=dir_adj,
+                                momentum_applied=directional.get("momentum_applied", False),
+                                macro=macro_data,
+                                quoting_posture=posture_data,
+                                best_fit=best_fit,
+                                range_low=range_low,
+                                range_high=range_high,
+                                rate_strength=rate_strength,
+                                reports=reports,
+                                vol_label=vol_label_brief,
+                                std_dev_used=std_dev_used if has_range else 0,
+                                same_day_on=same_day_on,
+                                same_day_mult=same_day_mult,
+                                relevant_indicators=relevant_ind,
+                                staleness_days=directional.get("staleness_days"),
+                                origin_live_ltr=origin_live,
+                                dest_live_ltr=dest_live,
+                            )
+
+                            brief_text = generate_intel_brief(context)
+
+                            if brief_text:
+                                st.session_state["intel_brief_key"] = brief_cache_key
+                                st.session_state["intel_brief_text"] = brief_text
+                                st.info(brief_text)
+                            else:
+                                st.caption("Brief unavailable — check API key configuration.")
+                        except Exception as e:
+                            st.caption(f"Brief unavailable.")
 
                 # ──────────────────────────────────────────────────────────
                 # SAVE QUOTE
