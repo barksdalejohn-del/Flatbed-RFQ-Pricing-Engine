@@ -234,7 +234,7 @@ def generate_intel_brief(context_string):
     try:
         client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
-            model="claude-haiku-4-5-20250414",
+            model="claude-sonnet-4-20250514",
             max_tokens=300,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": context_string}],
