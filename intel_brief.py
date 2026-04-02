@@ -86,6 +86,7 @@ ORIGIN vs DESTINATION — THE CRITICAL DISTINCTION:
 - ORIGIN pressure = carrier leverage over the broker. A tight origin means carriers have abundant load options and will be selective. The broker is competing for capacity.
 - DESTINATION pressure = carrier reload opportunity = broker leverage. A tight destination means the carrier will have loads available after delivery — this makes YOUR load more attractive because they won't sit empty. A SOFT destination means the carrier faces a freight desert after delivery and must price in deadhead/repositioning cost to get back to freight.
 - Therefore: Soft origin + tight destination = STRONG broker position (carrier needs loads, and your load delivers them to a good market). Tight origin + soft destination = DISADVANTAGED (carrier has options at origin and faces a freight desert at delivery).
+- LANGUAGE RULE: When both origin and destination signals favor the same side (e.g., soft origin AND tight destination both favor the broker), do NOT use contrastive language ("but," "however," "despite," "although") that implies one offsets the other. These signals COMPOUND — use additive language ("and," "reinforced by," "compounded by"). Contrastive language is only appropriate when origin and destination signals genuinely pull in opposite directions (e.g., tight origin working against the broker while tight destination works for them).
 
 LIVE LTR vs WEEKLY DATA:
 When live LTR (current day) is provided alongside weekly 8-day averages, the live data reflects TODAY's conditions. Weekly pressure scores can lag by days. When live and weekly signals diverge meaningfully, weight the live data and note the divergence. Example: if weekly says "Tightening" but live LTR has dropped to neutral, the market is softening faster than the weekly score reflects.
@@ -248,6 +249,7 @@ def build_brief_context(
     origin_live_ltr=None, dest_live_ltr=None,
     orig_state=None, dest_state=None,
     rate_risk_triggered=False, rate_risk_costs=None,
+    eom_eoq=None, density=None,
 ):
     """Build the context string passed to Claude for brief generation."""
 
@@ -261,6 +263,22 @@ def build_brief_context(
         lines.append("CALENDAR CONTEXT:")
         for flag in cal_flags:
             lines.append(f"  *** {flag} ***")
+        lines.append("")
+
+    # EOM/EOQ multiplier applied
+    if eom_eoq and eom_eoq.get("eom_active"):
+        eom_label = "END OF QUARTER" if eom_eoq.get("eoq_active") else "END OF MONTH"
+        eom_pct = (eom_eoq["multiplier"] - 1) * 100
+        lines.append(f"CALENDAR CARRIER PREMIUM: +{eom_pct:.0f}% ({eom_label} — {eom_eoq['business_days_remaining']} business days remaining)")
+        lines.append("")
+
+    # Freight density factor applied
+    if density and abs(density.get("factor", 0)) > 0.001:
+        density_dir = "CARRIER PREMIUM" if density["factor"] > 0 else "BROKER ADVANTAGE"
+        lines.append(f"FREIGHT DENSITY {density_dir}: {density['factor']:+.1%}")
+        lines.append(f"  Origin ({orig_state}): {density['orig_facilities']} facilities | "
+                     f"Destination ({dest_state}): {density['dest_facilities']} facilities")
+        lines.append(f"  In-season demand layers at origin: {density['in_season_pct']:.0%}")
         lines.append("")
 
     lines.append("ORIGIN MARKET:")

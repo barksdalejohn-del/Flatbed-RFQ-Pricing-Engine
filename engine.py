@@ -1,8 +1,10 @@
 import json
 import os
+import calendar
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
+from intel_brief import STATE_FACILITY_COUNT, STATE_DEMAND_LAYERS
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
@@ -328,6 +330,142 @@ def compute_same_day_multiplier(hours_remaining, origin_signal=None, day_of_week
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# EOM/EOQ CALENDAR MULTIPLIER (Spot Only)
+# ──────────────────────────────────────────────────────────────────────────────
+
+EOM_BASE_PREMIUM = 0.03        # +3% during last 5 business days of month
+EOQ_ADDITIONAL_PREMIUM = 0.02  # +2% additional during quarter-end months (stacks)
+
+
+def compute_eom_eoq_multiplier(ref_date=None):
+    """Compute end-of-month / end-of-quarter carrier cost multiplier for spot quotes.
+
+    EOM: last 5 business days of month → +3% on carrier cost
+    EOQ: March/June/Sep/Dec → additional +2% (stacks with EOM, total +5%)
+
+    Returns dict with:
+        multiplier: float (e.g. 1.05 for EOQ window)
+        eom_active: bool
+        eoq_active: bool
+        business_days_remaining: int
+    """
+    if ref_date is None:
+        ref_date = datetime.now()
+
+    month = ref_date.month
+    year = ref_date.year
+    day = ref_date.day
+    _, last_day = calendar.monthrange(year, month)
+
+    # Count business days remaining in month (excluding today)
+    bdays_remaining = 0
+    for d in range(day + 1, last_day + 1):
+        dt = datetime(year, month, d)
+        if dt.weekday() < 5:  # Mon-Fri
+            bdays_remaining += 1
+
+    eom_active = bdays_remaining <= 4  # 0-4 business days left = last 5 business days
+    eoq_active = eom_active and month in (3, 6, 9, 12)
+
+    mult = 1.0
+    if eom_active:
+        mult += EOM_BASE_PREMIUM
+    if eoq_active:
+        mult += EOQ_ADDITIONAL_PREMIUM
+
+    return {
+        "multiplier": round(mult, 3),
+        "eom_active": eom_active,
+        "eoq_active": eoq_active,
+        "business_days_remaining": bdays_remaining,
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# FREIGHT DENSITY FACTOR (Spot Only)
+# ──────────────────────────────────────────────────────────────────────────────
+
+DENSITY_MAX_FACTOR = 0.06          # Cap at ±6%
+DENSITY_IMBALANCE_THRESHOLD = 5    # Minimum facility difference to trigger
+DENSITY_MAX_FACILITIES = 18        # TX = densest state (normalization denominator)
+
+# Seasonal peak months by demand layer (from AI Analyst framework)
+LAYER_PEAK_MONTHS = {
+    "Steel":         [1, 2, 3, 4, 5, 6, 7, 8, 9],              # Q1-Q3
+    "Lumber":        [4, 5, 6, 7, 8, 9],                         # Q2-Q3
+    "Lumber-PNW":    [4, 5, 6, 7, 8, 9],                         # Q2-Q3
+    "Construction":  [4, 5, 6, 7, 8, 9, 10, 11, 12],             # Q2-Q4
+    "ISM-Grid":      [1, 2, 3, 4, 5, 6, 7, 8, 9],              # Q1-Q3
+    "Energy":        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],  # Year-round (rig-count driven)
+    "Renewables":    [1, 2, 3, 4, 5, 6, 7, 8, 9],              # Q1-Q3
+    "HeavyEquip-Ag": [1, 2, 3, 7, 8, 9, 10, 11, 12],           # Q3-Q4 harvest + Q1-Q3
+    "Permits-Starts":[4, 5, 6, 7, 8, 9, 10, 11, 12],            # Q2-Q4
+}
+
+
+def compute_freight_density_factor(orig_state, dest_state, ref_date=None):
+    """Compute freight density imbalance factor for spot quotes.
+
+    Dense origin + sparse destination = positive factor (carrier premium).
+    Sparse origin + dense destination = negative factor (broker advantage).
+    Weighted by how many of the origin's demand layers are currently in-season.
+
+    Args:
+        orig_state: str, 2-letter state code
+        dest_state: str, 2-letter state code
+        ref_date: datetime, defaults to now
+
+    Returns dict with:
+        factor: float (e.g. 0.04 = +4% carrier premium)
+        orig_facilities: int
+        dest_facilities: int
+        imbalance: int (orig - dest)
+        in_season_pct: float (0-1, fraction of origin layers currently in peak)
+        season_weight: float (0.3-1.0, dampened weight applied)
+    """
+    if ref_date is None:
+        ref_date = datetime.now()
+
+    month = ref_date.month
+    orig_fac = STATE_FACILITY_COUNT.get(orig_state, 0) if orig_state else 0
+    dest_fac = STATE_FACILITY_COUNT.get(dest_state, 0) if dest_state else 0
+    imbalance = orig_fac - dest_fac
+
+    # Compute in-season percentage for origin's demand layers
+    orig_layers = STATE_DEMAND_LAYERS.get(orig_state, []) if orig_state else []
+    if orig_layers:
+        in_season_count = sum(1 for layer in orig_layers
+                              if month in LAYER_PEAK_MONTHS.get(layer, []))
+        in_season_pct = in_season_count / len(orig_layers)
+    else:
+        in_season_pct = 0.5  # Neutral default if no layer data
+
+    # Season weight: in-season amplifies opportunity cost, off-season dampens it
+    # Floor of 0.3 so off-season still has some effect
+    season_weight = 0.3 + 0.7 * in_season_pct
+
+    # Only apply if imbalance is meaningful
+    if abs(imbalance) < DENSITY_IMBALANCE_THRESHOLD:
+        factor = 0.0
+    else:
+        # Normalize imbalance against densest state
+        raw_factor = imbalance / DENSITY_MAX_FACILITIES
+        factor = raw_factor * season_weight * DENSITY_MAX_FACTOR
+
+    # Cap
+    factor = max(-DENSITY_MAX_FACTOR, min(DENSITY_MAX_FACTOR, factor))
+
+    return {
+        "factor": round(factor, 4),
+        "orig_facilities": orig_fac,
+        "dest_facilities": dest_fac,
+        "imbalance": imbalance,
+        "in_season_pct": round(in_season_pct, 2),
+        "season_weight": round(season_weight, 2),
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # RATE CAST — REAL-TIME LTR DIVERGENCE DETECTION
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -602,25 +740,35 @@ def price_lane(orig_market, dest_market, data, params_override=None, dashboard_s
         posture_bias = qp.get("margin_bias", 0.0)
         posture_label = qp.get("posture")
 
+    # --- Spot-only factors: EOM/EOQ calendar multiplier + freight density ---
+    eom_eoq = compute_eom_eoq_multiplier()
+    density = compute_freight_density_factor(orig_state, dest_state)
+
     # --- For SPOT: directional replaces vol buffer AND cycle buffer ---
     #     The directional adjustment IS the cycle at the market level.
     #     No need to double-count with a national cycle overlay.
+    #     EOM/EOQ multiplier and freight density factor apply only to spot.
     # --- For CONTRACT: vol buffer + cycle buffer stay, directional is additive (dampened) ---
     if term == 0:
-        # Spot: directional + liquidity only — no vol buffer, no cycle buffer
-        total_buffer = dir_adj_pct + liq_adj
+        # Spot: directional + liquidity + density — no vol buffer, no cycle buffer
+        density_factor = density["factor"]
+        eom_mult = eom_eoq["multiplier"]
+        total_buffer = dir_adj_pct + liq_adj + density_factor
         effective_vol = 0.0
         effective_cycle = 0.0
     else:
         # Contract: full stack — vol buffer + liq + cycle + dampened directional
+        # No EOM/EOQ or density for contracts (these are short-term spot dynamics)
+        density_factor = 0.0
+        eom_mult = 1.0
         total_buffer = vol_buffer + liq_adj + cycle_buffer + dir_adj_pct
         effective_vol = vol_buffer
         effective_cycle = cycle_buffer
 
-    contract_rpm = rpm * (1 + total_buffer) * (1 + target_margin)
+    contract_rpm = rpm * (1 + total_buffer) * (1 + target_margin) * eom_mult
     flat_rate = contract_rpm * mi
     if term == 0:
-        carrier_rpm = rpm * (1 + liq_adj + dir_adj_pct)
+        carrier_rpm = rpm * (1 + liq_adj + dir_adj_pct + density_factor) * eom_mult
     else:
         carrier_rpm = rpm * (1 + liq_adj + cycle_buffer + dir_adj_pct)
     carrier_flat = carrier_rpm * mi
@@ -682,6 +830,17 @@ def price_lane(orig_market, dest_market, data, params_override=None, dashboard_s
         # Quoting posture (from enriched bridge)
         "posture": posture_label,
         "posture_margin_bias": posture_bias,
+        # EOM/EOQ calendar multiplier (spot only)
+        "eom_eoq_mult": eom_mult,
+        "eom_active": eom_eoq["eom_active"],
+        "eoq_active": eom_eoq["eoq_active"],
+        "bdays_remaining": eom_eoq["business_days_remaining"],
+        # Freight density factor (spot only)
+        "density_factor": round(density_factor, 4),
+        "density_orig_facilities": density["orig_facilities"],
+        "density_dest_facilities": density["dest_facilities"],
+        "density_imbalance": density["imbalance"],
+        "density_in_season_pct": density["in_season_pct"],
     }
 
 

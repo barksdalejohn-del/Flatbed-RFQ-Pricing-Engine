@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+import sys
 import io
 from datetime import datetime
 import hashlib
@@ -85,7 +86,8 @@ if not check_password():
 
 from engine import (load_data, resolve_market, load_dashboard_signals, get_signal_staleness,
                      compute_directional_adjustment, compute_same_day_multiplier,
-                     check_rate_cast_triggers, compute_live_signal, lookup_lane)
+                     check_rate_cast_triggers, compute_live_signal, lookup_lane,
+                     compute_eom_eoq_multiplier, compute_freight_density_factor)
 from vision_reader import extract_rateview_data
 from quote_log import ANALYSTS, save_quote, load_quote_log, update_outcome, delete_quote, detect_strategy
 from intel_brief import generate_intel_brief, build_brief_context, get_relevant_indicators
@@ -316,6 +318,17 @@ if dashboard_signals is not None:
         st.sidebar.warning(f"Signals are {sig_staleness} days old")
 else:
     st.sidebar.caption("No dashboard signals loaded")
+
+if st.sidebar.button("🔄 Refresh Signals", help="Re-export dashboard_signals.json from the latest workbooks"):
+    import subprocess
+    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "export_dashboard_signals.py")
+    result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, timeout=60)
+    if result.returncode == 0:
+        st.cache_data.clear()
+        st.sidebar.success("Signals refreshed!")
+        st.rerun()
+    else:
+        st.sidebar.error(f"Export failed: {result.stderr[:200]}")
 
 params_override = {
     "regime": params.get("regime", "EXPANSION"),
@@ -632,6 +645,13 @@ if st.session_state.get("show_results"):
             orig_sig = directional.get("orig_signal")
             dest_sig = directional.get("dest_signal")
 
+            # Spot-only factors: EOM/EOQ calendar multiplier + freight density
+            eom_eoq = compute_eom_eoq_multiplier()
+            eom_mult = eom_eoq["multiplier"]
+            density = compute_freight_density_factor(signal_orig_state or orig_st,
+                                                     signal_dest_state or dest_st)
+            density_factor = density["factor"]
+
             # Get miles from model data as fallback
             model_lane = lookup_lane(orig_market, dest_market, data)
             if screenshot_miles > 0:
@@ -793,9 +813,9 @@ if st.session_state.get("show_results"):
                     st.markdown("### Carrier Target")
 
                 carrier_base = best_fit
-                carrier_adjusted = carrier_base * (1 + dir_adj) * same_day_mult
-                carrier_low = min(carrier_base * same_day_mult, carrier_adjusted)
-                carrier_high = max(carrier_base * same_day_mult, carrier_adjusted)
+                carrier_adjusted = carrier_base * (1 + dir_adj + density_factor) * same_day_mult * eom_mult
+                carrier_low = min(carrier_base * same_day_mult * eom_mult, carrier_adjusted)
+                carrier_high = max(carrier_base * same_day_mult * eom_mult, carrier_adjusted)
 
                 ct1, ct2, ct3 = st.columns(3)
                 ct1.metric("Target Low", format_currency(carrier_low),
@@ -817,6 +837,25 @@ if st.session_state.get("show_results"):
                                f"{abs(dir_adj):.1%} premium above Best Fit. Budget toward Target High.")
                 else:
                     st.caption("Balanced market — carrier likely near DAT Best Fit.")
+
+                # Spot adjustment factors (EOM/EOQ + Density)
+                spot_factor_parts = []
+                if eom_eoq["eom_active"]:
+                    eom_label = "EOQ" if eom_eoq["eoq_active"] else "EOM"
+                    eom_pct = (eom_mult - 1) * 100
+                    spot_factor_parts.append(
+                        f"**{eom_label}:** +{eom_pct:.0f}% carrier premium "
+                        f"({eom_eoq['business_days_remaining']} business days remaining)")
+                if abs(density_factor) > 0.001:
+                    density_dir = "premium" if density_factor > 0 else "discount"
+                    spot_factor_parts.append(
+                        f"**Density:** {density_factor:+.1%} {density_dir} "
+                        f"(origin {density['orig_facilities']} facilities, "
+                        f"dest {density['dest_facilities']} facilities, "
+                        f"{density['in_season_pct']:.0%} of origin layers in-season)")
+                if spot_factor_parts:
+                    for part in spot_factor_parts:
+                        st.caption(part)
 
                 # ──────────────────────────────────────────────────────────
                 # 4. CUSTOMER QUOTE RANGE (Floor and Ceiling)
@@ -1260,6 +1299,8 @@ if st.session_state.get("show_results"):
                                 dest_state=dest_st,
                                 rate_risk_triggered=brief_rate_risk_triggered,
                                 rate_risk_costs=brief_rate_risk_costs,
+                                eom_eoq=eom_eoq,
+                                density=density,
                             )
 
                             brief_text = generate_intel_brief(context)
