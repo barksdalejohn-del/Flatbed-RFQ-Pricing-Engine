@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-03-31 18:45:33",
+  "exported_at": "2026-04-02 11:13:56",
   "as_of": "2026-03-28",
   "national": {
     "ltr_8d": 96.4,
@@ -11,11 +11,11 @@
     "ltr_direction": "RISING"
   },
   "macro": {
-    "regime": "EXPANSION",
-    "regime_date": "2026-02-01",
+    "regime": "UNKNOWN",
+    "regime_date": "2026-03-01",
     "phase": 4,
-    "conviction_score": 5,
-    "monthly_structural_score": 2.0,
+    "conviction_score": 6,
+    "monthly_structural_score": 3.0,
     "weekly_momentum_score": 3.0,
     "output_label": "EXTREME TIGHTENING",
     "operational_bias": "Defensive quoting — protect cost risk aggressively",
