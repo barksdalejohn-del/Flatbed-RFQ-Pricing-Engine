@@ -319,16 +319,7 @@ if dashboard_signals is not None:
 else:
     st.sidebar.caption("No dashboard signals loaded")
 
-if st.sidebar.button("🔄 Refresh Signals", help="Re-export dashboard_signals.json from the latest workbooks"):
-    import subprocess
-    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "export_dashboard_signals.py")
-    result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, timeout=60)
-    if result.returncode == 0:
-        st.cache_data.clear()
-        st.sidebar.success("Signals refreshed!")
-        st.rerun()
-    else:
-        st.sidebar.error(f"Export failed: {result.stderr[:200]}")
+st.sidebar.caption("To refresh: double-click **Refresh_Signals** on your desktop after updating workbooks")
 
 params_override = {
     "regime": params.get("regime", "EXPANSION"),
