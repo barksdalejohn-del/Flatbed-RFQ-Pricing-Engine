@@ -387,7 +387,7 @@ def compute_eom_eoq_multiplier(ref_date=None):
 
 DENSITY_MAX_FACTOR = 0.06          # Cap at ±6%
 DENSITY_IMBALANCE_THRESHOLD = 5    # Minimum facility difference to trigger
-DENSITY_MAX_FACILITIES = 18        # TX = densest state (normalization denominator)
+DENSITY_MAX_FACILITIES = 36        # TX = densest state (normalization denominator)
 
 # Seasonal peak months by demand layer (from AI Analyst framework)
 LAYER_PEAK_MONTHS = {

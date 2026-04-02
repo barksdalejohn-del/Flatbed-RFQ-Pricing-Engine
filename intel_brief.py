@@ -219,16 +219,18 @@ def get_calendar_context():
     return flags
 
 
-# Approximate facility count by state from the 212-facility demand map
+# Facility count by state from the demand map (synced with DEMAND_MAP in dashboard)
 # Used to assess freight density imbalance between origin and destination
 STATE_FACILITY_COUNT = {
-    "TX": 18, "IL": 12, "IN": 11, "OH": 10, "PA": 9, "AL": 8, "GA": 8,
-    "MI": 7, "NC": 7, "TN": 7, "SC": 6, "AR": 6, "MO": 6, "WI": 5,
-    "LA": 5, "MS": 5, "NY": 5, "VA": 5, "IA": 4, "MN": 4, "KS": 4,
-    "OK": 4, "KY": 4, "OR": 4, "WA": 4, "CA": 4, "FL": 3, "NJ": 3,
-    "MD": 3, "CT": 3, "AZ": 3, "NE": 3, "CO": 2, "SD": 2, "ND": 2,
-    "WV": 2, "ID": 2, "MT": 2, "NV": 1, "UT": 1, "NM": 1, "WY": 1,
-    "ME": 0, "NH": 0, "VT": 0, "RI": 0, "DE": 0, "HI": 0, "AK": 0,
+    "TX": 36, "AL": 13, "GA": 13, "IN": 9, "NC": 9, "SC": 9,
+    "CA": 8, "FL": 8, "MS": 8, "KY": 7, "LA": 7, "MO": 7, "OH": 7, "TN": 7,
+    "PA": 6, "VA": 6, "IA": 5, "OK": 5, "WI": 5,
+    "AZ": 4, "IL": 4, "NE": 4, "OR": 4,
+    "ND": 3,
+    "AR": 2, "CO": 2, "ID": 2, "KS": 2, "NV": 2, "NY": 2, "WA": 2,
+    "MN": 1, "NM": 1, "UT": 1, "WV": 1,
+    "AK": 0, "CT": 0, "DE": 0, "HI": 0, "MD": 0, "ME": 0, "MI": 0,
+    "MT": 0, "NH": 0, "NJ": 0, "RI": 0, "SD": 0, "VT": 0, "WY": 0,
 }
 
 
