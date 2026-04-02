@@ -190,12 +190,15 @@ def read_regime_from_usmno(wb_path):
         max_r = ws.max_row
         for r in range(max_r, 1, -1):
             date_val = ws.cell(r, 1).value
-            if date_val is not None:
-                # Column 7 = regime from Option A, Column 12 = regime from Option C
-                regime_a = _safe_str(ws.cell(r, 7).value)
-                regime_c = _safe_str(ws.cell(r, 12).value)
-                # Use Option C (most comprehensive) as primary, fallback to A
-                result["regime"] = regime_c or regime_a or "UNKNOWN"
+            if date_val is None:
+                continue
+            # Column 21 = Final Regime (primary), Column 7/12 = Option A/C fallback
+            regime_final = _safe_str(ws.cell(r, 21).value)
+            regime_a = _safe_str(ws.cell(r, 7).value)
+            regime_c = _safe_str(ws.cell(r, 12).value)
+            regime = regime_final or regime_c or regime_a
+            if regime:
+                result["regime"] = regime
                 result["regime_date"] = _safe_date(date_val)
                 break
         wb.close()
