@@ -160,7 +160,7 @@ Your brief must:
 ## RULES
 
 - Never exceed 4 sentences
-- Use the data provided — do not invent numbers
+- Use the data provided — do not invent numbers. Quote LTR values and divergence percentages EXACTLY as they appear in the context. Do not recalculate percentages — the context provides pre-calculated "Live vs 8-day divergence" values. Use those directly.
 - Reference demand indicators only when they appear in the RELEVANT DEMAND INDICATORS section
 - Do not repeat the quote range — the account manager already sees those numbers. Focus on WHY and WHAT TO DO
 - If same-day mode is active, factor urgency into your recommendation
