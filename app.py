@@ -94,6 +94,24 @@ from intel_brief import generate_intel_brief, build_brief_context, get_relevant_
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# PENDING RESET — must run before widgets render to avoid StreamlitAPIException
+# ──────────────────────────────────────────────────────────────────────────────
+if st.session_state.get("_pending_reset"):
+    keep_same_day = st.session_state.get("_reset_keep_same_day", False)
+    form_keys = ["orig_city_q", "orig_state_q", "dest_city_q", "dest_state_q",
+                 "orig_zip3_q", "dest_zip3_q", "orig_mkt_q", "dest_mkt_q"]
+    preserved = {"password_correct": st.session_state.get("password_correct")}
+    if keep_same_day:
+        preserved["same_day_on"] = st.session_state.get("same_day_on")
+    for key in list(st.session_state.keys()):
+        if key not in preserved:
+            del st.session_state[key]
+    for k, v in preserved.items():
+        if v is not None:
+            st.session_state[k] = v
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # CUSTOM CSS
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -532,14 +550,7 @@ if reset_clicked:
             # Already showing confirmation — wait for button click below
             pass
     else:
-        # Clear form fields explicitly (set to empty, not delete, so widgets reset)
-        form_keys = ["orig_city_q", "orig_state_q", "dest_city_q", "dest_state_q",
-                     "orig_zip3_q", "dest_zip3_q", "orig_mkt_q", "dest_mkt_q"]
-        for key in form_keys:
-            st.session_state[key] = ""
-        for key in list(st.session_state.keys()):
-            if key not in ["password_correct"] and key not in form_keys:
-                del st.session_state[key]
+        st.session_state["_pending_reset"] = True
         st.rerun()
 
 # Same-day reset confirmation dialog
@@ -548,23 +559,12 @@ if st.session_state.get("same_day_confirm_reset"):
     confirm_col1, confirm_col2 = st.columns(2)
     if confirm_col1.button("Yes, keep Same-Day ON", use_container_width=True):
         del st.session_state["same_day_confirm_reset"]
-        form_keys = ["orig_city_q", "orig_state_q", "dest_city_q", "dest_state_q",
-                     "orig_zip3_q", "dest_zip3_q", "orig_mkt_q", "dest_mkt_q"]
-        for key in form_keys:
-            st.session_state[key] = ""
-        for key in list(st.session_state.keys()):
-            if key not in ["password_correct", "same_day_confirm_reset"] and key not in form_keys:
-                del st.session_state[key]
+        st.session_state["_pending_reset"] = True
+        st.session_state["_reset_keep_same_day"] = True
         st.rerun()
     if confirm_col2.button("No, turn it OFF", use_container_width=True):
         del st.session_state["same_day_confirm_reset"]
-        form_keys = ["orig_city_q", "orig_state_q", "dest_city_q", "dest_state_q",
-                     "orig_zip3_q", "dest_zip3_q", "orig_mkt_q", "dest_mkt_q"]
-        for key in form_keys:
-            st.session_state[key] = ""
-        for key in list(st.session_state.keys()):
-            if key not in ["password_correct"] and key not in form_keys:
-                del st.session_state[key]
+        st.session_state["_pending_reset"] = True
         st.rerun()
 
 if quote_clicked:
