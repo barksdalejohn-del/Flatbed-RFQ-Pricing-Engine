@@ -53,8 +53,8 @@ PRESSURE_THRESHOLDS = [
 DEMAND_INDICATORS = [
     {'pattern': 'USMNO',  'key': 'ISM_New_Orders',       'label': 'ISM Manufacturing New Orders',      'unit': 'index',           'layers': ['ISM-Grid'],                    'bullish_above': 50},
     {'pattern': 'USTRG',  'key': 'Rig_Count',            'label': 'Baker Hughes Total Rig Count',      'unit': 'rigs',            'layers': ['Energy'],                      'bullish_above': None},
-    {'pattern': 'HOUST1F','key': 'Housing_Starts',        'label': 'Housing Starts (SF, SAAR)',         'unit': 'thousands',       'layers': ['Permits-Starts','Construction'],'bullish_above': None},
-    {'pattern': 'PERMIT1','key': 'Building_Permits',      'label': 'Building Permits (SF)',             'unit': 'thousands',       'layers': ['Permits-Starts','Construction'],'bullish_above': None},
+    {'pattern': 'HOUST',  'key': 'Housing_Starts',        'label': 'Housing Starts (Total, SAAR)',      'unit': 'thousands',       'layers': ['Permits-Starts','Construction'],'bullish_above': None},
+    {'pattern': 'PERMIT', 'key': 'Building_Permits',      'label': 'Building Permits (Total)',           'unit': 'thousands',       'layers': ['Permits-Starts','Construction'],'bullish_above': None},
     {'pattern': 'TLMFGCON','key':'Construction_Spending',  'label': 'Construction Spending (Mfg)',       'unit': 'millions_USD',    'layers': ['Construction'],                'bullish_above': None},
     {'pattern': 'LBR1',   'key': 'Lumber_Futures',        'label': 'Lumber Futures',                    'unit': 'USD_per_mbf',     'layers': ['Lumber','Lumber-PNW'],          'bullish_above': None},
     {'pattern': 'HRC1',   'key': 'HRC_Steel',             'label': 'Hot-Rolled Coil Steel Futures',     'unit': 'USD_per_ton',     'layers': ['Steel'],                       'bullish_above': None},

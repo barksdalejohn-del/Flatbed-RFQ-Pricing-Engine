@@ -1,13 +1,13 @@
 {
-  "exported_at": "2026-04-02 17:25:17",
-  "as_of": "2026-03-28",
+  "exported_at": "2026-04-05 09:55:15",
+  "as_of": "2026-04-04",
   "national": {
-    "ltr_8d": 96.4,
-    "ltr_30d": 91.8,
-    "divergence": 0.0502,
-    "national_ltr_weekly": 81.57,
-    "national_ema": 67.6,
-    "national_roc": 0.259,
+    "ltr_8d": 82.0,
+    "ltr_30d": 90.8,
+    "divergence": -0.0963,
+    "national_ltr_weekly": 73.0,
+    "national_ema": 68.8,
+    "national_roc": 0.0755,
     "ltr_direction": "RISING"
   },
   "macro": {
@@ -29,2310 +29,2310 @@
   },
   "states": {
     "AL": {
-      "ltr_8d": 257.8,
-      "ltr_30d": 254.3,
-      "divergence": 0.0138,
-      "pressure_score": 42.2,
+      "ltr_8d": 256.5,
+      "ltr_30d": 266.4,
+      "divergence": -0.0372,
+      "pressure_score": 40.0,
       "signal": "Balanced",
-      "momentum": -0.0619,
-      "z_score": -0.7
-    },
-    "AR": {
-      "ltr_8d": 283.5,
-      "ltr_30d": 274.2,
-      "divergence": 0.0339,
-      "pressure_score": 45.8,
-      "signal": "Firming",
-      "momentum": -0.1107,
-      "z_score": -0.48
-    },
-    "AZ": {
-      "ltr_8d": 66.1,
-      "ltr_30d": 56.9,
-      "divergence": 0.1617,
-      "pressure_score": 50.3,
-      "signal": "Firming",
-      "momentum": -0.2226,
-      "z_score": -0.23
-    },
-    "CA": {
-      "ltr_8d": 107.9,
-      "ltr_30d": 81.2,
-      "divergence": 0.3288,
-      "pressure_score": 64.9,
-      "signal": "Firming",
-      "momentum": -0.2709,
-      "z_score": 0.58
-    },
-    "CO": {
-      "ltr_8d": 35.0,
-      "ltr_30d": 36.0,
-      "divergence": -0.0278,
-      "pressure_score": 19.0,
-      "signal": "Balanced",
-      "momentum": -0.1594,
-      "z_score": -0.45
-    },
-    "CT": {
-      "ltr_8d": 157.4,
-      "ltr_30d": 132.3,
-      "divergence": 0.1897,
-      "pressure_score": 59.2,
-      "signal": "Firming",
-      "momentum": 0.0884,
-      "z_score": -0.21
-    },
-    "DE": {
-      "ltr_8d": 71.1,
-      "ltr_30d": 65.6,
-      "divergence": 0.0838,
-      "pressure_score": 45.7,
-      "signal": "Firming",
-      "momentum": 0.1237,
-      "z_score": -0.47
-    },
-    "FL": {
-      "ltr_8d": 71.2,
-      "ltr_30d": 64.2,
-      "divergence": 0.109,
-      "pressure_score": 47.3,
-      "signal": "Firming",
-      "momentum": -0.1942,
-      "z_score": -0.06
-    },
-    "GA": {
-      "ltr_8d": 124.3,
-      "ltr_30d": 115.9,
-      "divergence": 0.0725,
-      "pressure_score": 46.7,
-      "signal": "Firming",
-      "momentum": -0.0165,
-      "z_score": -0.45
-    },
-    "ID": {
-      "ltr_8d": 69.8,
-      "ltr_30d": 65.9,
-      "divergence": 0.0592,
-      "pressure_score": 4.0,
-      "signal": "Soft",
-      "momentum": -0.1517,
-      "z_score": 0.07
-    },
-    "IL": {
-      "ltr_8d": 27.8,
-      "ltr_30d": 30.8,
-      "divergence": -0.0974,
-      "pressure_score": 0.0,
-      "signal": "Soft",
-      "momentum": 0.1044,
-      "z_score": -0.63
-    },
-    "IN": {
-      "ltr_8d": 64.6,
-      "ltr_30d": 66.7,
-      "divergence": -0.0315,
-      "pressure_score": 18.7,
-      "signal": "Balanced",
-      "momentum": 0.1914,
-      "z_score": -0.59
-    },
-    "IA": {
-      "ltr_8d": 29.6,
-      "ltr_30d": 29.5,
-      "divergence": 0.0034,
-      "pressure_score": 3.9,
-      "signal": "Soft",
-      "momentum": 0.1214,
-      "z_score": -0.41
-    },
-    "KS": {
-      "ltr_8d": 59.4,
-      "ltr_30d": 52.5,
-      "divergence": 0.1314,
-      "pressure_score": 25.5,
-      "signal": "Balanced",
-      "momentum": 0.2348,
-      "z_score": -0.01
-    },
-    "KY": {
-      "ltr_8d": 68.4,
-      "ltr_30d": 73.5,
-      "divergence": -0.0694,
-      "pressure_score": 18.2,
-      "signal": "Loosening",
-      "momentum": 0.0314,
+      "momentum": -0.0509,
       "z_score": -1.04
     },
-    "LA": {
-      "ltr_8d": 127.7,
-      "ltr_30d": 106.9,
-      "divergence": 0.1946,
-      "pressure_score": 31.3,
-      "signal": "Balanced",
-      "momentum": -0.1974,
-      "z_score": 0.01
-    },
-    "ME": {
-      "ltr_8d": 281.7,
-      "ltr_30d": 296.6,
-      "divergence": -0.0502,
-      "pressure_score": 40.0,
-      "signal": "Balanced",
-      "momentum": -0.4617,
-      "z_score": -1.15
-    },
-    "MD": {
-      "ltr_8d": 106.0,
-      "ltr_30d": 82.9,
-      "divergence": 0.2786,
-      "pressure_score": 61.3,
+    "AR": {
+      "ltr_8d": 332.1,
+      "ltr_30d": 295.4,
+      "divergence": 0.1242,
+      "pressure_score": 62.7,
       "signal": "Firming",
-      "momentum": -0.6051,
-      "z_score": -0.11
-    },
-    "MA": {
-      "ltr_8d": 106.0,
-      "ltr_30d": 120.1,
-      "divergence": -0.1174,
-      "pressure_score": 40.0,
-      "signal": "Balanced",
-      "momentum": -0.2997,
-      "z_score": -0.87
-    },
-    "MI": {
-      "ltr_8d": 45.9,
-      "ltr_30d": 50.2,
-      "divergence": -0.0857,
-      "pressure_score": 0.0,
-      "signal": "Soft",
-      "momentum": 0.1847,
-      "z_score": -0.77
-    },
-    "MN": {
-      "ltr_8d": 60.4,
-      "ltr_30d": 60.0,
-      "divergence": 0.0067,
-      "pressure_score": 20.6,
-      "signal": "Balanced",
-      "momentum": -0.2047,
-      "z_score": -0.95
-    },
-    "MS": {
-      "ltr_8d": 331.5,
-      "ltr_30d": 303.5,
-      "divergence": 0.0923,
-      "pressure_score": 57.2,
-      "signal": "Firming",
-      "momentum": -0.0584,
-      "z_score": -0.32
-    },
-    "MO": {
-      "ltr_8d": 57.9,
-      "ltr_30d": 50.0,
-      "divergence": 0.158,
-      "pressure_score": 49.5,
-      "signal": "Firming",
-      "momentum": 0.175,
-      "z_score": 0.25
-    },
-    "MT": {
-      "ltr_8d": 67.4,
-      "ltr_30d": 64.0,
-      "divergence": 0.0531,
-      "pressure_score": 5.9,
-      "signal": "Soft",
-      "momentum": 0.0684,
-      "z_score": -0.04
-    },
-    "NE": {
-      "ltr_8d": 24.6,
-      "ltr_30d": 32.5,
-      "divergence": -0.2431,
-      "pressure_score": 0.0,
-      "signal": "Soft",
-      "momentum": -0.0477,
-      "z_score": -0.87
-    },
-    "NV": {
-      "ltr_8d": 66.3,
-      "ltr_30d": 46.4,
-      "divergence": 0.4289,
-      "pressure_score": 65.0,
-      "signal": "Tightening",
-      "momentum": -0.3324,
-      "z_score": 0.26
-    },
-    "NH": {
-      "ltr_8d": 146.1,
-      "ltr_30d": 199.3,
-      "divergence": -0.2669,
-      "pressure_score": 28.2,
-      "signal": "Loosening",
-      "momentum": -0.2702,
-      "z_score": -1.33
-    },
-    "NJ": {
-      "ltr_8d": 66.2,
-      "ltr_30d": 60.5,
-      "divergence": 0.0942,
-      "pressure_score": 46.1,
-      "signal": "Firming",
-      "momentum": -0.0106,
-      "z_score": -0.54
-    },
-    "NM": {
-      "ltr_8d": 23.6,
-      "ltr_30d": 29.9,
-      "divergence": -0.2107,
-      "pressure_score": 0.0,
-      "signal": "Soft",
-      "momentum": -0.1023,
-      "z_score": -0.99
-    },
-    "NY": {
-      "ltr_8d": 48.2,
-      "ltr_30d": 64.9,
-      "divergence": -0.2573,
-      "pressure_score": 36.3,
-      "signal": "Balanced",
-      "momentum": -0.2001,
-      "z_score": -1.57
-    },
-    "NC": {
-      "ltr_8d": 87.0,
-      "ltr_30d": 86.2,
-      "divergence": 0.0093,
-      "pressure_score": 40.7,
-      "signal": "Balanced",
-      "momentum": -0.1472,
-      "z_score": -0.85
-    },
-    "ND": {
-      "ltr_8d": 15.8,
-      "ltr_30d": 13.4,
-      "divergence": 0.1791,
-      "pressure_score": 7.5,
-      "signal": "Soft",
-      "momentum": 0.3524,
-      "z_score": 0.55
-    },
-    "OH": {
-      "ltr_8d": 52.8,
-      "ltr_30d": 51.3,
-      "divergence": 0.0292,
-      "pressure_score": 17.7,
-      "signal": "Balanced",
-      "momentum": 0.1688,
-      "z_score": -0.44
-    },
-    "OK": {
-      "ltr_8d": 73.4,
-      "ltr_30d": 61.4,
-      "divergence": 0.1954,
-      "pressure_score": 52.8,
-      "signal": "Firming",
-      "momentum": 0.1851,
-      "z_score": -0.05
-    },
-    "OR": {
-      "ltr_8d": 154.8,
-      "ltr_30d": 111.8,
-      "divergence": 0.3846,
-      "pressure_score": 35.0,
-      "signal": "Firming",
-      "momentum": 0.0516,
-      "z_score": 1.1
-    },
-    "PA": {
-      "ltr_8d": 84.1,
-      "ltr_30d": 76.7,
-      "divergence": 0.0965,
-      "pressure_score": 47.1,
-      "signal": "Firming",
-      "momentum": -0.0594,
-      "z_score": -0.82
-    },
-    "RI": {
-      "ltr_8d": 61.8,
-      "ltr_30d": 51.7,
-      "divergence": 0.1954,
-      "pressure_score": 51.9,
-      "signal": "Firming",
-      "momentum": -0.1298,
-      "z_score": -0.32
-    },
-    "SC": {
-      "ltr_8d": 108.8,
-      "ltr_30d": 97.6,
-      "divergence": 0.1148,
-      "pressure_score": 49.6,
-      "signal": "Firming",
-      "momentum": 0.0562,
-      "z_score": -0.67
-    },
-    "SD": {
-      "ltr_8d": 72.9,
-      "ltr_30d": 90.8,
-      "divergence": -0.1971,
-      "pressure_score": 23.0,
-      "signal": "Loosening",
-      "momentum": -0.029,
-      "z_score": -0.89
-    },
-    "TN": {
-      "ltr_8d": 57.3,
-      "ltr_30d": 48.6,
-      "divergence": 0.179,
-      "pressure_score": 50.6,
-      "signal": "Firming",
-      "momentum": 0.0355,
+      "momentum": 0.0903,
       "z_score": 0.2
     },
-    "TX": {
-      "ltr_8d": 96.1,
-      "ltr_30d": 77.1,
-      "divergence": 0.2464,
-      "pressure_score": 58.1,
-      "signal": "Firming",
-      "momentum": -0.03,
-      "z_score": 0.02
-    },
-    "UT": {
-      "ltr_8d": 34.5,
-      "ltr_30d": 25.8,
-      "divergence": 0.3372,
-      "pressure_score": 16.2,
-      "signal": "Loosening",
-      "momentum": -0.0685,
-      "z_score": 0.9
-    },
-    "VT": {
-      "ltr_8d": 128.1,
-      "ltr_30d": 145.9,
-      "divergence": -0.122,
-      "pressure_score": 35.2,
+    "AZ": {
+      "ltr_8d": 59.0,
+      "ltr_30d": 60.3,
+      "divergence": -0.0216,
+      "pressure_score": 40.0,
       "signal": "Balanced",
-      "momentum": -0.1579,
-      "z_score": -0.39
+      "momentum": -0.1832,
+      "z_score": -0.75
     },
-    "VA": {
-      "ltr_8d": 125.8,
-      "ltr_30d": 101.3,
-      "divergence": 0.543,
-      "pressure_score": 71.3,
-      "signal": "Tightening",
-      "momentum": 0.0,
-      "z_score": 0.75
-    },
-    "WA": {
-      "ltr_8d": 62.3,
-      "ltr_30d": 47.4,
-      "divergence": 0.3143,
-      "pressure_score": 19.2,
-      "signal": "Loosening",
-      "momentum": 0.1259,
-      "z_score": 0.74
-    },
-    "WV": {
-      "ltr_8d": 231.0,
-      "ltr_30d": 229.0,
-      "divergence": 0.0087,
-      "pressure_score": 41.3,
+    "CA": {
+      "ltr_8d": 85.3,
+      "ltr_30d": 91.1,
+      "divergence": -0.0637,
+      "pressure_score": 40.0,
       "signal": "Balanced",
-      "momentum": -0.0067,
-      "z_score": -1.23
+      "momentum": -0.3925,
+      "z_score": -1.47
     },
-    "WI": {
-      "ltr_8d": 34.0,
-      "ltr_30d": 33.8,
-      "divergence": 0.0059,
-      "pressure_score": 3.8,
+    "CO": {
+      "ltr_8d": 30.2,
+      "ltr_30d": 34.1,
+      "divergence": -0.1144,
+      "pressure_score": 13.4,
       "signal": "Soft",
-      "momentum": -0.0257,
+      "momentum": -0.0866,
+      "z_score": -0.74
+    },
+    "CT": {
+      "ltr_8d": 86.7,
+      "ltr_30d": 124.8,
+      "divergence": -0.3053,
+      "pressure_score": 40.0,
+      "signal": "Balanced",
+      "momentum": -0.495,
+      "z_score": -1.11
+    },
+    "DE": {
+      "ltr_8d": 46.7,
+      "ltr_30d": 59.9,
+      "divergence": -0.2204,
+      "pressure_score": 12.0,
+      "signal": "Soft",
+      "momentum": -0.3042,
+      "z_score": -1.18
+    },
+    "FL": {
+      "ltr_8d": 68.6,
+      "ltr_30d": 66.7,
+      "divergence": 0.0285,
+      "pressure_score": 41.9,
+      "signal": "Balanced",
+      "momentum": -0.0805,
+      "z_score": -0.41
+    },
+    "GA": {
+      "ltr_8d": 141.2,
+      "ltr_30d": 124.3,
+      "divergence": 0.136,
+      "pressure_score": 53.2,
+      "signal": "Firming",
+      "momentum": 0.0635,
+      "z_score": -0.02
+    },
+    "ID": {
+      "ltr_8d": 62.9,
+      "ltr_30d": 67.3,
+      "divergence": -0.0654,
+      "pressure_score": 0.0,
+      "signal": "Soft",
+      "momentum": -0.1246,
+      "z_score": -0.36
+    },
+    "IL": {
+      "ltr_8d": 26.7,
+      "ltr_30d": 27.7,
+      "divergence": -0.0361,
+      "pressure_score": 0.0,
+      "signal": "Soft",
+      "momentum": 0.0613,
+      "z_score": -0.36
+    },
+    "IN": {
+      "ltr_8d": 58.5,
+      "ltr_30d": 60.4,
+      "divergence": -0.0315,
+      "pressure_score": 5.2,
+      "signal": "Balanced",
+      "momentum": 0.0,
+      "z_score": -0.56
+    },
+    "IA": {
+      "ltr_8d": 27.6,
+      "ltr_30d": 28.6,
+      "divergence": -0.035,
+      "pressure_score": 0.0,
+      "signal": "Soft",
+      "momentum": -0.0384,
+      "z_score": -0.56
+    },
+    "KS": {
+      "ltr_8d": 56.0,
+      "ltr_30d": 50.3,
+      "divergence": 0.1133,
+      "pressure_score": 12.3,
+      "signal": "Balanced",
+      "momentum": -0.0181,
+      "z_score": -0.09
+    },
+    "KY": {
+      "ltr_8d": 67.9,
+      "ltr_30d": 70.9,
+      "divergence": -0.0423,
+      "pressure_score": 7.5,
+      "signal": "Balanced",
+      "momentum": 0.0271,
+      "z_score": -0.85
+    },
+    "LA": {
+      "ltr_8d": 142.9,
+      "ltr_30d": 127.3,
+      "divergence": 0.1225,
+      "pressure_score": 44.1,
+      "signal": "Balanced",
+      "momentum": -0.072,
+      "z_score": -0.24
+    },
+    "ME": {
+      "ltr_8d": 136.9,
+      "ltr_30d": 293.6,
+      "divergence": -0.5337,
+      "pressure_score": 40.0,
+      "signal": "Balanced",
+      "momentum": -0.4835,
+      "z_score": -2.11
+    },
+    "MD": {
+      "ltr_8d": 71.6,
+      "ltr_30d": 87.2,
+      "divergence": -0.1789,
+      "pressure_score": 40.0,
+      "signal": "Balanced",
+      "momentum": -0.4575,
+      "z_score": -1.18
+    },
+    "MA": {
+      "ltr_8d": 102.7,
+      "ltr_30d": 121.3,
+      "divergence": -0.1533,
+      "pressure_score": 40.0,
+      "signal": "Balanced",
+      "momentum": -0.0359,
+      "z_score": -0.89
+    },
+    "MI": {
+      "ltr_8d": 34.0,
+      "ltr_30d": 42.7,
+      "divergence": -0.2037,
+      "pressure_score": 0.0,
+      "signal": "Soft",
+      "momentum": -0.1181,
+      "z_score": -1.12
+    },
+    "MN": {
+      "ltr_8d": 39.0,
+      "ltr_30d": 53.5,
+      "divergence": -0.271,
+      "pressure_score": 4.6,
+      "signal": "Soft",
+      "momentum": -0.2777,
+      "z_score": -2.26
+    },
+    "MS": {
+      "ltr_8d": 309.7,
+      "ltr_30d": 330.9,
+      "divergence": -0.0641,
+      "pressure_score": 40.0,
+      "signal": "Balanced",
+      "momentum": -0.1563,
+      "z_score": -0.93
+    },
+    "MO": {
+      "ltr_8d": 57.1,
+      "ltr_30d": 51.0,
+      "divergence": 0.1196,
+      "pressure_score": 47.2,
+      "signal": "Firming",
+      "momentum": -0.0384,
+      "z_score": 0.03
+    },
+    "MT": {
+      "ltr_8d": 55.9,
+      "ltr_30d": 61.1,
+      "divergence": -0.0851,
+      "pressure_score": 0.0,
+      "signal": "Soft",
+      "momentum": -0.1382,
+      "z_score": -0.63
+    },
+    "NE": {
+      "ltr_8d": 29.5,
+      "ltr_30d": 28.7,
+      "divergence": 0.0279,
+      "pressure_score": 1.4,
+      "signal": "Soft",
+      "momentum": 0.271,
+      "z_score": -0.16
+    },
+    "NV": {
+      "ltr_8d": 35.2,
+      "ltr_30d": 50.6,
+      "divergence": -0.3043,
+      "pressure_score": 40.0,
+      "signal": "Balanced",
+      "momentum": -0.7332,
+      "z_score": -0.91
+    },
+    "NH": {
+      "ltr_8d": 72.5,
+      "ltr_30d": 144.3,
+      "divergence": -0.4976,
+      "pressure_score": 0.0,
+      "signal": "Soft",
+      "momentum": -0.2306,
+      "z_score": -1.99
+    },
+    "NJ": {
+      "ltr_8d": 48.1,
+      "ltr_30d": 58.3,
+      "divergence": -0.175,
+      "pressure_score": 40.0,
+      "signal": "Balanced",
+      "momentum": -0.2692,
+      "z_score": -1.58
+    },
+    "NM": {
+      "ltr_8d": 26.1,
+      "ltr_30d": 27.2,
+      "divergence": -0.0404,
+      "pressure_score": 0.0,
+      "signal": "Soft",
+      "momentum": 0.1703,
+      "z_score": -0.34
+    },
+    "NY": {
+      "ltr_8d": 34.0,
+      "ltr_30d": 50.9,
+      "divergence": -0.332,
+      "pressure_score": 11.1,
+      "signal": "Soft",
+      "momentum": -0.0747,
+      "z_score": -1.86
+    },
+    "NC": {
+      "ltr_8d": 100.5,
+      "ltr_30d": 91.0,
+      "divergence": 0.1044,
+      "pressure_score": 48.4,
+      "signal": "Firming",
+      "momentum": 0.0951,
+      "z_score": -0.35
+    },
+    "ND": {
+      "ltr_8d": 12.8,
+      "ltr_30d": 11.9,
+      "divergence": 0.0756,
+      "pressure_score": 3.1,
+      "signal": "Soft",
+      "momentum": -0.1035,
+      "z_score": 0.26
+    },
+    "OH": {
+      "ltr_8d": 44.3,
+      "ltr_30d": 47.4,
+      "divergence": -0.0654,
+      "pressure_score": 5.8,
+      "signal": "Balanced",
+      "momentum": -0.0946,
+      "z_score": -0.9
+    },
+    "OK": {
+      "ltr_8d": 88.6,
+      "ltr_30d": 70.2,
+      "divergence": 0.2621,
+      "pressure_score": 58.4,
+      "signal": "Firming",
+      "momentum": 0.0667,
+      "z_score": 0.25
+    },
+    "OR": {
+      "ltr_8d": 150.8,
+      "ltr_30d": 123.7,
+      "divergence": 0.2191,
+      "pressure_score": 27.0,
+      "signal": "Balanced",
+      "momentum": -0.1655,
+      "z_score": 0.44
+    },
+    "PA": {
+      "ltr_8d": 58.6,
+      "ltr_30d": 72.7,
+      "divergence": -0.1939,
+      "pressure_score": 40.0,
+      "signal": "Balanced",
+      "momentum": -0.2904,
+      "z_score": -2.9
+    },
+    "RI": {
+      "ltr_8d": 66.1,
+      "ltr_30d": 60.2,
+      "divergence": 0.098,
+      "pressure_score": 46.4,
+      "signal": "Firming",
+      "momentum": -0.0974,
       "z_score": -0.6
     },
-    "WY": {
-      "ltr_8d": 91.5,
-      "ltr_30d": 87.2,
-      "divergence": 0.0493,
-      "pressure_score": 24.8,
+    "SC": {
+      "ltr_8d": 99.9,
+      "ltr_30d": 102.9,
+      "divergence": -0.0292,
+      "pressure_score": 40.0,
       "signal": "Balanced",
-      "momentum": -0.6389,
-      "z_score": -0.22
+      "momentum": -0.1439,
+      "z_score": -2.52
+    },
+    "SD": {
+      "ltr_8d": 96.0,
+      "ltr_30d": 83.4,
+      "divergence": 0.1511,
+      "pressure_score": 18.9,
+      "signal": "Balanced",
+      "momentum": 0.3482,
+      "z_score": 0.1
+    },
+    "TN": {
+      "ltr_8d": 55.6,
+      "ltr_30d": 50.4,
+      "divergence": 0.1032,
+      "pressure_score": 46.2,
+      "signal": "Firming",
+      "momentum": -0.0758,
+      "z_score": -0.31
+    },
+    "TX": {
+      "ltr_8d": 96.6,
+      "ltr_30d": 83.9,
+      "divergence": 0.1514,
+      "pressure_score": 51.6,
+      "signal": "Firming",
+      "momentum": -0.0951,
+      "z_score": -0.51
+    },
+    "UT": {
+      "ltr_8d": 29.1,
+      "ltr_30d": 27.0,
+      "divergence": 0.0778,
+      "pressure_score": 3.8,
+      "signal": "Soft",
+      "momentum": -0.2594,
+      "z_score": -0.09
+    },
+    "VT": {
+      "ltr_8d": 34.0,
+      "ltr_30d": 82.8,
+      "divergence": -0.5894,
+      "pressure_score": 0.0,
+      "signal": "Soft",
+      "momentum": -0.4674,
+      "z_score": -0.88
+    },
+    "VA": {
+      "ltr_8d": 88.4,
+      "ltr_30d": 104.9,
+      "divergence": -0.1573,
+      "pressure_score": 40.0,
+      "signal": "Balanced",
+      "momentum": -0.7003,
+      "z_score": -2.25
+    },
+    "WA": {
+      "ltr_8d": 72.6,
+      "ltr_30d": 52.2,
+      "divergence": 0.3908,
+      "pressure_score": 32.0,
+      "signal": "Firming",
+      "momentum": 0.0765,
+      "z_score": 1.01
+    },
+    "WV": {
+      "ltr_8d": 147.3,
+      "ltr_30d": 217.2,
+      "divergence": -0.3218,
+      "pressure_score": 40.0,
+      "signal": "Balanced",
+      "momentum": -0.3306,
+      "z_score": -3.05
+    },
+    "WI": {
+      "ltr_8d": 25.8,
+      "ltr_30d": 32.4,
+      "divergence": -0.2037,
+      "pressure_score": 0.0,
+      "signal": "Soft",
+      "momentum": -0.2096,
+      "z_score": -1.91
+    },
+    "WY": {
+      "ltr_8d": 69.6,
+      "ltr_30d": 86.3,
+      "divergence": -0.1935,
+      "pressure_score": 17.2,
+      "signal": "Loosening",
+      "momentum": -0.2428,
+      "z_score": -0.93
     }
   },
   "markets": {
     "AL_BIR": {
       "market_name": "Birmingham, AL",
       "state": "AL",
-      "ltr_8d": 164.1,
-      "ltr_30d": 159.7,
-      "divergence": 0.0276,
-      "signal": "Balanced",
-      "pressure_score": 38.6
+      "ltr_8d": 206.7,
+      "ltr_30d": 177.3,
+      "divergence": 0.1658,
+      "signal": "Firming",
+      "pressure_score": 47.3
     },
     "AL_CHA": {
       "market_name": "Chattanooga, TN",
       "state": "AL",
-      "ltr_8d": 82.0,
-      "ltr_30d": 55.8,
-      "divergence": 0.4695,
-      "signal": "Firming",
-      "pressure_score": 62.5
+      "ltr_8d": 59.8,
+      "ltr_30d": 60.5,
+      "divergence": -0.0116,
+      "signal": "Balanced",
+      "pressure_score": 36.3
     },
     "AL_DEC": {
       "market_name": "Decatur, AL",
       "state": "AL",
-      "ltr_8d": 256.0,
-      "ltr_30d": 238.7,
-      "divergence": 0.0725,
-      "signal": "Balanced",
-      "pressure_score": 41.2
+      "ltr_8d": 215.1,
+      "ltr_30d": 247.3,
+      "divergence": -0.1302,
+      "signal": "Loosening",
+      "pressure_score": 24.2
     },
     "AL_MOB": {
       "market_name": "Mobile, AL",
       "state": "AL",
-      "ltr_8d": 179.2,
-      "ltr_30d": 179.2,
-      "divergence": null,
+      "ltr_8d": 167.2,
+      "ltr_30d": 173.9,
+      "divergence": -0.0385,
       "signal": "Balanced",
-      "pressure_score": 37
+      "pressure_score": 34.8
     },
     "AL_MON": {
       "market_name": "Montgomery, AL",
       "state": "AL",
-      "ltr_8d": 473.3,
-      "ltr_30d": 508.8,
-      "divergence": -0.0698,
+      "ltr_8d": 444.0,
+      "ltr_30d": 504.0,
+      "divergence": -0.119,
       "signal": "Balanced",
-      "pressure_score": 32.9
+      "pressure_score": 30.1
     },
     "AZ_FLA": {
       "market_name": "Flagstaff, AZ",
       "state": "AZ",
-      "ltr_8d": 85.9,
-      "ltr_30d": 97.9,
-      "divergence": -0.1226,
-      "signal": "Loosening",
-      "pressure_score": 27.8
+      "ltr_8d": 60.6,
+      "ltr_30d": 90.9,
+      "divergence": -0.3333,
+      "signal": "Soft",
+      "pressure_score": 6.7
     },
     "AZ_PHO": {
       "market_name": "Phoenix, AZ",
       "state": "AZ",
-      "ltr_8d": 65.3,
-      "ltr_30d": 53.0,
-      "divergence": 0.2321,
-      "signal": "Firming",
-      "pressure_score": 50.6
+      "ltr_8d": 60.6,
+      "ltr_30d": 57.6,
+      "divergence": 0.0521,
+      "signal": "Balanced",
+      "pressure_score": 40.0
     },
     "AZ_TUC": {
       "market_name": "Tucson, AZ",
       "state": "AZ",
-      "ltr_8d": 44.7,
-      "ltr_30d": 43.5,
-      "divergence": 0.0276,
-      "signal": "Balanced",
-      "pressure_score": 38.6
+      "ltr_8d": 40.9,
+      "ltr_30d": 47.7,
+      "divergence": -0.1426,
+      "signal": "Loosening",
+      "pressure_score": 18.5
     },
     "AR_FAY": {
       "market_name": "Fayetteville, AR",
       "state": "AR",
-      "ltr_8d": 155.9,
-      "ltr_30d": 140.7,
-      "divergence": 0.108,
-      "signal": "Balanced",
-      "pressure_score": 43.3
+      "ltr_8d": 227.3,
+      "ltr_30d": 170.4,
+      "divergence": 0.3339,
+      "signal": "Firming",
+      "pressure_score": 55.7
     },
     "AR_LIT": {
       "market_name": "Little Rock, AR",
       "state": "AR",
-      "ltr_8d": 373.8,
-      "ltr_30d": 382.8,
-      "divergence": -0.0235,
-      "signal": "Balanced",
-      "pressure_score": 35.6
+      "ltr_8d": 483.5,
+      "ltr_30d": 396.0,
+      "divergence": 0.221,
+      "signal": "Firming",
+      "pressure_score": 50.0
     },
     "AR_MEM": {
       "market_name": "Memphis, TN",
       "state": "AR",
-      "ltr_8d": 112.5,
-      "ltr_30d": 104.8,
-      "divergence": 0.0735,
+      "ltr_8d": 104.5,
+      "ltr_30d": 107.7,
+      "divergence": -0.0297,
       "signal": "Balanced",
-      "pressure_score": 41.3
+      "pressure_score": 35.3
     },
     "AR_TEX": {
       "market_name": "Texarkana, TX",
       "state": "AR",
-      "ltr_8d": 376.1,
-      "ltr_30d": 329.6,
-      "divergence": 0.1411,
-      "signal": "Firming",
-      "pressure_score": 46.1
+      "ltr_8d": 369.6,
+      "ltr_30d": 355.8,
+      "divergence": 0.0388,
+      "signal": "Balanced",
+      "pressure_score": 39.3
     },
     "CA_FRE": {
       "market_name": "Fresno, CA",
       "state": "CA",
-      "ltr_8d": 97.4,
-      "ltr_30d": 61.2,
-      "divergence": 0.5915,
-      "signal": "Tightening",
-      "pressure_score": 77.8
+      "ltr_8d": 99.5,
+      "ltr_30d": 89.3,
+      "divergence": 0.1142,
+      "signal": "Balanced",
+      "pressure_score": 43.7
     },
     "CA_LOS": {
       "market_name": "Los Angeles, CA",
       "state": "CA",
-      "ltr_8d": 138.4,
-      "ltr_30d": 120.1,
-      "divergence": 0.1524,
-      "signal": "Firming",
-      "pressure_score": 46.6
+      "ltr_8d": 108.2,
+      "ltr_30d": 128.7,
+      "divergence": -0.1593,
+      "signal": "Soft",
+      "pressure_score": 13.6
     },
     "CA_MED": {
       "market_name": "Medford, OR",
       "state": "CA",
-      "ltr_8d": 622.4,
-      "ltr_30d": 386.3,
-      "divergence": 0.6112,
-      "signal": "Acute Imbalance",
-      "pressure_score": 80.6
+      "ltr_8d": 402.2,
+      "ltr_30d": 426.6,
+      "divergence": -0.0572,
+      "signal": "Balanced",
+      "pressure_score": 33.7
     },
     "CA_ONT": {
       "market_name": "Ontario, CA",
       "state": "CA",
-      "ltr_8d": 81.3,
-      "ltr_30d": 58.7,
-      "divergence": 0.385,
-      "signal": "Firming",
-      "pressure_score": 58.3
+      "ltr_8d": 61.1,
+      "ltr_30d": 67.6,
+      "divergence": -0.0962,
+      "signal": "Balanced",
+      "pressure_score": 31.4
     },
     "CA_REN": {
       "market_name": "Reno, NV",
       "state": "CA",
-      "ltr_8d": 35.6,
-      "ltr_30d": 27.4,
-      "divergence": 0.2993,
-      "signal": "Firming",
-      "pressure_score": 54.0
+      "ltr_8d": 20.4,
+      "ltr_30d": 26.0,
+      "divergence": -0.2154,
+      "signal": "Soft",
+      "pressure_score": 11.4
     },
     "CA_SAN": {
       "market_name": "San Francisco, CA",
       "state": "CA",
-      "ltr_8d": 80.5,
-      "ltr_30d": 70.9,
-      "divergence": 0.1354,
-      "signal": "Firming",
-      "pressure_score": 45.8
+      "ltr_8d": 47.7,
+      "ltr_30d": 64.6,
+      "divergence": -0.2616,
+      "signal": "Soft",
+      "pressure_score": 9.5
     },
     "CA_STO": {
       "market_name": "Stockton, CA",
       "state": "CA",
-      "ltr_8d": 61.2,
-      "ltr_30d": 49.6,
-      "divergence": 0.2339,
+      "ltr_8d": 70.9,
+      "ltr_30d": 56.0,
+      "divergence": 0.2661,
       "signal": "Firming",
-      "pressure_score": 50.7
+      "pressure_score": 52.3
     },
     "CO_ALB": {
       "market_name": "Albuquerque, NM",
       "state": "CO",
-      "ltr_8d": 34.1,
-      "ltr_30d": 45.9,
-      "divergence": -0.2571,
+      "ltr_8d": 30.3,
+      "ltr_30d": 38.2,
+      "divergence": -0.2068,
       "signal": "Soft",
-      "pressure_score": 9.7
+      "pressure_score": 11.7
     },
     "CO_DEN": {
       "market_name": "Denver, CO",
       "state": "CO",
-      "ltr_8d": 23.4,
-      "ltr_30d": 24.0,
-      "divergence": -0.025,
+      "ltr_8d": 24.3,
+      "ltr_30d": 23.2,
+      "divergence": 0.0474,
       "signal": "Balanced",
-      "pressure_score": 35.5
+      "pressure_score": 39.8
     },
     "CO_GRA": {
       "market_name": "Grand Junction, CO",
       "state": "CO",
-      "ltr_8d": 109.9,
-      "ltr_30d": 125.2,
-      "divergence": -0.1222,
-      "signal": "Loosening",
-      "pressure_score": 28.0
+      "ltr_8d": 68.5,
+      "ltr_30d": 112.5,
+      "divergence": -0.3911,
+      "signal": "Soft",
+      "pressure_score": 4.4
     },
     "CO_N P": {
       "market_name": "N Platte, NE",
       "state": "CO",
-      "ltr_8d": 8.9,
-      "ltr_30d": 15.8,
-      "divergence": -0.4367,
-      "signal": "Soft",
-      "pressure_score": 2.5
+      "ltr_8d": 14.1,
+      "ltr_30d": 8.8,
+      "divergence": 0.6023,
+      "signal": "Acute Imbalance",
+      "pressure_score": 80.1
     },
     "CT_HAR": {
       "market_name": "Hartford, CT",
       "state": "CT",
-      "ltr_8d": 131.3,
-      "ltr_30d": 111.3,
-      "divergence": 0.1797,
-      "signal": "Firming",
-      "pressure_score": 48.0
+      "ltr_8d": 71.3,
+      "ltr_30d": 106.3,
+      "divergence": -0.3293,
+      "signal": "Soft",
+      "pressure_score": 6.8
     },
     "DE_BAL": {
       "market_name": "Baltimore, MD",
       "state": "DE",
-      "ltr_8d": 105.9,
-      "ltr_30d": 79.1,
-      "divergence": 0.3388,
-      "signal": "Firming",
-      "pressure_score": 55.9
+      "ltr_8d": 64.6,
+      "ltr_30d": 82.1,
+      "divergence": -0.2132,
+      "signal": "Soft",
+      "pressure_score": 11.5
     },
     "FL_JAC": {
       "market_name": "Jacksonville, FL",
       "state": "FL",
-      "ltr_8d": 91.4,
-      "ltr_30d": 81.7,
-      "divergence": 0.1187,
-      "signal": "Balanced",
-      "pressure_score": 43.9
+      "ltr_8d": 124.7,
+      "ltr_30d": 98.4,
+      "divergence": 0.2673,
+      "signal": "Firming",
+      "pressure_score": 52.4
     },
     "FL_LAK": {
       "market_name": "Lakeland, FL",
       "state": "FL",
-      "ltr_8d": 61.1,
-      "ltr_30d": 53.1,
-      "divergence": 0.1507,
-      "signal": "Firming",
-      "pressure_score": 46.5
+      "ltr_8d": 57.7,
+      "ltr_30d": 55.5,
+      "divergence": 0.0396,
+      "signal": "Balanced",
+      "pressure_score": 39.3
     },
     "FL_MIA": {
       "market_name": "Miami, FL",
       "state": "FL",
-      "ltr_8d": 25.6,
-      "ltr_30d": 21.2,
-      "divergence": 0.2075,
-      "signal": "Firming",
-      "pressure_score": 49.4
+      "ltr_8d": 21.9,
+      "ltr_30d": 19.7,
+      "divergence": 0.1117,
+      "signal": "Balanced",
+      "pressure_score": 43.5
     },
     "FL_TAL": {
       "market_name": "Tallahassee, FL",
       "state": "FL",
-      "ltr_8d": 285.3,
-      "ltr_30d": 309.1,
-      "divergence": -0.077,
-      "signal": "Balanced",
-      "pressure_score": 32.5
+      "ltr_8d": 237.7,
+      "ltr_30d": 307.8,
+      "divergence": -0.2277,
+      "signal": "Soft",
+      "pressure_score": 10.9
     },
     "GA_ATL": {
       "market_name": "Atlanta, GA",
       "state": "GA",
-      "ltr_8d": 62.2,
-      "ltr_30d": 56.8,
-      "divergence": 0.0951,
-      "signal": "Balanced",
-      "pressure_score": 42.5
+      "ltr_8d": 75.0,
+      "ltr_30d": 60.7,
+      "divergence": 0.2356,
+      "signal": "Firming",
+      "pressure_score": 50.8
     },
     "GA_CHA": {
       "market_name": "Chattanooga, TN",
       "state": "GA",
-      "ltr_8d": 82.0,
-      "ltr_30d": 55.8,
-      "divergence": 0.4695,
-      "signal": "Firming",
-      "pressure_score": 62.5
+      "ltr_8d": 59.8,
+      "ltr_30d": 60.5,
+      "divergence": -0.0116,
+      "signal": "Balanced",
+      "pressure_score": 36.3
     },
     "GA_MAC": {
       "market_name": "Macon, GA",
       "state": "GA",
-      "ltr_8d": 245.0,
-      "ltr_30d": 277.2,
-      "divergence": -0.1162,
+      "ltr_8d": 352.3,
+      "ltr_30d": 318.9,
+      "divergence": 0.1047,
       "signal": "Balanced",
-      "pressure_score": 30.2
+      "pressure_score": 43.1
     },
     "GA_MON": {
       "market_name": "Montgomery, AL",
       "state": "GA",
-      "ltr_8d": 473.3,
-      "ltr_30d": 508.8,
-      "divergence": -0.0698,
+      "ltr_8d": 444.0,
+      "ltr_30d": 504.0,
+      "divergence": -0.119,
       "signal": "Balanced",
-      "pressure_score": 32.9
+      "pressure_score": 30.1
     },
     "GA_SAV": {
       "market_name": "Savannah, GA",
       "state": "GA",
-      "ltr_8d": 243.0,
-      "ltr_30d": 209.3,
-      "divergence": 0.161,
-      "signal": "Firming",
-      "pressure_score": 47.1
+      "ltr_8d": 222.6,
+      "ltr_30d": 216.3,
+      "divergence": 0.0291,
+      "signal": "Balanced",
+      "pressure_score": 38.7
     },
     "GA_TIF": {
       "market_name": "Tifton, GA",
       "state": "GA",
-      "ltr_8d": 275.7,
-      "ltr_30d": 246.4,
-      "divergence": 0.1189,
+      "ltr_8d": 258.2,
+      "ltr_30d": 272.2,
+      "divergence": -0.0514,
       "signal": "Balanced",
-      "pressure_score": 43.9
+      "pressure_score": 34.0
     },
     "ID_GRE": {
       "market_name": "Green River, WY",
       "state": "ID",
-      "ltr_8d": 152.5,
-      "ltr_30d": 183.6,
-      "divergence": -0.1694,
+      "ltr_8d": 69.9,
+      "ltr_30d": 159.7,
+      "divergence": -0.5623,
       "signal": "Soft",
-      "pressure_score": 13.2
+      "pressure_score": 0
     },
     "ID_SPO": {
       "market_name": "Spokane, WA",
       "state": "ID",
-      "ltr_8d": 96.8,
-      "ltr_30d": 75.6,
-      "divergence": 0.2804,
-      "signal": "Firming",
-      "pressure_score": 53.0
+      "ltr_8d": 152.7,
+      "ltr_30d": 93.8,
+      "divergence": 0.6279,
+      "signal": "Acute Imbalance",
+      "pressure_score": 81.4
     },
     "ID_TWI": {
       "market_name": "Twin Falls, ID",
       "state": "ID",
-      "ltr_8d": 42.5,
-      "ltr_30d": 39.1,
-      "divergence": 0.087,
-      "signal": "Balanced",
-      "pressure_score": 42.1
+      "ltr_8d": 30.6,
+      "ltr_30d": 39.2,
+      "divergence": -0.2194,
+      "signal": "Soft",
+      "pressure_score": 11.2
     },
     "IL_BLO": {
       "market_name": "Bloomington, IL",
       "state": "IL",
-      "ltr_8d": 40.5,
-      "ltr_30d": 63.3,
-      "divergence": -0.3602,
-      "signal": "Soft",
-      "pressure_score": 5.6
+      "ltr_8d": 51.1,
+      "ltr_30d": 54.5,
+      "divergence": -0.0624,
+      "signal": "Balanced",
+      "pressure_score": 33.4
     },
     "IL_CAP": {
       "market_name": "Cape Girardeau, MO",
       "state": "IL",
-      "ltr_8d": 162.6,
-      "ltr_30d": 116.7,
-      "divergence": 0.3933,
+      "ltr_8d": 148.5,
+      "ltr_30d": 125.3,
+      "divergence": 0.1852,
       "signal": "Firming",
-      "pressure_score": 58.7
+      "pressure_score": 48.3
     },
     "IL_CHI": {
       "market_name": "Chicago, IL",
       "state": "IL",
-      "ltr_8d": 18.0,
-      "ltr_30d": 19.1,
-      "divergence": -0.0576,
+      "ltr_8d": 18.1,
+      "ltr_30d": 16.6,
+      "divergence": 0.0904,
       "signal": "Balanced",
-      "pressure_score": 33.6
+      "pressure_score": 42.3
     },
     "IL_JOL": {
       "market_name": "Joliet, IL",
       "state": "IL",
-      "ltr_8d": 16.5,
-      "ltr_30d": 21.5,
-      "divergence": -0.2326,
-      "signal": "Soft",
-      "pressure_score": 10.7
+      "ltr_8d": 15.6,
+      "ltr_30d": 17.8,
+      "divergence": -0.1236,
+      "signal": "Loosening",
+      "pressure_score": 27.3
     },
     "IL_QUI": {
       "market_name": "Quincy, IL",
       "state": "IL",
-      "ltr_8d": 29.4,
-      "ltr_30d": 41.8,
-      "divergence": -0.2967,
-      "signal": "Soft",
-      "pressure_score": 8.1
+      "ltr_8d": 35.0,
+      "ltr_30d": 40.2,
+      "divergence": -0.1294,
+      "signal": "Loosening",
+      "pressure_score": 24.6
     },
     "IL_ROC": {
       "market_name": "Rockford, IL",
       "state": "IL",
-      "ltr_8d": 49.1,
-      "ltr_30d": 35.4,
-      "divergence": 0.387,
-      "signal": "Firming",
-      "pressure_score": 58.4
+      "ltr_8d": 29.4,
+      "ltr_30d": 30.4,
+      "divergence": -0.0329,
+      "signal": "Balanced",
+      "pressure_score": 35.1
     },
     "IL_ST.": {
       "market_name": "St. Louis, MO",
       "state": "IL",
-      "ltr_8d": 63.3,
-      "ltr_30d": 60.3,
-      "divergence": 0.0498,
+      "ltr_8d": 70.6,
+      "ltr_30d": 63.9,
+      "divergence": 0.1049,
       "signal": "Balanced",
-      "pressure_score": 39.9
+      "pressure_score": 43.1
     },
     "IL_TAY": {
       "market_name": "Taylorville, IL",
       "state": "IL",
-      "ltr_8d": 38.5,
-      "ltr_30d": 31.4,
-      "divergence": 0.2261,
-      "signal": "Firming",
-      "pressure_score": 50.3
+      "ltr_8d": 16.3,
+      "ltr_30d": 30.1,
+      "divergence": -0.4585,
+      "signal": "Soft",
+      "pressure_score": 1.7
     },
     "IL_TER": {
       "market_name": "Terre Haute, IN",
       "state": "IL",
-      "ltr_8d": 69.0,
-      "ltr_30d": 74.7,
-      "divergence": -0.0763,
+      "ltr_8d": 71.9,
+      "ltr_30d": 67.6,
+      "divergence": 0.0636,
       "signal": "Balanced",
-      "pressure_score": 32.5
+      "pressure_score": 40.7
     },
     "IN_CIN": {
       "market_name": "Cincinnati, OH",
       "state": "IN",
-      "ltr_8d": 41.4,
-      "ltr_30d": 52.5,
-      "divergence": -0.2114,
-      "signal": "Soft",
-      "pressure_score": 11.5
+      "ltr_8d": 45.0,
+      "ltr_30d": 49.3,
+      "divergence": -0.0872,
+      "signal": "Balanced",
+      "pressure_score": 31.9
     },
     "IN_EVA": {
       "market_name": "Evansville, IN",
       "state": "IN",
-      "ltr_8d": 89.4,
-      "ltr_30d": 113.7,
-      "divergence": -0.2137,
-      "signal": "Soft",
-      "pressure_score": 11.5
+      "ltr_8d": 98.1,
+      "ltr_30d": 111.5,
+      "divergence": -0.1202,
+      "signal": "Loosening",
+      "pressure_score": 28.9
     },
     "IN_FT ": {
       "market_name": "Ft Wayne, IN",
       "state": "IN",
-      "ltr_8d": 83.7,
-      "ltr_30d": 91.1,
-      "divergence": -0.0812,
+      "ltr_8d": 69.5,
+      "ltr_30d": 77.5,
+      "divergence": -0.1032,
       "signal": "Balanced",
-      "pressure_score": 32.3
+      "pressure_score": 31.0
     },
     "IN_GAR": {
       "market_name": "Gary, IN",
       "state": "IN",
-      "ltr_8d": 46.8,
-      "ltr_30d": 59.8,
-      "divergence": -0.2174,
+      "ltr_8d": 36.6,
+      "ltr_30d": 44.5,
+      "divergence": -0.1775,
       "signal": "Soft",
-      "pressure_score": 11.3
+      "pressure_score": 12.9
     },
     "IN_IND": {
       "market_name": "Indianapolis, IN",
       "state": "IN",
-      "ltr_8d": 46.5,
-      "ltr_30d": 47.7,
-      "divergence": -0.0252,
-      "signal": "Balanced",
-      "pressure_score": 35.5
+      "ltr_8d": 53.1,
+      "ltr_30d": 45.3,
+      "divergence": 0.1722,
+      "signal": "Firming",
+      "pressure_score": 47.6
     },
     "IN_LOU": {
       "market_name": "Louisville, KY",
       "state": "IN",
-      "ltr_8d": 72.6,
-      "ltr_30d": 59.6,
-      "divergence": 0.2181,
-      "signal": "Firming",
-      "pressure_score": 49.9
+      "ltr_8d": 61.9,
+      "ltr_30d": 60.9,
+      "divergence": 0.0164,
+      "signal": "Balanced",
+      "pressure_score": 38.0
     },
     "IN_S B": {
       "market_name": "S Bend, IN",
       "state": "IN",
-      "ltr_8d": 55.7,
-      "ltr_30d": 61.7,
-      "divergence": -0.0972,
-      "signal": "Balanced",
-      "pressure_score": 31.3
+      "ltr_8d": 44.3,
+      "ltr_30d": 51.8,
+      "divergence": -0.1448,
+      "signal": "Loosening",
+      "pressure_score": 17.4
     },
     "IN_TER": {
       "market_name": "Terre Haute, IN",
       "state": "IN",
-      "ltr_8d": 69.0,
-      "ltr_30d": 74.7,
-      "divergence": -0.0763,
+      "ltr_8d": 71.9,
+      "ltr_30d": 67.6,
+      "divergence": 0.0636,
       "signal": "Balanced",
-      "pressure_score": 32.5
+      "pressure_score": 40.7
     },
     "IA_CED": {
       "market_name": "Cedar Rapids, IA",
       "state": "IA",
-      "ltr_8d": 7.4,
-      "ltr_30d": 7.1,
-      "divergence": 0.0423,
+      "ltr_8d": 6.0,
+      "ltr_30d": 6.8,
+      "divergence": -0.1176,
       "signal": "Balanced",
-      "pressure_score": 39.5
+      "pressure_score": 30.1
     },
     "IA_DES": {
       "market_name": "Des Moines, IA",
       "state": "IA",
-      "ltr_8d": 20.6,
-      "ltr_30d": 16.7,
-      "divergence": 0.2335,
+      "ltr_8d": 25.5,
+      "ltr_30d": 18.9,
+      "divergence": 0.3492,
       "signal": "Firming",
-      "pressure_score": 50.7
+      "pressure_score": 56.5
     },
     "IA_DUB": {
       "market_name": "Dubuque, IA",
       "state": "IA",
-      "ltr_8d": 42.5,
-      "ltr_30d": 40.7,
-      "divergence": 0.0442,
-      "signal": "Balanced",
-      "pressure_score": 39.6
+      "ltr_8d": 27.1,
+      "ltr_30d": 34.4,
+      "divergence": -0.2122,
+      "signal": "Soft",
+      "pressure_score": 11.5
     },
     "IA_MIN": {
       "market_name": "Minneapolis, MN",
       "state": "IA",
-      "ltr_8d": 64.3,
-      "ltr_30d": 62.8,
-      "divergence": 0.0239,
-      "signal": "Balanced",
-      "pressure_score": 38.4
+      "ltr_8d": 42.0,
+      "ltr_30d": 56.2,
+      "divergence": -0.2527,
+      "signal": "Soft",
+      "pressure_score": 9.9
     },
     "IA_OMA": {
       "market_name": "Omaha, NE",
       "state": "IA",
-      "ltr_8d": 39.6,
-      "ltr_30d": 43.8,
-      "divergence": -0.0959,
-      "signal": "Balanced",
-      "pressure_score": 31.4
-    },
-    "IA_ROC": {
-      "market_name": "Rock Island, IL",
-      "state": "IA",
-      "ltr_8d": 56.8,
-      "ltr_30d": 65.7,
-      "divergence": -0.1355,
-      "signal": "Loosening",
-      "pressure_score": 21.8
-    },
-    "IA_SIO": {
-      "market_name": "Sioux Falls, SD",
-      "state": "IA",
-      "ltr_8d": 37.3,
-      "ltr_30d": 29.3,
-      "divergence": 0.273,
-      "signal": "Firming",
-      "pressure_score": 52.7
-    },
-    "KS_HUT": {
-      "market_name": "Hutchinson, KS",
-      "state": "KS",
-      "ltr_8d": 27.2,
-      "ltr_30d": 29.5,
-      "divergence": -0.078,
-      "signal": "Balanced",
-      "pressure_score": 32.5
-    },
-    "KS_JOP": {
-      "market_name": "Joplin, MO",
-      "state": "KS",
-      "ltr_8d": 119.9,
-      "ltr_30d": 76.9,
-      "divergence": 0.5592,
-      "signal": "Tightening",
-      "pressure_score": 73.3
-    },
-    "KS_KAN": {
-      "market_name": "Kansas City, KS",
-      "state": "KS",
-      "ltr_8d": 59.1,
-      "ltr_30d": 52.9,
-      "divergence": 0.1172,
-      "signal": "Balanced",
-      "pressure_score": 43.8
-    },
-    "KY_BOW": {
-      "market_name": "Bowling Green, KY",
-      "state": "KY",
-      "ltr_8d": 58.7,
-      "ltr_30d": 53.3,
-      "divergence": 0.1013,
-      "signal": "Balanced",
-      "pressure_score": 42.9
-    },
-    "KY_CAP": {
-      "market_name": "Cape Girardeau, MO",
-      "state": "KY",
-      "ltr_8d": 162.6,
-      "ltr_30d": 116.7,
-      "divergence": 0.3933,
-      "signal": "Firming",
-      "pressure_score": 58.7
-    },
-    "KY_CHA": {
-      "market_name": "Charleston, WV",
-      "state": "KY",
-      "ltr_8d": 136.4,
-      "ltr_30d": 122.4,
-      "divergence": 0.1144,
-      "signal": "Balanced",
-      "pressure_score": 43.7
-    },
-    "KY_EVA": {
-      "market_name": "Evansville, IN",
-      "state": "KY",
-      "ltr_8d": 89.4,
-      "ltr_30d": 113.7,
-      "divergence": -0.2137,
-      "signal": "Soft",
-      "pressure_score": 11.5
-    },
-    "KY_HUN": {
-      "market_name": "Huntington, WV",
-      "state": "KY",
-      "ltr_8d": 68.1,
-      "ltr_30d": 81.4,
-      "divergence": -0.1634,
-      "signal": "Soft",
-      "pressure_score": 13.5
-    },
-    "KY_KNO": {
-      "market_name": "Knoxville, TN",
-      "state": "KY",
-      "ltr_8d": 41.4,
-      "ltr_30d": 41.6,
-      "divergence": -0.0048,
-      "signal": "Balanced",
-      "pressure_score": 36.7
-    },
-    "KY_LEX": {
-      "market_name": "Lexington, KY",
-      "state": "KY",
-      "ltr_8d": 69.8,
-      "ltr_30d": 78.4,
-      "divergence": -0.1097,
-      "signal": "Balanced",
-      "pressure_score": 30.6
-    },
-    "KY_LOU": {
-      "market_name": "Louisville, KY",
-      "state": "KY",
-      "ltr_8d": 72.6,
-      "ltr_30d": 59.6,
-      "divergence": 0.2181,
-      "signal": "Firming",
-      "pressure_score": 49.9
-    },
-    "LA_NEW": {
-      "market_name": "New Orleans, LA",
-      "state": "LA",
-      "ltr_8d": 89.2,
-      "ltr_30d": 71.1,
-      "divergence": 0.2546,
-      "signal": "Firming",
-      "pressure_score": 51.7
-    },
-    "LA_SHR": {
-      "market_name": "Shreveport, LA",
-      "state": "LA",
-      "ltr_8d": 298.9,
-      "ltr_30d": 263.8,
-      "divergence": 0.1331,
-      "signal": "Firming",
-      "pressure_score": 45.7
-    },
-    "ME_AUG": {
-      "market_name": "Augusta, ME",
-      "state": "ME",
-      "ltr_8d": 248.6,
-      "ltr_30d": 267.3,
-      "divergence": -0.07,
-      "signal": "Balanced",
-      "pressure_score": 32.9
-    },
-    "MD_BAL": {
-      "market_name": "Baltimore, MD",
-      "state": "MD",
-      "ltr_8d": 105.9,
-      "ltr_30d": 79.1,
-      "divergence": 0.3388,
-      "signal": "Firming",
-      "pressure_score": 55.9
-    },
-    "MD_WIN": {
-      "market_name": "Winchester, VA",
-      "state": "MD",
-      "ltr_8d": 96.1,
-      "ltr_30d": 147.8,
-      "divergence": -0.3498,
-      "signal": "Soft",
-      "pressure_score": 6.0
-    },
-    "MA_BOS": {
-      "market_name": "Boston, MA",
-      "state": "MA",
-      "ltr_8d": 66.3,
-      "ltr_30d": 75.0,
-      "divergence": -0.116,
-      "signal": "Balanced",
-      "pressure_score": 30.2
-    },
-    "MA_SPR": {
-      "market_name": "Springfield, MA",
-      "state": "MA",
-      "ltr_8d": 440.9,
-      "ltr_30d": 457.8,
-      "divergence": -0.0369,
-      "signal": "Balanced",
-      "pressure_score": 34.8
-    },
-    "MI_DET": {
-      "market_name": "Detroit, MI",
-      "state": "MI",
-      "ltr_8d": 30.4,
-      "ltr_30d": 26.9,
-      "divergence": 0.1301,
-      "signal": "Firming",
-      "pressure_score": 45.5
-    },
-    "MI_GRA": {
-      "market_name": "Grand Rapids, MI",
-      "state": "MI",
-      "ltr_8d": 25.1,
-      "ltr_30d": 32.2,
-      "divergence": -0.2205,
-      "signal": "Soft",
-      "pressure_score": 11.2
-    },
-    "MI_S. ": {
-      "market_name": "S. Bend, IN",
-      "state": "MI",
-      "ltr_8d": 55.7,
-      "ltr_30d": 61.7,
-      "divergence": -0.0972,
-      "signal": "Balanced",
-      "pressure_score": 31.3
-    },
-    "MI_SAG": {
-      "market_name": "Saginaw, MI",
-      "state": "MI",
-      "ltr_8d": 340.6,
-      "ltr_30d": 357.3,
-      "divergence": -0.0467,
-      "signal": "Balanced",
-      "pressure_score": 34.3
-    },
-    "MN_DUL": {
-      "market_name": "Duluth, MN",
-      "state": "MN",
-      "ltr_8d": 133.9,
-      "ltr_30d": 159.6,
-      "divergence": -0.161,
-      "signal": "Soft",
-      "pressure_score": 13.6
-    },
-    "MN_FAR": {
-      "market_name": "Fargo, ND",
-      "state": "MN",
-      "ltr_8d": 30.0,
-      "ltr_30d": 29.5,
-      "divergence": 0.0169,
-      "signal": "Balanced",
-      "pressure_score": 38.0
-    },
-    "MN_MIN": {
-      "market_name": "Minneapolis, MN",
-      "state": "MN",
-      "ltr_8d": 64.3,
-      "ltr_30d": 62.8,
-      "divergence": 0.0239,
-      "signal": "Balanced",
-      "pressure_score": 38.4
-    },
-    "MN_SIO": {
-      "market_name": "Sioux Falls, SD",
-      "state": "MN",
-      "ltr_8d": 37.3,
-      "ltr_30d": 29.3,
-      "divergence": 0.273,
-      "signal": "Firming",
-      "pressure_score": 52.7
-    },
-    "MN_ST ": {
-      "market_name": "St Cloud, MN",
-      "state": "MN",
-      "ltr_8d": 23.2,
-      "ltr_30d": 33.0,
-      "divergence": -0.297,
-      "signal": "Soft",
-      "pressure_score": 8.1
-    },
-    "MS_JAC": {
-      "market_name": "Jackson, MS",
-      "state": "MS",
-      "ltr_8d": 438.2,
-      "ltr_30d": 373.7,
-      "divergence": 0.1726,
-      "signal": "Firming",
-      "pressure_score": 47.6
-    },
-    "MS_MEM": {
-      "market_name": "Memphis, TN",
-      "state": "MS",
-      "ltr_8d": 112.5,
-      "ltr_30d": 104.8,
-      "divergence": 0.0735,
-      "signal": "Balanced",
-      "pressure_score": 41.3
-    },
-    "MS_MOB": {
-      "market_name": "Mobile, AL",
-      "state": "MS",
-      "ltr_8d": 179.2,
-      "ltr_30d": 179.2,
+      "ltr_8d": 40.7,
+      "ltr_30d": 40.7,
       "divergence": null,
       "signal": "Balanced",
       "pressure_score": 37
     },
+    "IA_ROC": {
+      "market_name": "Rock Island, IL",
+      "state": "IA",
+      "ltr_8d": 43.7,
+      "ltr_30d": 60.1,
+      "divergence": -0.2729,
+      "signal": "Soft",
+      "pressure_score": 9.1
+    },
+    "IA_SIO": {
+      "market_name": "Sioux Falls, SD",
+      "state": "IA",
+      "ltr_8d": 28.7,
+      "ltr_30d": 27.7,
+      "divergence": 0.0361,
+      "signal": "Balanced",
+      "pressure_score": 39.1
+    },
+    "KS_HUT": {
+      "market_name": "Hutchinson, KS",
+      "state": "KS",
+      "ltr_8d": 34.7,
+      "ltr_30d": 28.7,
+      "divergence": 0.2091,
+      "signal": "Firming",
+      "pressure_score": 49.5
+    },
+    "KS_JOP": {
+      "market_name": "Joplin, MO",
+      "state": "KS",
+      "ltr_8d": 119.1,
+      "ltr_30d": 87.3,
+      "divergence": 0.3643,
+      "signal": "Firming",
+      "pressure_score": 57.2
+    },
+    "KS_KAN": {
+      "market_name": "Kansas City, KS",
+      "state": "KS",
+      "ltr_8d": 49.0,
+      "ltr_30d": 49.1,
+      "divergence": -0.002,
+      "signal": "Balanced",
+      "pressure_score": 36.9
+    },
+    "KY_BOW": {
+      "market_name": "Bowling Green, KY",
+      "state": "KY",
+      "ltr_8d": 50.1,
+      "ltr_30d": 56.6,
+      "divergence": -0.1148,
+      "signal": "Balanced",
+      "pressure_score": 30.3
+    },
+    "KY_CAP": {
+      "market_name": "Cape Girardeau, MO",
+      "state": "KY",
+      "ltr_8d": 148.5,
+      "ltr_30d": 125.3,
+      "divergence": 0.1852,
+      "signal": "Firming",
+      "pressure_score": 48.3
+    },
+    "KY_CHA": {
+      "market_name": "Charleston, WV",
+      "state": "KY",
+      "ltr_8d": 104.9,
+      "ltr_30d": 117.5,
+      "divergence": -0.1072,
+      "signal": "Balanced",
+      "pressure_score": 30.7
+    },
+    "KY_EVA": {
+      "market_name": "Evansville, IN",
+      "state": "KY",
+      "ltr_8d": 98.1,
+      "ltr_30d": 111.5,
+      "divergence": -0.1202,
+      "signal": "Loosening",
+      "pressure_score": 28.9
+    },
+    "KY_HUN": {
+      "market_name": "Huntington, WV",
+      "state": "KY",
+      "ltr_8d": 73.8,
+      "ltr_30d": 78.4,
+      "divergence": -0.0587,
+      "signal": "Balanced",
+      "pressure_score": 33.6
+    },
+    "KY_KNO": {
+      "market_name": "Knoxville, TN",
+      "state": "KY",
+      "ltr_8d": 61.6,
+      "ltr_30d": 48.0,
+      "divergence": 0.2833,
+      "signal": "Firming",
+      "pressure_score": 53.2
+    },
+    "KY_LEX": {
+      "market_name": "Lexington, KY",
+      "state": "KY",
+      "ltr_8d": 85.0,
+      "ltr_30d": 78.0,
+      "divergence": 0.0897,
+      "signal": "Balanced",
+      "pressure_score": 42.2
+    },
+    "KY_LOU": {
+      "market_name": "Louisville, KY",
+      "state": "KY",
+      "ltr_8d": 61.9,
+      "ltr_30d": 60.9,
+      "divergence": 0.0164,
+      "signal": "Balanced",
+      "pressure_score": 38.0
+    },
+    "LA_NEW": {
+      "market_name": "New Orleans, LA",
+      "state": "LA",
+      "ltr_8d": 96.5,
+      "ltr_30d": 84.4,
+      "divergence": 0.1434,
+      "signal": "Firming",
+      "pressure_score": 46.2
+    },
+    "LA_SHR": {
+      "market_name": "Shreveport, LA",
+      "state": "LA",
+      "ltr_8d": 344.8,
+      "ltr_30d": 314.7,
+      "divergence": 0.0956,
+      "signal": "Balanced",
+      "pressure_score": 42.6
+    },
+    "ME_AUG": {
+      "market_name": "Augusta, ME",
+      "state": "ME",
+      "ltr_8d": 116.6,
+      "ltr_30d": 247.0,
+      "divergence": -0.5279,
+      "signal": "Soft",
+      "pressure_score": 0
+    },
+    "MD_BAL": {
+      "market_name": "Baltimore, MD",
+      "state": "MD",
+      "ltr_8d": 64.6,
+      "ltr_30d": 82.1,
+      "divergence": -0.2132,
+      "signal": "Soft",
+      "pressure_score": 11.5
+    },
+    "MD_WIN": {
+      "market_name": "Winchester, VA",
+      "state": "MD",
+      "ltr_8d": 62.8,
+      "ltr_30d": 127.7,
+      "divergence": -0.5082,
+      "signal": "Soft",
+      "pressure_score": 0
+    },
+    "MA_BOS": {
+      "market_name": "Boston, MA",
+      "state": "MA",
+      "ltr_8d": 69.6,
+      "ltr_30d": 77.8,
+      "divergence": -0.1054,
+      "signal": "Balanced",
+      "pressure_score": 30.9
+    },
+    "MA_SPR": {
+      "market_name": "Springfield, MA",
+      "state": "MA",
+      "ltr_8d": 325.7,
+      "ltr_30d": 431.0,
+      "divergence": -0.2443,
+      "signal": "Soft",
+      "pressure_score": 10.2
+    },
+    "MI_DET": {
+      "market_name": "Detroit, MI",
+      "state": "MI",
+      "ltr_8d": 21.1,
+      "ltr_30d": 23.2,
+      "divergence": -0.0905,
+      "signal": "Balanced",
+      "pressure_score": 31.7
+    },
+    "MI_GRA": {
+      "market_name": "Grand Rapids, MI",
+      "state": "MI",
+      "ltr_8d": 23.6,
+      "ltr_30d": 27.6,
+      "divergence": -0.1449,
+      "signal": "Loosening",
+      "pressure_score": 17.4
+    },
+    "MI_S. ": {
+      "market_name": "S. Bend, IN",
+      "state": "MI",
+      "ltr_8d": 44.3,
+      "ltr_30d": 51.8,
+      "divergence": -0.1448,
+      "signal": "Loosening",
+      "pressure_score": 17.4
+    },
+    "MI_SAG": {
+      "market_name": "Saginaw, MI",
+      "state": "MI",
+      "ltr_8d": 151.7,
+      "ltr_30d": 293.8,
+      "divergence": -0.4837,
+      "signal": "Soft",
+      "pressure_score": 0.7
+    },
+    "MN_DUL": {
+      "market_name": "Duluth, MN",
+      "state": "MN",
+      "ltr_8d": 207.3,
+      "ltr_30d": 149.8,
+      "divergence": 0.3838,
+      "signal": "Firming",
+      "pressure_score": 58.2
+    },
+    "MN_FAR": {
+      "market_name": "Fargo, ND",
+      "state": "MN",
+      "ltr_8d": 26.0,
+      "ltr_30d": 26.9,
+      "divergence": -0.0335,
+      "signal": "Balanced",
+      "pressure_score": 35.0
+    },
+    "MN_MIN": {
+      "market_name": "Minneapolis, MN",
+      "state": "MN",
+      "ltr_8d": 42.0,
+      "ltr_30d": 56.2,
+      "divergence": -0.2527,
+      "signal": "Soft",
+      "pressure_score": 9.9
+    },
+    "MN_SIO": {
+      "market_name": "Sioux Falls, SD",
+      "state": "MN",
+      "ltr_8d": 28.7,
+      "ltr_30d": 27.7,
+      "divergence": 0.0361,
+      "signal": "Balanced",
+      "pressure_score": 39.1
+    },
+    "MN_ST ": {
+      "market_name": "St Cloud, MN",
+      "state": "MN",
+      "ltr_8d": 19.9,
+      "ltr_30d": 28.2,
+      "divergence": -0.2943,
+      "signal": "Soft",
+      "pressure_score": 8.2
+    },
+    "MS_JAC": {
+      "market_name": "Jackson, MS",
+      "state": "MS",
+      "ltr_8d": 418.0,
+      "ltr_30d": 421.2,
+      "divergence": -0.0076,
+      "signal": "Balanced",
+      "pressure_score": 36.6
+    },
+    "MS_MEM": {
+      "market_name": "Memphis, TN",
+      "state": "MS",
+      "ltr_8d": 104.5,
+      "ltr_30d": 107.7,
+      "divergence": -0.0297,
+      "signal": "Balanced",
+      "pressure_score": 35.3
+    },
+    "MS_MOB": {
+      "market_name": "Mobile, AL",
+      "state": "MS",
+      "ltr_8d": 167.2,
+      "ltr_30d": 173.9,
+      "divergence": -0.0385,
+      "signal": "Balanced",
+      "pressure_score": 34.8
+    },
     "MO_CAP": {
       "market_name": "Cape Girardeau, MO",
       "state": "MO",
-      "ltr_8d": 162.6,
-      "ltr_30d": 116.7,
-      "divergence": 0.3933,
+      "ltr_8d": 148.5,
+      "ltr_30d": 125.3,
+      "divergence": 0.1852,
       "signal": "Firming",
-      "pressure_score": 58.7
+      "pressure_score": 48.3
     },
     "MO_JEF": {
       "market_name": "Jefferson City, MO",
       "state": "MO",
-      "ltr_8d": 35.7,
-      "ltr_30d": 36.7,
-      "divergence": -0.0272,
+      "ltr_8d": 38.7,
+      "ltr_30d": 35.6,
+      "divergence": 0.0871,
       "signal": "Balanced",
-      "pressure_score": 35.4
+      "pressure_score": 42.1
     },
     "MO_JOP": {
       "market_name": "Joplin, MO",
       "state": "MO",
-      "ltr_8d": 119.9,
-      "ltr_30d": 76.9,
-      "divergence": 0.5592,
-      "signal": "Tightening",
-      "pressure_score": 73.3
+      "ltr_8d": 119.1,
+      "ltr_30d": 87.3,
+      "divergence": 0.3643,
+      "signal": "Firming",
+      "pressure_score": 57.2
     },
     "MO_KAN": {
       "market_name": "Kansas City, MO",
       "state": "MO",
-      "ltr_8d": 59.1,
-      "ltr_30d": 52.9,
-      "divergence": 0.1172,
+      "ltr_8d": 49.0,
+      "ltr_30d": 49.1,
+      "divergence": -0.002,
       "signal": "Balanced",
-      "pressure_score": 43.8
+      "pressure_score": 36.9
     },
     "MO_QUI": {
       "market_name": "Quincy, IL",
       "state": "MO",
-      "ltr_8d": 29.4,
-      "ltr_30d": 41.8,
-      "divergence": -0.2967,
-      "signal": "Soft",
-      "pressure_score": 8.1
+      "ltr_8d": 35.0,
+      "ltr_30d": 40.2,
+      "divergence": -0.1294,
+      "signal": "Loosening",
+      "pressure_score": 24.6
     },
     "MO_ST ": {
       "market_name": "St Louis, MO",
       "state": "MO",
-      "ltr_8d": 63.3,
-      "ltr_30d": 60.3,
-      "divergence": 0.0498,
+      "ltr_8d": 70.6,
+      "ltr_30d": 63.9,
+      "divergence": 0.1049,
       "signal": "Balanced",
-      "pressure_score": 39.9
+      "pressure_score": 43.1
     },
     "MT_BIL": {
       "market_name": "Billings, MT",
       "state": "MT",
-      "ltr_8d": 59.5,
-      "ltr_30d": 78.6,
-      "divergence": -0.243,
-      "signal": "Soft",
-      "pressure_score": 10.3
+      "ltr_8d": 77.0,
+      "ltr_30d": 80.1,
+      "divergence": -0.0387,
+      "signal": "Balanced",
+      "pressure_score": 34.7
     },
     "MT_MIS": {
       "market_name": "Missoula, MT",
       "state": "MT",
-      "ltr_8d": 116.1,
-      "ltr_30d": 96.0,
-      "divergence": 0.2094,
-      "signal": "Firming",
-      "pressure_score": 49.5
+      "ltr_8d": 86.7,
+      "ltr_30d": 93.1,
+      "divergence": -0.0687,
+      "signal": "Balanced",
+      "pressure_score": 33.0
     },
     "NE_N P": {
       "market_name": "N Platte, NE",
       "state": "NE",
-      "ltr_8d": 8.9,
-      "ltr_30d": 15.8,
-      "divergence": -0.4367,
-      "signal": "Soft",
-      "pressure_score": 2.5
+      "ltr_8d": 14.1,
+      "ltr_30d": 8.8,
+      "divergence": 0.6023,
+      "signal": "Acute Imbalance",
+      "pressure_score": 80.1
     },
     "NE_OMA": {
       "market_name": "Omaha, NE",
       "state": "NE",
-      "ltr_8d": 39.6,
-      "ltr_30d": 43.8,
-      "divergence": -0.0959,
+      "ltr_8d": 40.7,
+      "ltr_30d": 40.7,
+      "divergence": null,
       "signal": "Balanced",
-      "pressure_score": 31.4
+      "pressure_score": 37
     },
     "NV_LAS": {
       "market_name": "Las Vegas, NV",
       "state": "NV",
-      "ltr_8d": 97.4,
-      "ltr_30d": 63.9,
-      "divergence": 0.5243,
-      "signal": "Tightening",
-      "pressure_score": 68.4
+      "ltr_8d": 47.0,
+      "ltr_30d": 76.9,
+      "divergence": -0.3888,
+      "signal": "Soft",
+      "pressure_score": 4.4
     },
     "NV_REN": {
       "market_name": "Reno, NV",
       "state": "NV",
-      "ltr_8d": 35.6,
-      "ltr_30d": 27.4,
-      "divergence": 0.2993,
-      "signal": "Firming",
-      "pressure_score": 54.0
+      "ltr_8d": 20.4,
+      "ltr_30d": 26.0,
+      "divergence": -0.2154,
+      "signal": "Soft",
+      "pressure_score": 11.4
     },
     "NH_AUG": {
       "market_name": "Augusta, ME",
       "state": "NH",
-      "ltr_8d": 248.6,
-      "ltr_30d": 267.3,
-      "divergence": -0.07,
-      "signal": "Balanced",
-      "pressure_score": 32.9
+      "ltr_8d": 116.6,
+      "ltr_30d": 247.0,
+      "divergence": -0.5279,
+      "signal": "Soft",
+      "pressure_score": 0
     },
     "NH_BRI": {
       "market_name": "Bristol, NH",
       "state": "NH",
-      "ltr_8d": 176.7,
-      "ltr_30d": 232.2,
-      "divergence": -0.239,
+      "ltr_8d": 87.0,
+      "ltr_30d": 170.5,
+      "divergence": -0.4897,
       "signal": "Soft",
-      "pressure_score": 10.4
+      "pressure_score": 0.4
     },
     "NJ_ELI": {
       "market_name": "Elizabeth, NJ",
       "state": "NJ",
-      "ltr_8d": 68.5,
-      "ltr_30d": 61.5,
-      "divergence": 0.1138,
-      "signal": "Balanced",
-      "pressure_score": 43.6
+      "ltr_8d": 51.2,
+      "ltr_30d": 61.0,
+      "divergence": -0.1607,
+      "signal": "Soft",
+      "pressure_score": 13.6
     },
     "NJ_PHI": {
       "market_name": "Philadelphia, PA",
       "state": "NJ",
-      "ltr_8d": 71.8,
-      "ltr_30d": 68.1,
-      "divergence": 0.0543,
-      "signal": "Balanced",
-      "pressure_score": 40.2
+      "ltr_8d": 46.9,
+      "ltr_30d": 60.3,
+      "divergence": -0.2222,
+      "signal": "Soft",
+      "pressure_score": 11.1
     },
     "NM_ALB": {
       "market_name": "Albuquerque, NM",
       "state": "NM",
-      "ltr_8d": 34.1,
-      "ltr_30d": 45.9,
-      "divergence": -0.2571,
+      "ltr_8d": 30.3,
+      "ltr_30d": 38.2,
+      "divergence": -0.2068,
       "signal": "Soft",
-      "pressure_score": 9.7
+      "pressure_score": 11.7
     },
     "NM_EL ": {
       "market_name": "El Paso, TX",
       "state": "NM",
-      "ltr_8d": 49.3,
-      "ltr_30d": 49.7,
-      "divergence": -0.008,
-      "signal": "Balanced",
-      "pressure_score": 36.5
+      "ltr_8d": 40.3,
+      "ltr_30d": 46.3,
+      "divergence": -0.1296,
+      "signal": "Loosening",
+      "pressure_score": 24.5
     },
     "NM_FLA": {
       "market_name": "Flagstaff, AZ",
       "state": "NM",
-      "ltr_8d": 85.9,
-      "ltr_30d": 97.9,
-      "divergence": -0.1226,
-      "signal": "Loosening",
-      "pressure_score": 27.8
+      "ltr_8d": 60.6,
+      "ltr_30d": 90.9,
+      "divergence": -0.3333,
+      "signal": "Soft",
+      "pressure_score": 6.7
     },
     "NM_LUB": {
       "market_name": "Lubbock, TX",
       "state": "NM",
-      "ltr_8d": 31.2,
-      "ltr_30d": 24.8,
-      "divergence": 0.2581,
+      "ltr_8d": 30.9,
+      "ltr_30d": 25.1,
+      "divergence": 0.2311,
       "signal": "Firming",
-      "pressure_score": 51.9
+      "pressure_score": 50.6
     },
     "NY_ALB": {
       "market_name": "Albany, NY",
       "state": "NY",
-      "ltr_8d": 38.6,
-      "ltr_30d": 48.8,
-      "divergence": -0.209,
+      "ltr_8d": 30.2,
+      "ltr_30d": 41.3,
+      "divergence": -0.2688,
       "signal": "Soft",
-      "pressure_score": 11.6
+      "pressure_score": 9.2
     },
     "NY_BRO": {
       "market_name": "Brooklyn, NY",
       "state": "NY",
-      "ltr_8d": 20.7,
-      "ltr_30d": 22.3,
-      "divergence": -0.0717,
-      "signal": "Balanced",
-      "pressure_score": 32.8
+      "ltr_8d": 11.8,
+      "ltr_30d": 18.0,
+      "divergence": -0.3444,
+      "signal": "Soft",
+      "pressure_score": 6.2
     },
     "NY_BUF": {
       "market_name": "Buffalo, NY",
       "state": "NY",
-      "ltr_8d": 130.3,
-      "ltr_30d": 205.4,
-      "divergence": -0.3656,
+      "ltr_8d": 101.0,
+      "ltr_30d": 154.6,
+      "divergence": -0.3467,
       "signal": "Soft",
-      "pressure_score": 5.4
+      "pressure_score": 6.1
     },
     "NY_ELM": {
       "market_name": "Elmira, NY",
       "state": "NY",
-      "ltr_8d": 42.5,
-      "ltr_30d": 53.0,
-      "divergence": -0.1981,
+      "ltr_8d": 28.3,
+      "ltr_30d": 39.4,
+      "divergence": -0.2817,
       "signal": "Soft",
-      "pressure_score": 12.1
+      "pressure_score": 8.7
     },
     "NY_HAR": {
       "market_name": "Hartford, CT",
       "state": "NY",
-      "ltr_8d": 131.3,
-      "ltr_30d": 111.3,
-      "divergence": 0.1797,
-      "signal": "Firming",
-      "pressure_score": 48.0
+      "ltr_8d": 71.3,
+      "ltr_30d": 106.3,
+      "divergence": -0.3293,
+      "signal": "Soft",
+      "pressure_score": 6.8
     },
     "NY_ROC": {
       "market_name": "Rochester, NY",
       "state": "NY",
-      "ltr_8d": 46.4,
-      "ltr_30d": 50.3,
-      "divergence": -0.0775,
+      "ltr_8d": 37.7,
+      "ltr_30d": 42.2,
+      "divergence": -0.1066,
       "signal": "Balanced",
-      "pressure_score": 32.5
+      "pressure_score": 30.8
     },
     "NY_SYR": {
       "market_name": "Syracuse, NY",
       "state": "NY",
-      "ltr_8d": 14.4,
-      "ltr_30d": 20.8,
-      "divergence": -0.3077,
+      "ltr_8d": 6.6,
+      "ltr_30d": 16.1,
+      "divergence": -0.5901,
       "signal": "Soft",
-      "pressure_score": 7.7
+      "pressure_score": 0
     },
     "NC_CHA": {
       "market_name": "Chattanooga, TN",
       "state": "NC",
-      "ltr_8d": 82.0,
-      "ltr_30d": 55.8,
-      "divergence": 0.4695,
-      "signal": "Firming",
-      "pressure_score": 62.5
+      "ltr_8d": 59.8,
+      "ltr_30d": 60.5,
+      "divergence": -0.0116,
+      "signal": "Balanced",
+      "pressure_score": 36.3
     },
     "NC_GRE": {
       "market_name": "Greenville, NC",
       "state": "NC",
-      "ltr_8d": 162.8,
-      "ltr_30d": 146.5,
-      "divergence": 0.1113,
+      "ltr_8d": 152.8,
+      "ltr_30d": 161.6,
+      "divergence": -0.0545,
       "signal": "Balanced",
-      "pressure_score": 43.5
+      "pressure_score": 33.8
     },
     "NC_NOR": {
       "market_name": "Norfolk, VA",
       "state": "NC",
-      "ltr_8d": 92.2,
-      "ltr_30d": 77.1,
-      "divergence": 0.1958,
-      "signal": "Firming",
-      "pressure_score": 48.8
+      "ltr_8d": 82.9,
+      "ltr_30d": 83.8,
+      "divergence": -0.0107,
+      "signal": "Balanced",
+      "pressure_score": 36.4
     },
     "NC_RAL": {
       "market_name": "Raleigh, NC",
       "state": "NC",
-      "ltr_8d": 162.8,
-      "ltr_30d": 146.5,
-      "divergence": 0.1113,
+      "ltr_8d": 152.8,
+      "ltr_30d": 161.6,
+      "divergence": -0.0545,
       "signal": "Balanced",
-      "pressure_score": 43.5
+      "pressure_score": 33.8
     },
     "NC_WIL": {
       "market_name": "Wilmington, NC",
       "state": "NC",
-      "ltr_8d": 71.5,
-      "ltr_30d": 73.4,
-      "divergence": -0.0259,
+      "ltr_8d": 56.3,
+      "ltr_30d": 62.6,
+      "divergence": -0.1006,
       "signal": "Balanced",
-      "pressure_score": 35.5
+      "pressure_score": 31.1
     },
     "ND_BIL": {
       "market_name": "Billings, MT",
       "state": "ND",
-      "ltr_8d": 59.5,
-      "ltr_30d": 78.6,
-      "divergence": -0.243,
-      "signal": "Soft",
-      "pressure_score": 10.3
+      "ltr_8d": 77.0,
+      "ltr_30d": 80.1,
+      "divergence": -0.0387,
+      "signal": "Balanced",
+      "pressure_score": 34.7
     },
     "ND_BIS": {
       "market_name": "Bismarck, ND",
       "state": "ND",
-      "ltr_8d": 17.4,
-      "ltr_30d": 13.4,
-      "divergence": 0.2985,
-      "signal": "Firming",
-      "pressure_score": 53.9
+      "ltr_8d": 11.5,
+      "ltr_30d": 11.9,
+      "divergence": -0.0336,
+      "signal": "Balanced",
+      "pressure_score": 35.0
     },
     "ND_FAR": {
       "market_name": "Fargo, ND",
       "state": "ND",
-      "ltr_8d": 30.0,
-      "ltr_30d": 29.5,
-      "divergence": 0.0169,
+      "ltr_8d": 26.0,
+      "ltr_30d": 26.9,
+      "divergence": -0.0335,
       "signal": "Balanced",
-      "pressure_score": 38.0
+      "pressure_score": 35.0
     },
     "ND_RAP": {
       "market_name": "Rapid City, SD",
       "state": "ND",
-      "ltr_8d": 96.2,
-      "ltr_30d": 132.3,
-      "divergence": -0.2729,
-      "signal": "Soft",
-      "pressure_score": 9.1
+      "ltr_8d": 112.0,
+      "ltr_30d": 126.0,
+      "divergence": -0.1111,
+      "signal": "Balanced",
+      "pressure_score": 30.5
     },
     "OH_CIN": {
       "market_name": "Cincinnati, OH",
       "state": "OH",
-      "ltr_8d": 41.4,
-      "ltr_30d": 52.5,
-      "divergence": -0.2114,
-      "signal": "Soft",
-      "pressure_score": 11.5
+      "ltr_8d": 45.0,
+      "ltr_30d": 49.3,
+      "divergence": -0.0872,
+      "signal": "Balanced",
+      "pressure_score": 31.9
     },
     "OH_CLE": {
       "market_name": "Cleveland, OH",
       "state": "OH",
-      "ltr_8d": 98.7,
-      "ltr_30d": 87.7,
-      "divergence": 0.1254,
-      "signal": "Firming",
-      "pressure_score": 45.3
+      "ltr_8d": 63.5,
+      "ltr_30d": 78.5,
+      "divergence": -0.1911,
+      "signal": "Soft",
+      "pressure_score": 12.4
     },
     "OH_COL": {
       "market_name": "Columbus, OH",
       "state": "OH",
-      "ltr_8d": 36.3,
-      "ltr_30d": 29.8,
-      "divergence": 0.2181,
-      "signal": "Firming",
-      "pressure_score": 49.9
+      "ltr_8d": 30.0,
+      "ltr_30d": 28.6,
+      "divergence": 0.049,
+      "signal": "Balanced",
+      "pressure_score": 39.9
     },
     "OH_HUN": {
       "market_name": "Huntington, WV",
       "state": "OH",
-      "ltr_8d": 68.1,
-      "ltr_30d": 81.4,
-      "divergence": -0.1634,
-      "signal": "Soft",
-      "pressure_score": 13.5
+      "ltr_8d": 73.8,
+      "ltr_30d": 78.4,
+      "divergence": -0.0587,
+      "signal": "Balanced",
+      "pressure_score": 33.6
     },
     "OH_PIT": {
       "market_name": "Pittsburgh, PA",
       "state": "OH",
-      "ltr_8d": 109.8,
-      "ltr_30d": 89.5,
-      "divergence": 0.2268,
-      "signal": "Firming",
-      "pressure_score": 50.3
+      "ltr_8d": 69.1,
+      "ltr_30d": 85.4,
+      "divergence": -0.1909,
+      "signal": "Soft",
+      "pressure_score": 12.4
     },
     "OH_TOL": {
       "market_name": "Toledo, OH",
       "state": "OH",
-      "ltr_8d": 22.2,
-      "ltr_30d": 25.7,
-      "divergence": -0.1362,
-      "signal": "Loosening",
-      "pressure_score": 21.4
+      "ltr_8d": 28.9,
+      "ltr_30d": 25.2,
+      "divergence": 0.1468,
+      "signal": "Firming",
+      "pressure_score": 46.3
     },
     "OK_ALB": {
       "market_name": "Albuquerque, NM",
       "state": "OK",
-      "ltr_8d": 34.1,
-      "ltr_30d": 45.9,
-      "divergence": -0.2571,
+      "ltr_8d": 30.3,
+      "ltr_30d": 38.2,
+      "divergence": -0.2068,
       "signal": "Soft",
-      "pressure_score": 9.7
+      "pressure_score": 11.7
     },
     "OK_AMA": {
       "market_name": "Amarillo, TX",
       "state": "OK",
-      "ltr_8d": 31.2,
-      "ltr_30d": 15.3,
-      "divergence": 1.0392,
+      "ltr_8d": 30.6,
+      "ltr_30d": 18.4,
+      "divergence": 0.663,
       "signal": "Acute Imbalance",
-      "pressure_score": 100
+      "pressure_score": 83.2
     },
     "OK_FAY": {
       "market_name": "Fayetteville, AR",
       "state": "OK",
-      "ltr_8d": 155.9,
-      "ltr_30d": 140.7,
-      "divergence": 0.108,
-      "signal": "Balanced",
-      "pressure_score": 43.3
+      "ltr_8d": 227.3,
+      "ltr_30d": 170.4,
+      "divergence": 0.3339,
+      "signal": "Firming",
+      "pressure_score": 55.7
     },
     "OK_HUT": {
       "market_name": "Hutchinson, OK",
       "state": "OK",
-      "ltr_8d": 27.2,
-      "ltr_30d": 29.5,
-      "divergence": -0.078,
-      "signal": "Balanced",
-      "pressure_score": 32.5
+      "ltr_8d": 34.7,
+      "ltr_30d": 28.7,
+      "divergence": 0.2091,
+      "signal": "Firming",
+      "pressure_score": 49.5
     },
     "OK_OKL": {
       "market_name": "Oklahoma City, OK",
       "state": "OK",
-      "ltr_8d": 83.1,
-      "ltr_30d": 77.6,
-      "divergence": 0.0709,
+      "ltr_8d": 93.0,
+      "ltr_30d": 83.8,
+      "divergence": 0.1098,
       "signal": "Balanced",
-      "pressure_score": 41.1
+      "pressure_score": 43.4
     },
     "OK_TUL": {
       "market_name": "Tulsa, OK",
       "state": "OK",
-      "ltr_8d": 53.2,
-      "ltr_30d": 38.8,
-      "divergence": 0.3711,
+      "ltr_8d": 68.1,
+      "ltr_30d": 46.3,
+      "divergence": 0.4708,
       "signal": "Firming",
-      "pressure_score": 57.6
+      "pressure_score": 62.5
     },
     "OR_MED": {
       "market_name": "Medford, OR",
       "state": "OR",
-      "ltr_8d": 622.4,
-      "ltr_30d": 386.3,
-      "divergence": 0.6112,
-      "signal": "Acute Imbalance",
-      "pressure_score": 80.6
+      "ltr_8d": 402.2,
+      "ltr_30d": 426.6,
+      "divergence": -0.0572,
+      "signal": "Balanced",
+      "pressure_score": 33.7
     },
     "OR_PEN": {
       "market_name": "Pendleton, OR",
       "state": "OR",
-      "ltr_8d": 35.0,
-      "ltr_30d": 30.7,
-      "divergence": 0.1401,
-      "signal": "Firming",
-      "pressure_score": 46.0
+      "ltr_8d": 39.0,
+      "ltr_30d": 37.1,
+      "divergence": 0.0512,
+      "signal": "Balanced",
+      "pressure_score": 40.0
     },
     "OR_POR": {
       "market_name": "Portland, OR",
       "state": "OR",
-      "ltr_8d": 121.6,
-      "ltr_30d": 89.2,
-      "divergence": 0.3632,
+      "ltr_8d": 116.2,
+      "ltr_30d": 92.2,
+      "divergence": 0.2603,
       "signal": "Firming",
-      "pressure_score": 57.2
+      "pressure_score": 52.0
     },
     "OR_TWI": {
       "market_name": "Twin Falls, ID",
       "state": "OR",
-      "ltr_8d": 42.5,
-      "ltr_30d": 39.1,
-      "divergence": 0.087,
-      "signal": "Balanced",
-      "pressure_score": 42.1
+      "ltr_8d": 30.6,
+      "ltr_30d": 39.2,
+      "divergence": -0.2194,
+      "signal": "Soft",
+      "pressure_score": 11.2
     },
     "PA_ALL": {
       "market_name": "Allentown, PA",
       "state": "PA",
-      "ltr_8d": 53.3,
-      "ltr_30d": 49.6,
-      "divergence": 0.0746,
+      "ltr_8d": 56.2,
+      "ltr_30d": 51.2,
+      "divergence": 0.0977,
       "signal": "Balanced",
-      "pressure_score": 41.4
+      "pressure_score": 42.7
     },
     "PA_ELM": {
       "market_name": "Elmira, NY",
       "state": "PA",
-      "ltr_8d": 42.5,
-      "ltr_30d": 53.0,
-      "divergence": -0.1981,
+      "ltr_8d": 28.3,
+      "ltr_30d": 39.4,
+      "divergence": -0.2817,
       "signal": "Soft",
-      "pressure_score": 12.1
+      "pressure_score": 8.7
     },
     "PA_ERI": {
       "market_name": "Erie, PA",
       "state": "PA",
-      "ltr_8d": 97.4,
-      "ltr_30d": 113.0,
-      "divergence": -0.1381,
-      "signal": "Loosening",
-      "pressure_score": 20.6
+      "ltr_8d": 71.3,
+      "ltr_30d": 97.2,
+      "divergence": -0.2665,
+      "signal": "Soft",
+      "pressure_score": 9.3
     },
     "PA_HAR": {
       "market_name": "Harrisburg, PA",
       "state": "PA",
-      "ltr_8d": 91.7,
-      "ltr_30d": 85.3,
-      "divergence": 0.075,
-      "signal": "Balanced",
-      "pressure_score": 41.4
+      "ltr_8d": 60.6,
+      "ltr_30d": 81.0,
+      "divergence": -0.2519,
+      "signal": "Soft",
+      "pressure_score": 9.9
     },
     "PA_PHI": {
       "market_name": "Philadelphia, PA",
       "state": "PA",
-      "ltr_8d": 71.8,
-      "ltr_30d": 68.1,
-      "divergence": 0.0543,
-      "signal": "Balanced",
-      "pressure_score": 40.2
+      "ltr_8d": 46.9,
+      "ltr_30d": 60.3,
+      "divergence": -0.2222,
+      "signal": "Soft",
+      "pressure_score": 11.1
     },
     "PA_PIT": {
       "market_name": "Pittsburgh, PA",
       "state": "PA",
-      "ltr_8d": 109.8,
-      "ltr_30d": 89.5,
-      "divergence": 0.2268,
-      "signal": "Firming",
-      "pressure_score": 50.3
+      "ltr_8d": 69.1,
+      "ltr_30d": 85.4,
+      "divergence": -0.1909,
+      "signal": "Soft",
+      "pressure_score": 12.4
     },
     "RI_BOS": {
       "market_name": "Boston, MA",
       "state": "RI",
-      "ltr_8d": 66.3,
-      "ltr_30d": 75.0,
-      "divergence": -0.116,
+      "ltr_8d": 69.6,
+      "ltr_30d": 77.8,
+      "divergence": -0.1054,
       "signal": "Balanced",
-      "pressure_score": 30.2
+      "pressure_score": 30.9
     },
     "SC_CHA": {
       "market_name": "Charlotte, NC",
       "state": "SC",
-      "ltr_8d": 74.3,
-      "ltr_30d": 71.9,
-      "divergence": 0.0334,
-      "signal": "Balanced",
-      "pressure_score": 38.9
+      "ltr_8d": 108.8,
+      "ltr_30d": 81.4,
+      "divergence": 0.3366,
+      "signal": "Firming",
+      "pressure_score": 55.8
     },
     "SC_COL": {
       "market_name": "Columbia, SC",
       "state": "SC",
-      "ltr_8d": 217.4,
-      "ltr_30d": 159.7,
-      "divergence": 0.3613,
-      "signal": "Firming",
-      "pressure_score": 57.1
+      "ltr_8d": 165.1,
+      "ltr_30d": 163.0,
+      "divergence": 0.0129,
+      "signal": "Balanced",
+      "pressure_score": 37.8
     },
     "SC_GRE": {
       "market_name": "Greenville, SC",
       "state": "SC",
-      "ltr_8d": 68.2,
-      "ltr_30d": 62.5,
-      "divergence": 0.0912,
+      "ltr_8d": 67.1,
+      "ltr_30d": 66.1,
+      "divergence": 0.0151,
       "signal": "Balanced",
-      "pressure_score": 42.3
+      "pressure_score": 37.9
     },
     "SC_N C": {
       "market_name": "N Charleston, SC",
       "state": "SC",
-      "ltr_8d": 109.3,
-      "ltr_30d": 125.3,
-      "divergence": -0.1277,
-      "signal": "Loosening",
-      "pressure_score": 25.4
+      "ltr_8d": 103.1,
+      "ltr_30d": 124.1,
+      "divergence": -0.1692,
+      "signal": "Soft",
+      "pressure_score": 13.2
     },
     "SC_SAV": {
       "market_name": "Savannah, GA",
       "state": "SC",
-      "ltr_8d": 243.0,
-      "ltr_30d": 209.3,
-      "divergence": 0.161,
-      "signal": "Firming",
-      "pressure_score": 47.1
+      "ltr_8d": 222.6,
+      "ltr_30d": 216.3,
+      "divergence": 0.0291,
+      "signal": "Balanced",
+      "pressure_score": 38.7
     },
     "SD_RAP": {
       "market_name": "Rapid City, SD",
       "state": "SD",
-      "ltr_8d": 96.2,
-      "ltr_30d": 132.3,
-      "divergence": -0.2729,
-      "signal": "Soft",
-      "pressure_score": 9.1
+      "ltr_8d": 112.0,
+      "ltr_30d": 126.0,
+      "divergence": -0.1111,
+      "signal": "Balanced",
+      "pressure_score": 30.5
     },
     "SD_SIO": {
       "market_name": "Sioux Falls, SD",
       "state": "SD",
-      "ltr_8d": 37.3,
-      "ltr_30d": 29.3,
-      "divergence": 0.273,
-      "signal": "Firming",
-      "pressure_score": 52.7
+      "ltr_8d": 28.7,
+      "ltr_30d": 27.7,
+      "divergence": 0.0361,
+      "signal": "Balanced",
+      "pressure_score": 39.1
     },
     "TN_BOW": {
       "market_name": "Bowling Green, KY",
       "state": "TN",
-      "ltr_8d": 58.7,
-      "ltr_30d": 53.3,
-      "divergence": 0.1013,
+      "ltr_8d": 50.1,
+      "ltr_30d": 56.6,
+      "divergence": -0.1148,
       "signal": "Balanced",
-      "pressure_score": 42.9
+      "pressure_score": 30.3
     },
     "TN_CHA": {
       "market_name": "Chattanooga, TN",
       "state": "TN",
-      "ltr_8d": 82.0,
-      "ltr_30d": 55.8,
-      "divergence": 0.4695,
-      "signal": "Firming",
-      "pressure_score": 62.5
+      "ltr_8d": 59.8,
+      "ltr_30d": 60.5,
+      "divergence": -0.0116,
+      "signal": "Balanced",
+      "pressure_score": 36.3
     },
     "TN_DEC": {
       "market_name": "Decatur, AL",
       "state": "TN",
-      "ltr_8d": 256.0,
-      "ltr_30d": 238.7,
-      "divergence": 0.0725,
-      "signal": "Balanced",
-      "pressure_score": 41.2
+      "ltr_8d": 215.1,
+      "ltr_30d": 247.3,
+      "divergence": -0.1302,
+      "signal": "Loosening",
+      "pressure_score": 24.2
     },
     "TN_KNO": {
       "market_name": "Knoxville, TN",
       "state": "TN",
-      "ltr_8d": 41.4,
-      "ltr_30d": 41.6,
-      "divergence": -0.0048,
-      "signal": "Balanced",
-      "pressure_score": 36.7
+      "ltr_8d": 61.6,
+      "ltr_30d": 48.0,
+      "divergence": 0.2833,
+      "signal": "Firming",
+      "pressure_score": 53.2
     },
     "TN_MEM": {
       "market_name": "Memphis, TN",
       "state": "TN",
-      "ltr_8d": 112.5,
-      "ltr_30d": 104.8,
-      "divergence": 0.0735,
+      "ltr_8d": 104.5,
+      "ltr_30d": 107.7,
+      "divergence": -0.0297,
       "signal": "Balanced",
-      "pressure_score": 41.3
+      "pressure_score": 35.3
     },
     "TN_NAS": {
       "market_name": "Nashville, TN",
       "state": "TN",
-      "ltr_8d": 48.1,
-      "ltr_30d": 36.5,
-      "divergence": 0.3178,
-      "signal": "Firming",
-      "pressure_score": 54.9
+      "ltr_8d": 40.4,
+      "ltr_30d": 37.2,
+      "divergence": 0.086,
+      "signal": "Balanced",
+      "pressure_score": 42.0
     },
     "TX_ALB": {
       "market_name": "Albuquerque, NM",
       "state": "TX",
-      "ltr_8d": 34.1,
-      "ltr_30d": 45.9,
-      "divergence": -0.2571,
+      "ltr_8d": 30.3,
+      "ltr_30d": 38.2,
+      "divergence": -0.2068,
       "signal": "Soft",
-      "pressure_score": 9.7
+      "pressure_score": 11.7
     },
     "TX_AMA": {
       "market_name": "Amarillo, TX",
       "state": "TX",
-      "ltr_8d": 31.2,
-      "ltr_30d": 15.3,
-      "divergence": 1.0392,
+      "ltr_8d": 30.6,
+      "ltr_30d": 18.4,
+      "divergence": 0.663,
       "signal": "Acute Imbalance",
-      "pressure_score": 100
+      "pressure_score": 83.2
     },
     "TX_AUS": {
       "market_name": "Austin, TX",
       "state": "TX",
-      "ltr_8d": 66.6,
-      "ltr_30d": 46.8,
-      "divergence": 0.4231,
-      "signal": "Firming",
-      "pressure_score": 60.2
+      "ltr_8d": 77.9,
+      "ltr_30d": 50.7,
+      "divergence": 0.5365,
+      "signal": "Tightening",
+      "pressure_score": 70.1
     },
     "TX_DAL": {
       "market_name": "Dallas, TX",
       "state": "TX",
-      "ltr_8d": 95.2,
-      "ltr_30d": 79.8,
-      "divergence": 0.193,
+      "ltr_8d": 106.7,
+      "ltr_30d": 85.1,
+      "divergence": 0.2538,
       "signal": "Firming",
-      "pressure_score": 48.6
+      "pressure_score": 51.7
     },
     "TX_EL ": {
       "market_name": "El Paso, TX",
       "state": "TX",
-      "ltr_8d": 49.3,
-      "ltr_30d": 49.7,
-      "divergence": -0.008,
-      "signal": "Balanced",
-      "pressure_score": 36.5
+      "ltr_8d": 40.3,
+      "ltr_30d": 46.3,
+      "divergence": -0.1296,
+      "signal": "Loosening",
+      "pressure_score": 24.5
     },
     "TX_FT ": {
       "market_name": "Ft Worth, TX",
       "state": "TX",
-      "ltr_8d": 88.3,
-      "ltr_30d": 87.7,
-      "divergence": 0.0068,
+      "ltr_8d": 98.3,
+      "ltr_30d": 88.2,
+      "divergence": 0.1145,
       "signal": "Balanced",
-      "pressure_score": 37.4
+      "pressure_score": 43.7
     },
     "TX_HOU": {
       "market_name": "Houston, TX",
       "state": "TX",
-      "ltr_8d": 103.2,
-      "ltr_30d": 80.9,
-      "divergence": 0.2756,
-      "signal": "Firming",
-      "pressure_score": 52.8
+      "ltr_8d": 95.2,
+      "ltr_30d": 89.2,
+      "divergence": 0.0673,
+      "signal": "Balanced",
+      "pressure_score": 40.9
     },
     "TX_LAR": {
       "market_name": "Laredo, TX",
       "state": "TX",
-      "ltr_8d": 104.3,
-      "ltr_30d": 62.3,
-      "divergence": 0.6742,
-      "signal": "Acute Imbalance",
-      "pressure_score": 83.7
+      "ltr_8d": 101.1,
+      "ltr_30d": 74.6,
+      "divergence": 0.3552,
+      "signal": "Firming",
+      "pressure_score": 56.8
     },
     "TX_LUB": {
       "market_name": "Lubbock, TX",
       "state": "TX",
-      "ltr_8d": 31.2,
-      "ltr_30d": 24.8,
-      "divergence": 0.2581,
+      "ltr_8d": 30.9,
+      "ltr_30d": 25.1,
+      "divergence": 0.2311,
       "signal": "Firming",
-      "pressure_score": 51.9
+      "pressure_score": 50.6
     },
     "TX_MCA": {
       "market_name": "McAllen, TX",
       "state": "TX",
-      "ltr_8d": 87.7,
-      "ltr_30d": 67.5,
-      "divergence": 0.2993,
+      "ltr_8d": 98.3,
+      "ltr_30d": 84.4,
+      "divergence": 0.1647,
       "signal": "Firming",
-      "pressure_score": 54.0
+      "pressure_score": 47.2
     },
     "TX_SAN": {
       "market_name": "San Antonio, TX",
       "state": "TX",
-      "ltr_8d": 49.2,
-      "ltr_30d": 41.2,
-      "divergence": 0.1942,
+      "ltr_8d": 59.0,
+      "ltr_30d": 45.3,
+      "divergence": 0.3024,
       "signal": "Firming",
-      "pressure_score": 48.7
+      "pressure_score": 54.1
     },
     "TX_SHR": {
       "market_name": "Shreveport, LA",
       "state": "TX",
-      "ltr_8d": 298.9,
-      "ltr_30d": 263.8,
-      "divergence": 0.1331,
-      "signal": "Firming",
-      "pressure_score": 45.7
+      "ltr_8d": 344.8,
+      "ltr_30d": 314.7,
+      "divergence": 0.0956,
+      "signal": "Balanced",
+      "pressure_score": 42.6
     },
     "TX_TEX": {
       "market_name": "Texarkana, TX",
       "state": "TX",
-      "ltr_8d": 376.1,
-      "ltr_30d": 329.6,
-      "divergence": 0.1411,
-      "signal": "Firming",
-      "pressure_score": 46.1
+      "ltr_8d": 369.6,
+      "ltr_30d": 355.8,
+      "divergence": 0.0388,
+      "signal": "Balanced",
+      "pressure_score": 39.3
     },
     "UT_FLA": {
       "market_name": "Flagstaff, AZ",
       "state": "UT",
-      "ltr_8d": 85.9,
-      "ltr_30d": 97.9,
-      "divergence": -0.1226,
-      "signal": "Loosening",
-      "pressure_score": 27.8
+      "ltr_8d": 60.6,
+      "ltr_30d": 90.9,
+      "divergence": -0.3333,
+      "signal": "Soft",
+      "pressure_score": 6.7
     },
     "UT_GRA": {
       "market_name": "Grand Jct., CO",
       "state": "UT",
-      "ltr_8d": 109.9,
-      "ltr_30d": 125.2,
-      "divergence": -0.1222,
-      "signal": "Loosening",
-      "pressure_score": 28.0
+      "ltr_8d": 68.5,
+      "ltr_30d": 112.5,
+      "divergence": -0.3911,
+      "signal": "Soft",
+      "pressure_score": 4.4
     },
     "UT_SAL": {
       "market_name": "Salt Lake City, UT",
       "state": "UT",
-      "ltr_8d": 35.2,
-      "ltr_30d": 26.1,
-      "divergence": 0.3487,
-      "signal": "Firming",
-      "pressure_score": 56.4
+      "ltr_8d": 29.0,
+      "ltr_30d": 27.2,
+      "divergence": 0.0662,
+      "signal": "Balanced",
+      "pressure_score": 40.9
     },
     "VT_ALB": {
       "market_name": "Albany, NY",
       "state": "VT",
-      "ltr_8d": 38.6,
-      "ltr_30d": 48.8,
-      "divergence": -0.209,
+      "ltr_8d": 30.2,
+      "ltr_30d": 41.3,
+      "divergence": -0.2688,
       "signal": "Soft",
-      "pressure_score": 11.6
+      "pressure_score": 9.2
     },
     "VT_BRI": {
       "market_name": "Bristol, VT",
       "state": "VT",
-      "ltr_8d": 38.6,
-      "ltr_30d": 48.8,
-      "divergence": -0.209,
+      "ltr_8d": 30.2,
+      "ltr_30d": 41.3,
+      "divergence": -0.2688,
       "signal": "Soft",
-      "pressure_score": 11.6
+      "pressure_score": 9.2
     },
     "VA_ALE": {
       "market_name": "Alexandria, VA",
       "state": "VA",
-      "ltr_8d": 98.8,
-      "ltr_30d": 67.4,
-      "divergence": 0.4659,
-      "signal": "Firming",
-      "pressure_score": 62.3
+      "ltr_8d": 63.1,
+      "ltr_30d": 73.9,
+      "divergence": -0.1461,
+      "signal": "Loosening",
+      "pressure_score": 16.8
     },
     "VA_CHA": {
       "market_name": "Charleston, WV",
       "state": "VA",
-      "ltr_8d": 136.4,
-      "ltr_30d": 122.4,
-      "divergence": 0.1144,
+      "ltr_8d": 104.9,
+      "ltr_30d": 117.5,
+      "divergence": -0.1072,
       "signal": "Balanced",
-      "pressure_score": 43.7
+      "pressure_score": 30.7
     },
     "VA_KNO": {
       "market_name": "Knoxville, TN",
       "state": "VA",
-      "ltr_8d": 41.4,
-      "ltr_30d": 41.6,
-      "divergence": -0.0048,
-      "signal": "Balanced",
-      "pressure_score": 36.7
+      "ltr_8d": 61.6,
+      "ltr_30d": 48.0,
+      "divergence": 0.2833,
+      "signal": "Firming",
+      "pressure_score": 53.2
     },
     "VA_NOR": {
       "market_name": "Norfolk, VA",
       "state": "VA",
-      "ltr_8d": 92.2,
-      "ltr_30d": 77.1,
-      "divergence": 0.1958,
-      "signal": "Firming",
-      "pressure_score": 48.8
+      "ltr_8d": 82.9,
+      "ltr_30d": 83.8,
+      "divergence": -0.0107,
+      "signal": "Balanced",
+      "pressure_score": 36.4
     },
     "VA_RIC": {
       "market_name": "Richmond, VA",
       "state": "VA",
-      "ltr_8d": 106.2,
-      "ltr_30d": 104.8,
-      "divergence": 0.0134,
-      "signal": "Balanced",
-      "pressure_score": 37.8
+      "ltr_8d": 88.0,
+      "ltr_30d": 106.8,
+      "divergence": -0.176,
+      "signal": "Soft",
+      "pressure_score": 13.0
     },
     "VA_ROA": {
       "market_name": "Roanoke, VA",
       "state": "VA",
-      "ltr_8d": 305.3,
-      "ltr_30d": 191.9,
-      "divergence": 0.5909,
-      "signal": "Tightening",
-      "pressure_score": 77.7
+      "ltr_8d": 193.0,
+      "ltr_30d": 211.1,
+      "divergence": -0.0857,
+      "signal": "Balanced",
+      "pressure_score": 32.0
     },
     "VA_WIN": {
       "market_name": "Winchester, VA",
       "state": "VA",
-      "ltr_8d": 96.1,
-      "ltr_30d": 147.8,
-      "divergence": -0.3498,
+      "ltr_8d": 62.8,
+      "ltr_30d": 127.7,
+      "divergence": -0.5082,
       "signal": "Soft",
-      "pressure_score": 6.0
+      "pressure_score": 0
     },
     "WA_PEN": {
       "market_name": "Pendleton, OR",
       "state": "WA",
-      "ltr_8d": 35.0,
-      "ltr_30d": 30.7,
-      "divergence": 0.1401,
-      "signal": "Firming",
-      "pressure_score": 46.0
+      "ltr_8d": 101.0,
+      "ltr_30d": 154.6,
+      "divergence": -0.3467,
+      "signal": "Soft",
+      "pressure_score": 6.1
     },
     "WA_POR": {
       "market_name": "Portland, OR",
       "state": "WA",
-      "ltr_8d": 121.6,
-      "ltr_30d": 89.2,
-      "divergence": 0.3632,
+      "ltr_8d": 116.2,
+      "ltr_30d": 92.2,
+      "divergence": 0.2603,
       "signal": "Firming",
-      "pressure_score": 57.2
+      "pressure_score": 52.0
     },
     "WA_SEA": {
       "market_name": "Seattle, WA",
       "state": "WA",
-      "ltr_8d": 56.9,
-      "ltr_30d": 44.2,
-      "divergence": 0.2873,
+      "ltr_8d": 67.9,
+      "ltr_30d": 46.9,
+      "divergence": 0.4478,
       "signal": "Firming",
-      "pressure_score": 53.4
+      "pressure_score": 61.4
     },
     "WA_SPO": {
       "market_name": "Spokane, WA",
       "state": "WA",
-      "ltr_8d": 96.8,
-      "ltr_30d": 75.6,
-      "divergence": 0.2804,
-      "signal": "Firming",
-      "pressure_score": 53.0
+      "ltr_8d": 152.7,
+      "ltr_30d": 93.8,
+      "divergence": 0.6279,
+      "signal": "Acute Imbalance",
+      "pressure_score": 81.4
     },
     "WV_CHA": {
       "market_name": "Charleston, WV",
       "state": "WV",
-      "ltr_8d": 136.4,
-      "ltr_30d": 122.4,
-      "divergence": 0.1144,
+      "ltr_8d": 104.9,
+      "ltr_30d": 117.5,
+      "divergence": -0.1072,
       "signal": "Balanced",
-      "pressure_score": 43.7
+      "pressure_score": 30.7
     },
     "WV_HUN": {
       "market_name": "Huntington, WV",
       "state": "WV",
-      "ltr_8d": 68.1,
-      "ltr_30d": 81.4,
-      "divergence": -0.1634,
-      "signal": "Soft",
-      "pressure_score": 13.5
+      "ltr_8d": 73.8,
+      "ltr_30d": 78.4,
+      "divergence": -0.0587,
+      "signal": "Balanced",
+      "pressure_score": 33.6
     },
     "WV_PIT": {
       "market_name": "Pittsburgh, PA",
       "state": "WV",
-      "ltr_8d": 109.8,
-      "ltr_30d": 89.5,
-      "divergence": 0.2268,
-      "signal": "Firming",
-      "pressure_score": 50.3
+      "ltr_8d": 69.1,
+      "ltr_30d": 85.4,
+      "divergence": -0.1909,
+      "signal": "Soft",
+      "pressure_score": 12.4
     },
     "WV_WIN": {
       "market_name": "Winchester, VA",
       "state": "WV",
-      "ltr_8d": 96.1,
-      "ltr_30d": 147.8,
-      "divergence": -0.3498,
+      "ltr_8d": 62.8,
+      "ltr_30d": 127.7,
+      "divergence": -0.5082,
       "signal": "Soft",
-      "pressure_score": 6.0
+      "pressure_score": 0
     },
     "WI_DUB": {
       "market_name": "Dubuque, IA",
       "state": "WI",
-      "ltr_8d": 42.5,
-      "ltr_30d": 40.7,
-      "divergence": 0.0442,
-      "signal": "Balanced",
-      "pressure_score": 39.6
+      "ltr_8d": 27.1,
+      "ltr_30d": 34.4,
+      "divergence": -0.2122,
+      "signal": "Soft",
+      "pressure_score": 11.5
     },
     "WI_DUL": {
       "market_name": "Duluth, MN",
       "state": "WI",
-      "ltr_8d": 133.9,
-      "ltr_30d": 159.6,
-      "divergence": -0.161,
-      "signal": "Soft",
-      "pressure_score": 13.6
+      "ltr_8d": 207.3,
+      "ltr_30d": 149.8,
+      "divergence": 0.3838,
+      "signal": "Firming",
+      "pressure_score": 58.2
     },
     "WI_EAU": {
       "market_name": "Eau Claire, WI",
       "state": "WI",
-      "ltr_8d": 30.1,
-      "ltr_30d": 28.9,
-      "divergence": 0.0415,
-      "signal": "Balanced",
-      "pressure_score": 39.4
+      "ltr_8d": 19.1,
+      "ltr_30d": 25.3,
+      "divergence": -0.2451,
+      "signal": "Soft",
+      "pressure_score": 10.2
     },
     "WI_GRE": {
       "market_name": "Green Bay, WI",
       "state": "WI",
-      "ltr_8d": 56.7,
-      "ltr_30d": 59.2,
-      "divergence": -0.0422,
-      "signal": "Balanced",
-      "pressure_score": 34.5
+      "ltr_8d": 47.9,
+      "ltr_30d": 58.5,
+      "divergence": -0.1812,
+      "signal": "Soft",
+      "pressure_score": 12.8
     },
     "WI_MAD": {
       "market_name": "Madison, WI",
       "state": "WI",
-      "ltr_8d": 19.1,
-      "ltr_30d": 14.9,
-      "divergence": 0.2819,
-      "signal": "Firming",
-      "pressure_score": 53.1
+      "ltr_8d": 13.7,
+      "ltr_30d": 15.6,
+      "divergence": -0.1218,
+      "signal": "Loosening",
+      "pressure_score": 28.2
     },
     "WI_MIL": {
       "market_name": "Milwaukee, WI",
       "state": "WI",
-      "ltr_8d": 20.3,
-      "ltr_30d": 21.6,
-      "divergence": -0.0602,
+      "ltr_8d": 19.1,
+      "ltr_30d": 19.8,
+      "divergence": -0.0354,
       "signal": "Balanced",
-      "pressure_score": 33.5
+      "pressure_score": 34.9
     },
     "WY_BIL": {
       "market_name": "Billings, MT",
       "state": "WY",
-      "ltr_8d": 59.5,
-      "ltr_30d": 78.6,
-      "divergence": -0.243,
-      "signal": "Soft",
-      "pressure_score": 10.3
+      "ltr_8d": 77.0,
+      "ltr_30d": 80.1,
+      "divergence": -0.0387,
+      "signal": "Balanced",
+      "pressure_score": 34.7
     },
     "WY_DEN": {
       "market_name": "Denver, CO",
       "state": "WY",
-      "ltr_8d": 23.4,
-      "ltr_30d": 24.0,
-      "divergence": -0.025,
+      "ltr_8d": 24.3,
+      "ltr_30d": 23.2,
+      "divergence": 0.0474,
       "signal": "Balanced",
-      "pressure_score": 35.5
+      "pressure_score": 39.8
     },
     "WY_GRE": {
       "market_name": "Green River, WY",
       "state": "WY",
-      "ltr_8d": 152.5,
-      "ltr_30d": 183.6,
-      "divergence": -0.1694,
+      "ltr_8d": 69.9,
+      "ltr_30d": 159.7,
+      "divergence": -0.5623,
       "signal": "Soft",
-      "pressure_score": 13.2
+      "pressure_score": 0
     },
     "WY_N P": {
       "market_name": "N Platte, NE",
       "state": "WY",
-      "ltr_8d": 8.9,
-      "ltr_30d": 15.8,
-      "divergence": -0.4367,
-      "signal": "Soft",
-      "pressure_score": 2.5
+      "ltr_8d": 14.1,
+      "ltr_30d": 8.8,
+      "divergence": 0.6023,
+      "signal": "Acute Imbalance",
+      "pressure_score": 80.1
     },
     "WY_RAP": {
       "market_name": "Rapid City, SD",
       "state": "WY",
-      "ltr_8d": 96.2,
-      "ltr_30d": 132.3,
-      "divergence": -0.2729,
-      "signal": "Soft",
-      "pressure_score": 9.1
+      "ltr_8d": 112.0,
+      "ltr_30d": 126.0,
+      "divergence": -0.1111,
+      "signal": "Balanced",
+      "pressure_score": 30.5
     }
   },
   "demand_indicators": {
@@ -2342,17 +2342,13 @@
       "layers": [
         "ISM-Grid"
       ],
-      "latest": 55.8,
-      "prior": 57.1,
+      "latest": 53.5,
+      "prior": 55.8,
       "three_mo_ago": 47.4,
       "direction": "FALLING",
-      "latest_date": "2026-02",
+      "latest_date": "2026-03",
       "bullish_above": 50,
       "data": [
-        {
-          "d": "2025-09",
-          "v": 48.9
-        },
         {
           "d": "2025-10",
           "v": 49.4
@@ -2372,6 +2368,10 @@
         {
           "d": "2026-02",
           "v": 55.8
+        },
+        {
+          "d": "2026-03",
+          "v": 53.5
         }
       ]
     },
@@ -2381,21 +2381,13 @@
       "layers": [
         "Energy"
       ],
-      "latest": 550.0,
-      "prior": 546.0,
-      "three_mo_ago": 544.0,
+      "latest": 548.0,
+      "prior": 543.0,
+      "three_mo_ago": 546.0,
       "direction": "RISING",
-      "latest_date": "2026-02",
+      "latest_date": "2026-04",
       "bullish_above": null,
       "data": [
-        {
-          "d": "2025-09",
-          "v": 549.0
-        },
-        {
-          "d": "2025-10",
-          "v": 546.0
-        },
         {
           "d": "2025-11",
           "v": 544.0
@@ -2411,86 +2403,94 @@
         {
           "d": "2026-02",
           "v": 550.0
+        },
+        {
+          "d": "2026-03",
+          "v": 543.0
+        },
+        {
+          "d": "2026-04",
+          "v": 548.0
         }
       ]
     },
     "Housing_Starts": {
-      "label": "Housing Starts (SF, SAAR)",
+      "label": "Housing Starts (Total, SAAR)",
       "unit": "thousands",
       "layers": [
         "Permits-Starts",
         "Construction"
       ],
-      "latest": 935.0,
-      "prior": 962.0,
-      "three_mo_ago": 894.0,
-      "direction": "FALLING",
+      "latest": 1487.0,
+      "prior": 1387.0,
+      "three_mo_ago": 1272.0,
+      "direction": "RISING",
       "latest_date": "2026-01",
       "bullish_above": null,
       "data": [
         {
           "d": "2025-08",
-          "v": 869.0
+          "v": 1291.0
         },
         {
           "d": "2025-09",
-          "v": 836.0
+          "v": 1328.0
         },
         {
           "d": "2025-10",
-          "v": 894.0
+          "v": 1272.0
         },
         {
           "d": "2025-11",
-          "v": 931.0
+          "v": 1324.0
         },
         {
           "d": "2025-12",
-          "v": 962.0
+          "v": 1387.0
         },
         {
           "d": "2026-01",
-          "v": 935.0
+          "v": 1487.0
         }
       ]
     },
     "Building_Permits": {
-      "label": "Building Permits (SF)",
+      "label": "Building Permits (Total)",
       "unit": "thousands",
       "layers": [
         "Permits-Starts",
         "Construction"
       ],
-      "latest": 876.0,
-      "prior": 881.0,
-      "three_mo_ago": 878.0,
+      "latest": 1386.0,
+      "prior": 1455.0,
+      "three_mo_ago": 1411.0,
       "direction": "FALLING",
       "latest_date": "2026-01",
       "bullish_above": null,
       "data": [
         {
           "d": "2025-08",
-          "v": 858.0
+          "v": 1330.0
         },
         {
           "d": "2025-09",
-          "v": 880.0
+          "v": 1415.0
         },
         {
           "d": "2025-10",
-          "v": 878.0
+          "v": 1411.0
         },
         {
           "d": "2025-11",
-          "v": 896.0
+          "v": 1388.0
         },
         {
           "d": "2025-12",
-          "v": 881.0
+          "v": 1455.0
         },
         {
           "d": "2026-01",
-          "v": 876.0
+          "v": 1386.0
         }
       ]
     },
@@ -2540,7 +2540,7 @@
         "Lumber",
         "Lumber-PNW"
       ],
-      "latest": 604.5,
+      "latest": 609.5,
       "prior": 558.0,
       "three_mo_ago": 539.0,
       "direction": "RISING",
@@ -2569,7 +2569,7 @@
         },
         {
           "d": "2026-03",
-          "v": 604.5
+          "v": 609.5
         }
       ]
     },
@@ -2579,7 +2579,7 @@
       "layers": [
         "Steel"
       ],
-      "latest": 1045.0,
+      "latest": 1047.0,
       "prior": 1016.0,
       "three_mo_ago": 940.0,
       "direction": "RISING",
@@ -2608,7 +2608,7 @@
         },
         {
           "d": "2026-03",
-          "v": 1045.0
+          "v": 1047.0
         }
       ]
     },
@@ -2618,17 +2618,13 @@
       "layers": [
         "Energy"
       ],
-      "latest": 104.87,
-      "prior": 67.29,
-      "three_mo_ago": 57.41,
+      "latest": 112.06,
+      "prior": 101.56,
+      "three_mo_ago": 65.74,
       "direction": "RISING",
-      "latest_date": "2026-03",
+      "latest_date": "2026-04",
       "bullish_above": null,
       "data": [
-        {
-          "d": "2025-10",
-          "v": 60.88
-        },
         {
           "d": "2025-11",
           "v": 58.48
@@ -2647,7 +2643,11 @@
         },
         {
           "d": "2026-03",
-          "v": 104.87
+          "v": 101.56
+        },
+        {
+          "d": "2026-04",
+          "v": 112.06
         }
       ]
     },
@@ -2657,7 +2657,7 @@
       "layers": [
         "HeavyEquip-Ag"
       ],
-      "latest": 455.25,
+      "latest": 458.5,
       "prior": 448.25,
       "three_mo_ago": 441.0,
       "direction": "RISING",
@@ -2686,7 +2686,7 @@
         },
         {
           "d": "2026-03",
-          "v": 455.25
+          "v": 458.5
         }
       ]
     },
@@ -2696,10 +2696,10 @@
       "layers": [
         "HeavyEquip-Ag"
       ],
-      "latest": 1159.5,
+      "latest": 1172.25,
       "prior": 1170.0,
       "three_mo_ago": 1047.25,
-      "direction": "FALLING",
+      "direction": "FLAT",
       "latest_date": "2026-03",
       "bullish_above": null,
       "data": [
@@ -2725,7 +2725,7 @@
         },
         {
           "d": "2026-03",
-          "v": 1159.5
+          "v": 1172.25
         }
       ]
     },
@@ -2735,7 +2735,7 @@
       "layers": [
         "HeavyEquip-Ag"
       ],
-      "latest": 608.5,
+      "latest": 618.25,
       "prior": 591.5,
       "three_mo_ago": 506.5,
       "direction": "RISING",
@@ -2764,7 +2764,7 @@
         },
         {
           "d": "2026-03",
-          "v": 608.5
+          "v": 618.25
         }
       ]
     },
